@@ -24,7 +24,7 @@ Edit `project.yml` to add targets, schemes, or build settings.
 
 `SmartStylist/Config/APIKeys.swift` is **gitignored** — it contains real keys and must never be committed.
 
-- Edit `APIKeys.template.swift` for structural changes
+- Edit `APIKeys.swift.template` for structural changes (no `.swift` extension — XcodeGen ignores it)
 - CI injects the real file from GitHub Secrets (`GEMINI_API_KEY`, `WEATHER_API_KEY`)
 - Local dev: create `APIKeys.swift` manually from the template
 
