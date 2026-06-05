@@ -2,21 +2,56 @@ import Foundation
 import SwiftData
 import Observation
 
+// ── Disposal reason ───────────────────────────────────────────────────────────
+
+enum DisposeReason: String, CaseIterable {
+    case wornOut  = "worn"
+    case damaged  = "damaged"
+    case donated  = "donated"
+    case unused   = "unused"
+
+    var label: String {
+        switch self {
+        case .wornOut:  return "Worn Out"
+        case .damaged:  return "Damaged"
+        case .donated:  return "Donated"
+        case .unused:   return "No Longer Used"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .wornOut:  return "tshirt"
+        case .damaged:  return "exclamationmark.triangle"
+        case .donated:  return "heart"
+        case .unused:   return "archivebox"
+        }
+    }
+}
+
+// ── View model ────────────────────────────────────────────────────────────────
+
 @Observable
 final class ClosetViewModel {
     var selectedCategory: ClothingCategory? = nil
     var searchText = ""
     var isAddingItem = false
 
+    // Active + archived — disposed items are permanently excluded
+    func visibleItems(from all: [ClothingItem]) -> [ClothingItem] {
+        all.filter { $0.status != .disposed }
+    }
+
+    // Active only — used by StyleEngine to build outfit recommendations
     func activeItems(from all: [ClothingItem]) -> [ClothingItem] {
         all.filter { $0.status == .active }
     }
 
     func filteredItems(from all: [ClothingItem]) -> [ClothingItem] {
-        let active = activeItems(from: all)
+        let visible = visibleItems(from: all)
         let categoryFiltered = selectedCategory == nil
-            ? active
-            : active.filter { $0.category == selectedCategory }
+            ? visible
+            : visible.filter { $0.category == selectedCategory }
         guard !searchText.isEmpty else { return categoryFiltered }
         return categoryFiltered.filter {
             $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(searchText) ||
@@ -25,8 +60,9 @@ final class ClosetViewModel {
         }
     }
 
-    func disposeItem(_ item: ClothingItem, context: ModelContext) {
+    func disposeItem(_ item: ClothingItem, reason: DisposeReason = .unused, context: ModelContext) {
         item.status = .disposed
+        item.disposeReason = reason.rawValue
         try? context.save()
     }
 

@@ -6,6 +6,7 @@ struct VirtualClosetView: View {
     @Environment(\.modelContext) private var ctx
     @State private var vm = ClosetViewModel()
     @State private var showAddItem = false
+    @State private var itemToDispose: ClothingItem?
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -18,8 +19,9 @@ struct VirtualClosetView: View {
                 Color.dsDeepSlate.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 20) {
                         categoryFilter
+                        statusSummary
                         itemGrid
                     }
                     .padding(16)
@@ -41,8 +43,11 @@ struct VirtualClosetView: View {
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
             .searchable(text: $vm.searchText, prompt: "Search pieces…")
             .sheet(isPresented: $showAddItem) { AddItemView() }
+            .sheet(item: $itemToDispose) { item in DisposeItemSheet(item: item) }
         }
     }
+
+    // ── Subviews ──────────────────────────────────────────────────────────────
 
     private var categoryFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -61,13 +66,35 @@ struct VirtualClosetView: View {
         }
     }
 
+    @ViewBuilder
+    private var statusSummary: some View {
+        let visible = vm.visibleItems(from: allItems)
+        let activeCount   = visible.filter { $0.status == .active }.count
+        let archivedCount = visible.filter { $0.status == .archived }.count
+        if archivedCount > 0 {
+            HStack(spacing: 4) {
+                Text("\(activeCount) active")
+                    .foregroundStyle(Color.dsTextSecondary)
+                Text("·")
+                    .foregroundStyle(Color.dsTextTertiary)
+                Text("\(archivedCount) archived")
+                    .foregroundStyle(Color.dsTextTertiary)
+            }
+            .font(.dsCaption)
+            .padding(.leading, 2)
+        }
+    }
+
     private var itemGrid: some View {
         LazyVGrid(columns: columns, spacing: 12) {
             ForEach(vm.filteredItems(from: allItems)) { item in
                 NavigationLink(destination: ItemDetailView(item: item)) {
-                    ClothingItemCard(item: item) {
-                        vm.disposeItem(item, context: ctx)
-                    }
+                    ClothingItemCard(
+                        item: item,
+                        onDispose: { itemToDispose = item },
+                        onArchive: { vm.archiveItem(item, context: ctx) },
+                        onRestore: { vm.restoreItem(item, context: ctx) }
+                    )
                 }
                 .buttonStyle(.plain)
             }

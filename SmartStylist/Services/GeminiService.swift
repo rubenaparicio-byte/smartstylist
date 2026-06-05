@@ -1,5 +1,19 @@
 import Foundation
 
+// ── Garment vision types ─────────────────────────────────────────────────────
+
+struct GarmentPrediction: Codable {
+    let category: String
+    let primaryColor: String
+    let pattern: String
+    let style: String
+    let tags: [String]
+}
+
+struct BulkScanResult: Codable {
+    let items: [GarmentPrediction]
+}
+
 // ── Colorimetry result types ──────────────────────────────────────────────────
 
 struct ColorSwatch: Codable, Hashable {
@@ -156,6 +170,99 @@ final class GeminiService {
         let raw = try await generate(prompt: prompt)
         guard let data = raw.data(using: .utf8) else { throw GeminiError.parseError }
         return try JSONDecoder().decode(StyleResponse.self, from: data)
+    }
+
+    // ── Vision: single item ───────────────────────────────────────────────────
+
+    func analyseClothingItem(imageData: Data,
+                             mimeType: String = "image/jpeg") async throws -> GarmentPrediction {
+        let prompt = """
+        You are a professional fashion cataloguer with computer vision expertise.
+        Analyse this clothing item image and respond ONLY with a valid JSON object.
+        No markdown, no code fences — raw JSON only.
+
+        Required JSON schema:
+        {
+          "category": "superior|inferior|calzado|abrigo|accesorio",
+          "primaryColor": "#RRGGBB",
+          "pattern": "Solid|Stripes|Checks|Floral|Abstract|Animal Print",
+          "style": "Casual|Formal|Smart Casual|Athletic|Evening",
+          "tags": ["occasion1", "occasion2", "occasion3"]
+        }
+        """
+        let raw = try await generateWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt)
+        let cleaned = stripMarkdownFences(raw)
+        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        do { return try JSONDecoder().decode(GarmentPrediction.self, from: data) }
+        catch { throw GeminiError.parseError }
+    }
+
+    // ── Vision: bulk wardrobe scan ────────────────────────────────────────────
+
+    func scanBulkWardrobe(imageData: Data,
+                          mimeType: String = "image/jpeg") async throws -> [GarmentPrediction] {
+        let prompt = """
+        You are a professional fashion cataloguer with computer vision expertise.
+        Identify every distinct clothing item visible in this image.
+        Respond ONLY with a valid JSON object — no markdown, no code fences.
+
+        Required JSON schema:
+        {
+          "items": [
+            {
+              "category": "superior|inferior|calzado|abrigo|accesorio",
+              "primaryColor": "#RRGGBB",
+              "pattern": "Solid|Stripes|Checks|Floral|Abstract|Animal Print",
+              "style": "Casual|Formal|Smart Casual|Athletic|Evening",
+              "tags": ["occasion1", "occasion2"]
+            }
+          ]
+        }
+
+        Return 1–12 items. Include only clearly distinct garments.
+        """
+        let raw = try await generateWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt)
+        let cleaned = stripMarkdownFences(raw)
+        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        do { return try JSONDecoder().decode(BulkScanResult.self, from: data).items }
+        catch { throw GeminiError.parseError }
+    }
+
+    // ── Multimodal request helper ─────────────────────────────────────────────
+
+    private func generateWithImage(imageData: Data,
+                                   mimeType: String,
+                                   prompt: String) async throws -> String {
+        let url = URL(string: "\(baseURL)?key=\(apiKey)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "contents": [[
+                "parts": [
+                    ["inline_data": ["mime_type": mimeType, "data": imageData.base64EncodedString()]],
+                    ["text": prompt]
+                ]
+            ]],
+            "generationConfig": [
+                "temperature": 0.3,
+                "maxOutputTokens": 1024,
+                "responseMimeType": "application/json"
+            ]
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw GeminiError.serverError
+        }
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let candidates = json?["candidates"] as? [[String: Any]]
+        let content    = candidates?.first?["content"] as? [String: Any]
+        let parts      = content?["parts"] as? [[String: Any]]
+        guard let text = parts?.first?["text"] as? String else { throw GeminiError.emptyResponse }
+        return text
     }
 }
 

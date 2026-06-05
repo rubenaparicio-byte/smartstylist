@@ -26,6 +26,7 @@ final class ClothingItem {
     var tags: [String]
     var status: ItemStatus
     var createdAt: Date
+    var disposeReason: String
 
     init(id: UUID = UUID(),
          imagePath: String? = nil,
@@ -35,7 +36,8 @@ final class ClothingItem {
          style: String = "Casual",
          tags: [String] = [],
          status: ItemStatus = .active,
-         createdAt: Date = Date()) {
+         createdAt: Date = Date(),
+         disposeReason: String = "") {
         self.id = id
         self.imagePath = imagePath
         self.category = category
@@ -45,5 +47,6 @@ final class ClothingItem {
         self.tags = tags
         self.status = status
         self.createdAt = createdAt
+        self.disposeReason = disposeReason
     }
 }
