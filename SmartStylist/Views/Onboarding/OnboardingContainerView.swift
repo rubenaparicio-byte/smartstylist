@@ -1,0 +1,78 @@
+import SwiftUI
+import SwiftData
+
+struct OnboardingContainerView: View {
+    @Environment(\.modelContext) private var ctx
+    @State private var vm = OnboardingViewModel()
+
+    var body: some View {
+        ZStack {
+            Color.dsDeepSlate.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                progressBar
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+
+                TabView(selection: $vm.currentStep) {
+                    BodyTypeStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.bodyType)
+                    SkinToneStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.skinTone)
+                    HairEyeStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.hairEye)
+                    ColorimetryResultView(vm: vm, onComplete: { vm.save(to: ctx) })
+                        .tag(OnboardingViewModel.OnboardingStep.result)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .never))
+                .animation(.dsDefault, value: vm.currentStep)
+
+                if vm.currentStep != .result {
+                    advanceButton
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 40)
+                }
+            }
+
+            if vm.isLoading {
+                Color.dsDeepSlate.opacity(0.7).ignoresSafeArea()
+                VStack(spacing: 16) {
+                    LoadingPulse()
+                    Text("Analysing your profile…")
+                        .font(.dsBody)
+                        .foregroundStyle(Color.dsTextSecondary)
+                }
+            }
+        }
+        .alert("Error", isPresented: .constant(vm.errorMessage != nil)) {
+            Button("OK") { vm.errorMessage = nil }
+        } message: {
+            Text(vm.errorMessage ?? "")
+        }
+    }
+
+    private var progressBar: some View {
+        HStack(spacing: 6) {
+            ForEach(OnboardingViewModel.OnboardingStep.allCases, id: \.self) { step in
+                Capsule()
+                    .fill(vm.currentStep.rawValue >= step.rawValue
+                          ? Color.dsAccentGold : Color.dsSurface)
+                    .frame(height: 3)
+                    .animation(.dsDefault, value: vm.currentStep)
+            }
+        }
+    }
+
+    private var advanceButton: some View {
+        Button {
+            withAnimation(.dsDefault) { vm.advance() }
+        } label: {
+            Text(vm.currentStep == .hairEye ? "Analyse My Style" : "Continue")
+                .font(.dsBodyMedium)
+                .foregroundStyle(Color.dsDeepSlate)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(vm.canAdvance ? Color.dsAccentGold : Color.dsSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .disabled(!vm.canAdvance)
+        .animation(.dsDefault, value: vm.canAdvance)
+    }
+}
