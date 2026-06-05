@@ -1,0 +1,41 @@
+name: iOS CI Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: macos-14 
+
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v4
+
+    - name: Instalar XcodeGen
+      run: brew install xcodegen
+
+    - name: Inyectar API Keys desde los GitHub Secrets
+      run: |
+        mkdir -p SmartStylist/Config
+        cat << 'EOF' > SmartStylist/Config/APIKeys.swift
+        import Foundation
+
+        enum APIKeys {
+            static let gemini = "${{ secrets.GEMINI_API_KEY }}"
+            static let openWeather = "${{ secrets.WEATHER_API_KEY }}"
+        }
+        EOF
+
+    - name: Generar Proyecto de Xcode con XcodeGen
+      run: xcodegen generate
+
+    - name: Compilar App (Simulador de iPhone)
+      run: |
+        xcodebuild -project SmartStylist.xcodeproj \
+                   -scheme SmartStylist \
+                   -sdk iphonesimulator \
+                   -configuration Debug \
+                   clean build
