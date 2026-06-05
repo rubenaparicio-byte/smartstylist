@@ -132,25 +132,34 @@ final class GeminiService {
                        historyJSON: String,
                        occasion: String) async throws -> StyleResponse {
         let prompt = """
-        You are an elite personal stylist with deep knowledge of colour theory and fashion.
-        Respond ONLY with a JSON object matching this schema exactly:
+        You are an elite personal stylist with expertise in colour theory, seasonal fashion, and dress codes.
+        Respond ONLY with a valid JSON object matching this schema exactly. No markdown, no code fences.
+
         {
           "clima_procesado": "temperature + condition string",
-          "analisis_contexto": "2-3 sentence premium analysis",
+          "analisis_contexto": "2-3 sentence premium justification for why this look is ideal today",
           "outfit_sugerido": {
-            "superior": "UUID string or null",
-            "inferior": "UUID string or null",
-            "calzado":  "UUID string or null",
-            "abrigo":   "UUID string or null"
+            "superior_id": "UUID string or null",
+            "inferior_id": "UUID string or null",
+            "calzado_id":  "UUID string or null",
+            "abrigo_id":   "UUID string or null"
           },
-          "consejo_estilo": "one personalised fashion tip"
+          "consejo_estilo": "one personalised tip to elevate the outfit"
         }
 
-        RULES:
-        1. Only use UUIDs from the provided inventory.
-        2. NEVER repeat an outfit combination seen in the last 14 days (history).
-        3. Prioritise colour harmony with the user's seasonal colorimetry.
-        4. Match formality and layering to the weather and occasion.
+        STRICT RULES — each violation degrades the quality of the recommendation:
+        1. INVENTORY: Use ONLY UUIDs present in the active wardrobe below. Never invent or reuse UUIDs.
+        2. RADICAL VARIETY — CRITICAL:
+           - Cross-reference all item IDs from the 14-day history.
+           - Any item appearing 3 or more times in the last 14 days MUST be rested today.
+           - NEVER reproduce an identical outfit combination from the history.
+           - The new outfit must differ by at least 2 pieces from the most recently worn look.
+        3. THERMAL COHERENCE:
+           - If requiresUmbrella is true → abrigo_id is MANDATORY and must be weather-resistant.
+           - If temp < 10°C → abrigo_id is MANDATORY for warmth.
+           - If temp > 24°C → abrigo_id should be null unless the event strictly requires it.
+        4. EVENT PROTOCOL: Every piece must respect the formality and dress code of the occasion.
+        5. COLOUR HARMONY: Prioritise pieces that complement the user's seasonal colorimetry palette.
 
         === USER PROFILE ===
         \(profileJSON)
@@ -158,18 +167,20 @@ final class GeminiService {
         === CURRENT WEATHER ===
         \(weatherJSON)
 
-        === ACTIVE WARDROBE ===
+        === OCCASION & DRESS CODE ===
+        \(occasion)
+
+        === ACTIVE WARDROBE (use only these UUIDs) ===
         \(inventoryJSON)
 
-        === LAST 14 DAYS HISTORY ===
+        === LAST 14 DAYS HISTORY (avoid repeating these combinations) ===
         \(historyJSON)
-
-        === OCCASION ===
-        \(occasion)
         """
         let raw = try await generate(prompt: prompt)
-        guard let data = raw.data(using: .utf8) else { throw GeminiError.parseError }
-        return try JSONDecoder().decode(StyleResponse.self, from: data)
+        let cleaned = stripMarkdownFences(raw)
+        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        do { return try JSONDecoder().decode(StyleResponse.self, from: data) }
+        catch { throw GeminiError.parseError }
     }
 
     // ── Vision: single item ───────────────────────────────────────────────────

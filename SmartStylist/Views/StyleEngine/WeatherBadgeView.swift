@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct WeatherBadgeView: View {
-    let weather: WeatherData
+    let weather: CurrentWeatherData
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: weatherIcon(for: weather.condition))
+        HStack(spacing: 12) {
+            Image(systemName: weather.conditionIcon)
                 .foregroundStyle(Color.dsAccentGold)
+                .font(.title3)
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(weather.displayString)
                     .font(.dsBodyMedium)
@@ -15,19 +17,22 @@ struct WeatherBadgeView: View {
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextSecondary)
             }
+
             Spacer()
+
+            if weather.requiresUmbrella {
+                HStack(spacing: 4) {
+                    Image(systemName: "umbrella.fill")
+                        .foregroundStyle(Color.dsAccentGold)
+                    Text("Umbrella")
+                        .font(.dsCaption)
+                        .foregroundStyle(Color.dsTextSecondary)
+                }
+                .transition(.scale.combined(with: .opacity))
+            }
         }
         .padding(14)
         .luxuryCard()
-    }
-
-    private func weatherIcon(for condition: String) -> String {
-        switch condition.lowercased() {
-        case let c where c.contains("rain"):    return "cloud.rain"
-        case let c where c.contains("cloud"):   return "cloud"
-        case let c where c.contains("snow"):    return "snow"
-        case let c where c.contains("thunder"): return "cloud.bolt"
-        default:                                 return "sun.max"
-        }
+        .animation(.dsDefault, value: weather.requiresUmbrella)
     }
 }

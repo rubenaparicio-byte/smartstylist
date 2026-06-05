@@ -15,6 +15,13 @@ struct StyleResponse: Codable {
         var allItemIds: [UUID] {
             [superior, inferior, calzado, abrigo].compactMap { $0 }
         }
+
+        enum CodingKeys: String, CodingKey {
+            case superior = "superior_id"
+            case inferior = "inferior_id"
+            case calzado  = "calzado_id"
+            case abrigo   = "abrigo_id"
+        }
     }
 
     enum CodingKeys: String, CodingKey {

@@ -21,10 +21,10 @@ final class ClothingItemTests: XCTestCase {
           "clima_procesado": "20°C, Sunny",
           "analisis_contexto": "A bright spring day calls for layered pastels.",
           "outfit_sugerido": {
-            "superior": "00000000-0000-0000-0000-000000000001",
-            "inferior": "00000000-0000-0000-0000-000000000002",
-            "calzado":  "00000000-0000-0000-0000-000000000003",
-            "abrigo":   null
+            "superior_id": "00000000-0000-0000-0000-000000000001",
+            "inferior_id": "00000000-0000-0000-0000-000000000002",
+            "calzado_id":  "00000000-0000-0000-0000-000000000003",
+            "abrigo_id":   null
           },
           "consejo_estilo": "Roll your sleeves — a casual touch on a tailored look."
         }
