@@ -16,7 +16,6 @@ DerivedData/
 *.ipa
 *.xcuserstate
 *.xcscmblueprint
-.DS_Store
 
 # ── Swift Package Manager ────────────────────────────────
 .build/
