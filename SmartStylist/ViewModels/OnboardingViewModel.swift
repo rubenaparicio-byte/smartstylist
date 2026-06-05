@@ -13,7 +13,7 @@ final class OnboardingViewModel {
     var selectedEyeColor = ""
     var selectedHairColor = ""
 
-    var analysisResult: (season: String, guidelines: String)?
+    var analysisResult: ColorimetryAnalysis?
 
     private let gemini = GeminiService()
 
@@ -66,7 +66,12 @@ final class OnboardingViewModel {
             hairColor: selectedHairColor,
             seasonalColorimetry: result.season,
             styleGuidelines: result.guidelines,
-            onboardingCompleted: true
+            onboardingCompleted: true,
+            recommendedColorNames: result.recommendedColors.map(\.name),
+            recommendedColorHexes: result.recommendedColors.map(\.hex),
+            avoidColorNames: result.avoidColors.map(\.name),
+            avoidColorHexes: result.avoidColors.map(\.hex),
+            metalPreference: result.metalPreference
         )
         context.insert(profile)
         try? context.save()

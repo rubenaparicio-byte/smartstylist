@@ -1,5 +1,29 @@
 import Foundation
 
+// ── Colorimetry result types ──────────────────────────────────────────────────
+
+struct ColorSwatch: Codable, Hashable {
+    let name: String
+    let hex: String
+}
+
+struct ColorimetryAnalysis: Codable {
+    let season: String
+    let guidelines: String
+    let recommendedColors: [ColorSwatch]
+    let avoidColors: [ColorSwatch]
+    let metalPreference: String
+
+    enum CodingKeys: String, CodingKey {
+        case season, guidelines
+        case recommendedColors = "recommended_colors"
+        case avoidColors       = "avoid_colors"
+        case metalPreference   = "metal_preference"
+    }
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
 final class GeminiService {
     private let apiKey = APIKeys.gemini
     private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
@@ -36,13 +60,30 @@ final class GeminiService {
     }
 
     func analyseProfile(bodyType: String, skinTone: String,
-                        eyeColor: String, hairColor: String) async throws -> (season: String, guidelines: String) {
+                        eyeColor: String, hairColor: String) async throws -> ColorimetryAnalysis {
         let prompt = """
-        You are a luxury fashion consultant and colour analyst.
-        Analyse the following physical profile and respond ONLY with a JSON object:
+        You are a luxury fashion consultant and certified colour analyst.
+        Analyse the physical profile below and respond ONLY with a valid JSON object.
+        No markdown, no code fences, no extra text — raw JSON only.
+
+        Required JSON schema:
         {
           "season": "Spring|Summer|Autumn|Winter",
-          "guidelines": "2-3 sentences of personalised style architecture guidance"
+          "guidelines": "2-3 sentences of personalised seasonal colour harmony guidance",
+          "recommended_colors": [
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"}
+          ],
+          "avoid_colors": [
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"},
+            {"name": "Color Name", "hex": "#RRGGBB"}
+          ],
+          "metal_preference": "Gold|Silver|Rose Gold"
         }
 
         Profile:
@@ -52,13 +93,23 @@ final class GeminiService {
         - Hair colour: \(hairColor)
         """
         let raw = try await generate(prompt: prompt)
-        guard let data = raw.data(using: .utf8),
-              let json = try JSONSerialization.jsonObject(with: data) as? [String: String],
-              let season = json["season"],
-              let guidelines = json["guidelines"] else {
+        let cleaned = stripMarkdownFences(raw)
+        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        do {
+            return try JSONDecoder().decode(ColorimetryAnalysis.self, from: data)
+        } catch {
             throw GeminiError.parseError
         }
-        return (season, guidelines)
+    }
+
+    // Strips markdown code fences that the model sometimes wraps around JSON
+    private func stripMarkdownFences(_ raw: String) -> String {
+        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.hasPrefix("```") {
+            let lines = s.components(separatedBy: "\n")
+            s = lines.dropFirst().dropLast().joined(separator: "\n")
+        }
+        return s.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func suggestOutfit(profileJSON: String,

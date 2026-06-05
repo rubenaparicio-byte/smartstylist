@@ -42,8 +42,15 @@ struct OnboardingContainerView: View {
                 }
             }
         }
-        .alert("Error", isPresented: .constant(vm.errorMessage != nil)) {
-            Button("OK") { vm.errorMessage = nil }
+        .alert("Error", isPresented: Binding(
+            get: { vm.errorMessage != nil },
+            set: { _ in vm.errorMessage = nil }
+        )) {
+            Button("Try Again") {
+                vm.errorMessage = nil
+                Task { await vm.analyseProfile() }
+            }
+            Button("Cancel", role: .cancel) { vm.errorMessage = nil }
         } message: {
             Text(vm.errorMessage ?? "")
         }

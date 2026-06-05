@@ -4,8 +4,8 @@ struct ColorimetryResultView: View {
     let vm: OnboardingViewModel
     let onComplete: () -> Void
 
-    private var season: String { vm.analysisResult?.season ?? "" }
-    private var guidelines: String { vm.analysisResult?.guidelines ?? "" }
+    private var analysis: ColorimetryAnalysis? { vm.analysisResult }
+    private var season: String { analysis?.season ?? "" }
 
     var body: some View {
         ScrollView {
@@ -20,23 +20,70 @@ struct ColorimetryResultView: View {
 
                 GoldDivider()
 
+                // ── Season card ───────────────────────────────────────────
                 LuxuryCard {
                     VStack(alignment: .leading, spacing: 16) {
-                        HStack {
-                            Text(season.uppercased())
-                                .font(.dsTitle)
-                                .foregroundStyle(Color.dsAccentGold)
-                                .tracking(3)
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(season.uppercased())
+                                    .font(.dsTitle)
+                                    .foregroundStyle(Color.dsAccentGold)
+                                    .tracking(3)
+                                if let metal = analysis?.metalPreference {
+                                    Text(metal.uppercased())
+                                        .font(.dsCaption)
+                                        .foregroundStyle(Color.dsTextTertiary)
+                                        .tracking(1.5)
+                                }
+                            }
                             Spacer()
                             Image(systemName: seasonIcon(for: season))
                                 .foregroundStyle(Color.dsAccentGold)
                                 .font(.title2)
                         }
-                        Text(guidelines)
-                            .font(.dsBody)
-                            .foregroundStyle(Color.dsTextSecondary)
+
+                        if let guidelines = analysis?.guidelines {
+                            Text(guidelines)
+                                .font(.dsBody)
+                                .foregroundStyle(Color.dsTextSecondary)
+                        }
                     }
                     .padding(20)
+                }
+
+                // ── Recommended palette ───────────────────────────────────
+                if let colors = analysis?.recommendedColors, !colors.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("YOUR PALETTE")
+                            .font(.dsLabel)
+                            .foregroundStyle(Color.dsTextSecondary)
+                            .tracking(2)
+
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 14) {
+                                ForEach(colors, id: \.hex) { swatch in
+                                    SwatchCell(swatch: swatch, muted: false)
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+
+                // ── Colours to minimise ───────────────────────────────────
+                if let avoid = analysis?.avoidColors, !avoid.isEmpty {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("MINIMISE")
+                            .font(.dsLabel)
+                            .foregroundStyle(Color.dsTextSecondary)
+                            .tracking(2)
+
+                        HStack(spacing: 14) {
+                            ForEach(avoid, id: \.hex) { swatch in
+                                SwatchCell(swatch: swatch, muted: true)
+                            }
+                        }
+                    }
                 }
 
                 Button(action: onComplete) {
@@ -60,6 +107,40 @@ struct ColorimetryResultView: View {
         case "Autumn":  return "wind"
         case "Winter":  return "snowflake"
         default:        return "sparkles"
+        }
+    }
+}
+
+// ── Private swatch cell ───────────────────────────────────────────────────────
+
+private struct SwatchCell: View {
+    let swatch: ColorSwatch
+    let muted: Bool
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Circle()
+                .fill(Color(hex: swatch.hex))
+                .frame(width: 46, height: 46)
+                .overlay {
+                    Circle()
+                        .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
+                }
+                .opacity(muted ? 0.4 : 1.0)
+                .overlay {
+                    if muted {
+                        Image(systemName: "xmark")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(Color.white.opacity(0.8))
+                    }
+                }
+
+            Text(swatch.name)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(Color.dsTextTertiary)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(width: 52)
         }
     }
 }

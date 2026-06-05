@@ -11,6 +11,11 @@ final class UserProfile {
     var seasonalColorimetry: String
     var styleGuidelines: String
     var onboardingCompleted: Bool
+    var recommendedColorNames: [String]
+    var recommendedColorHexes: [String]
+    var avoidColorNames: [String]
+    var avoidColorHexes: [String]
+    var metalPreference: String
 
     init(id: UUID = UUID(),
          bodyType: String = "",
@@ -19,7 +24,12 @@ final class UserProfile {
          hairColor: String = "",
          seasonalColorimetry: String = "",
          styleGuidelines: String = "",
-         onboardingCompleted: Bool = false) {
+         onboardingCompleted: Bool = false,
+         recommendedColorNames: [String] = [],
+         recommendedColorHexes: [String] = [],
+         avoidColorNames: [String] = [],
+         avoidColorHexes: [String] = [],
+         metalPreference: String = "Gold") {
         self.id = id
         self.bodyType = bodyType
         self.skinTone = skinTone
@@ -28,5 +38,10 @@ final class UserProfile {
         self.seasonalColorimetry = seasonalColorimetry
         self.styleGuidelines = styleGuidelines
         self.onboardingCompleted = onboardingCompleted
+        self.recommendedColorNames = recommendedColorNames
+        self.recommendedColorHexes = recommendedColorHexes
+        self.avoidColorNames = avoidColorNames
+        self.avoidColorHexes = avoidColorHexes
+        self.metalPreference = metalPreference
     }
 }
