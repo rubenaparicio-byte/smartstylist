@@ -2,12 +2,12 @@ import SwiftUI
 import SwiftData
 
 struct StyleEngineView: View {
-    @Query(filter: #Predicate<ClothingItem> { $0.status == "active" })
-    private var activeItems: [ClothingItem]
-
+    @Query private var allItems: [ClothingItem]
     @Query private var history: [OutfitHistory]
     @Query private var profiles: [UserProfile]
     @State private var vm = StyleEngineViewModel()
+
+    private var activeItems: [ClothingItem] { allItems.filter { $0.status == .active } }
 
     private var profile: UserProfile? { profiles.first(where: { $0.onboardingCompleted }) }
 

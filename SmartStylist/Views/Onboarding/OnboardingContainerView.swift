@@ -6,7 +6,8 @@ struct OnboardingContainerView: View {
     @State private var vm = OnboardingViewModel()
 
     var body: some View {
-        ZStack {
+        @Bindable var vm = vm
+        return ZStack {
             Color.dsDeepSlate.ignoresSafeArea()
 
             VStack(spacing: 0) {
