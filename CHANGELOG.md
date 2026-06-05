@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.1.1] — 2026-06-05 · CI & Build Fixes
+
+### Fixed
+- **CI runner** upgraded from `macos-14` (Xcode 15.4) to `macos-15` (Xcode 16.4). XcodeGen 2.45.4 generates project format 77, which requires Xcode 16+.
+- **`APIKeys.template.swift` renamed to `APIKeys.swift.template`** — removes the `.swift` extension so XcodeGen no longer includes it as a compile source. Previously, both the template and the CI-generated `APIKeys.swift` declared `enum APIKeys`, causing a duplicate symbol error on build.
+- **`StyleEngineViewModel` marked `@MainActor`** — Xcode 16 / Swift 6 strict concurrency requires that `@MainActor`-isolated types (`LocationService`) are only instantiated from a `@MainActor` context. The ViewModel was already effectively main-actor (all state is UI-facing).
+
+### Added
+- Claude Code project configuration (`.claude/`, `.mcp.json`, `CLAUDE.md`) with hooks, skills, and a Swift reviewer subagent.
+
+---
+
 ## [v0.1.0] — 2026-06-05 · Initial Release
 
 First complete baseline of the SmartStylist iOS app.
@@ -12,7 +24,7 @@ First complete baseline of the SmartStylist iOS app.
 - Private GitHub repository under `rubenaparicio-byte/smartstylist`
 - Strict `.gitignore` covering Xcode artefacts, DerivedData, SPM cache, CocoaPods, Fastlane, secrets, and OS files
 - `project.yml` XcodeGen manifest targeting iOS 17+, Swift 5.10, with app + unit-test targets and all required privacy usage descriptions
-- `APIKeys.template.swift` committed as a safe placeholder; `APIKeys.swift` is gitignored
+- `APIKeys.swift.template` committed as a safe placeholder; `APIKeys.swift` is gitignored
 
 #### Design System (`SmartStylist/DesignSystem/`)
 - **DS+Colors.swift** — 9 colour tokens: `dsDeepSlate` (#1C1C1E), `dsCardSlate` (#2C2C2E), `dsSurface` (#3A3A3C), `dsAccentGold` (#D4AF37), `dsSoftGold` (#E9C46A), `dsErrorRed` (#E63946), plus three text-opacity variants; hex `Color.init(hex:)` initialiser
@@ -82,7 +94,7 @@ First complete baseline of the SmartStylist iOS app.
 1. Clone: `git clone https://github.com/rubenaparicio-byte/smartstylist.git`
 2. Install XcodeGen: `brew install xcodegen`
 3. Generate project: `cd smartstylist && xcodegen generate`
-4. Copy API keys template: `cp SmartStylist/Config/APIKeys.template.swift SmartStylist/Config/APIKeys.swift`
+4. Copy API keys template: `cp SmartStylist/Config/APIKeys.swift.template SmartStylist/Config/APIKeys.swift`
 5. Fill in your Gemini and OpenWeather API keys in `APIKeys.swift`
 6. Open `SmartStylist.xcodeproj` in Xcode 16+
 7. Select a simulator (iPhone 16 recommended) and run
