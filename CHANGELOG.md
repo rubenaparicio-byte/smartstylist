@@ -1,14 +1,83 @@
 # Changelog
 
+All notable changes to SmartStylist are documented here.
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+
+---
+
+## [v0.2.0] — 2026-06-06 · App Store Feature Complete
+
+### Added
+
+#### Navigation
+- **MainTabView** — 4-tab navigation hub with luxury `UITabBarAppearance` (`dsCardSlate` background, `dsAccentGold` tint, `dsTextTertiary` unselected icons): Today · Wardrobe · Insights · Profile
+- `RootView` cleaned up; inline `MainTabView` stub removed
+
+#### UX Quality — Luxury Components
+- **LuxuryLoadingView** — multi-ring gold spinner with cycling localized messages (`Task.sleep` async message loop); replaces all plain `ProgressView` usages
+- **LuxuryErrorView** — typed error display for `StyleEngineError` cases (insufficientWardrobe / locationDenied / aiUnavailable); gold retry button + ghost Settings CTA; `UIApplication.shared.open` for Settings deep-link
+
+#### Style Engine
+- **Offline colorimetry fallback** — when Gemini is unreachable, `StyleEngineViewModel.buildOfflineSuggestion` scores items by `recommendedColorHexes` (2 pts) and neutral hex match (1 pt), returning a local `StyleResponse` without any network call; `isOfflineSuggestion` flag drives an offline banner in the view
+- **`StyleEngineError` typed enum** (`.insufficientWardrobe`, `.locationDenied`, `.aiUnavailable(String)`) replaces generic `errorMessage: String?`
+- **`DisplayState` computed enum** on `StyleEngineView` drives `animation(value:)` transitions between loading / error / suggestion / empty states
+
+#### Closet — Advanced Filters & Search (Module 2)
+- `ClosetViewModel`: `selectedStyles: Set<String>`, `selectedPattern: String?`, `showOnlyStatus: ItemStatus?`; `hasActiveFilters: Bool`; `clearFilters()`; static `knownStyles` / `knownPatterns` lookup tables; `filteredItems` refactored into five private predicates (`statusMatches` / `categoryMatches` / `styleMatches` / `patternMatches` / `textMatches`)
+- `VirtualClosetView`: replaced `.searchable` with a luxury custom search bar (gold border 0.5 pt, `dsCardSlate` background, animated magnifying-glass icon); expandable filter panel (`Material.ultraThinMaterial`, STATUS / STYLES / PATTERNS chip sections, `GoldDivider` separators, in-panel clear-filters link); badge dot on filter toggle when `hasActiveFilters`; `filterKey`-driven `.easeInOut(0.22 s)` grid animation
+- **NoResultsView** — luxury empty state with `magnifyingglass` icon and gold "Clear Filters" button
+
+#### Insights — WardrobeInsightsView & ViewModel (Module 3)
+- `InsightsViewModel` — pure computation, no SwiftUI/SwiftData mutations; `referenceDate`-injectable for deterministic tests
+  - `styleDistribution(from:)` — counts visible items by style, sorted desc, assigns gold/slate palette hex
+  - `topWornItems(from:history:referenceDate:)` — cross-references `OutfitHistory` for the last 30 days, returns top 3 active items by wear count
+  - `closetHealth(from:)` — counts active/archived/disposed, computes percentages, finds top disposal reason
+- `WardrobeInsightsView` — Swift Charts `SectorMark` donut (innerRadius 0.56, gold/slate palette, custom 2-col legend); ranked top-worn cards with `GoldDivider`; closet health stat pills + segmented proportion bar; luxury empty state
+
+#### Profile — ProfileSettingsView & ViewModel (Module 4)
+- `ProfileViewModel` (`@MainActor @Observable`) — `retakeAnalysis(profile:context:)` deletes only `UserProfile` preserving the wardrobe; `deleteAllData(context:)` purges all SwiftData entities (`UserProfile`, `ClothingItem`, `OutfitHistory`) — satisfies Apple's data-deletion App Store requirement
+- `ProfileSettingsView` — profile header (seasonal colorimetry name, metal indicator); recommended colour palette swatches (scrollable circles from `recommendedColorHexes`, colour-matched shadow); avoid-colour swatches with `xmark` overlay; physical traits card with `GoldDivider` rows; Retake Analysis button (gold outline); Danger Zone section with destructive Delete All button (red, with 0.08-opacity red fill)
+- Both actions are guarded by `.alert` confirmation dialogs with localized titles and messages
+
+#### CD Pipeline
+- `ios-cd.yml` — TestFlight deployment on `workflow_dispatch` or `v*` tag; macos-15 runner; xcodebuild archive + export with `-allowProvisioningUpdates`; `xcrun altool --upload-app` via App Store Connect API key (`.p8`); GitHub artifact upload (30-day retention)
+- `project.yml` — signing settings: `PRODUCT_BUNDLE_IDENTIFIER`, `CODE_SIGN_STYLE: Automatic`
+
+#### Localization
+- Full EN + ES coverage — 78 keys across 8 namespaces: common, loading, onboarding, style engine, events, wardrobe, wardrobe filters, insights, profile & settings
+- Centralised in `Strings.swift` using `String(localized:)` for per-call bundle lookup
+
+#### Legal Docs (GitHub Pages)
+- `docs/privacy.html` — local-only SwiftData storage, transient Gemini vision use, no analytics SDKs, in-app data-deletion instructions
+- `docs/terms.html` — EULA, AI disclaimer, weather disclaimer, third-party service links, limitation of liability, governing law (Spain)
+
+### Changed
+- `RootView` — `MainTabView` extracted to `SmartStylist/Views/Main/MainTabView.swift`
+- `StyleEngineView` — switched from `.alert` for errors to inline `LuxuryErrorView`; `@Bindable` state drives `DisplayState` transitions
+- `OnboardingContainerView` — `LuxuryLoadingView` overlay replaces plain `ProgressView`; localized button labels and alert copy
+- `VirtualClosetView` — category chips now use `cat.localizedName` (localized); `withAnimation(.dsDefault)` on chip tap
+- `project.yml` — added `options.developmentLanguage: en`
+- CI (`ios-ci.yml`) + CD (`ios-cd.yml`) — `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` opts into Node.js 24 ahead of the June 2026 GitHub Actions deadline
+
+### Fixed
+- **`withAnimation` in ViewModel** — removed all `withAnimation(.dsDefault) { … }` calls from `StyleEngineViewModel.generateOutfit`; `withAnimation` is a SwiftUI function and caused `cannot find 'withAnimation' in scope` on CI. Animations now live exclusively in the View layer via `.animation(value:)` modifiers.
+
+### Tests
+- `ClosetViewModelTests` — 28 tests: extended `makeItem` helper with `style/pattern/color/tags` params; 17 new tests covering `hasActiveFilters`, `clearFilters`, single/multi style, pattern, status, text search by color/tag/style/category rawValue, combined filters
+- `InsightsViewModelTests` — 13 new tests: `styleDistribution` (count, disposed exclusion, sort order, archived inclusion, color assignment); `topWornItems` (empty history, ≤3 cap, 30-day boundary, sort, disposed exclusion); `closetHealth` (count, top reason, percentages, nil reason)
+- `ProfileViewModelTests` — 7 new tests (`@MainActor`, in-memory `ModelContainer`): default flags, retake deletes profile and preserves wardrobe, deleteAllData clears all entities, works on empty store, handles multiple profiles
+
+---
+
 ## [v0.1.1] — 2026-06-05 · CI & Build Fixes
 
 ### Fixed
-- **CI runner** upgraded from `macos-14` (Xcode 15.4) to `macos-15` (Xcode 16.4). XcodeGen 2.45.4 generates project format 77, which requires Xcode 16+.
-- **`APIKeys.template.swift` renamed to `APIKeys.swift.template`** — removes the `.swift` extension so XcodeGen no longer includes it as a compile source. Previously, both the template and the CI-generated `APIKeys.swift` declared `enum APIKeys`, causing a duplicate symbol error on build.
-- **`StyleEngineViewModel` marked `@MainActor`** — Xcode 16 / Swift 6 strict concurrency requires that `@MainActor`-isolated types (`LocationService`) are only instantiated from a `@MainActor` context. The ViewModel was already effectively main-actor (all state is UI-facing).
+- CI runner upgraded from `macos-14` (Xcode 15.4) to `macos-15` (Xcode 16.4)
+- `APIKeys.swift.template` renamed to remove `.swift` extension — prevents duplicate-symbol build error
+- `StyleEngineViewModel` marked `@MainActor` for Swift 6 strict concurrency
 
 ### Added
-- Claude Code project configuration (`.claude/`, `.mcp.json`, `CLAUDE.md`) with hooks, skills, and a Swift reviewer subagent.
+- Claude Code project configuration (`.claude/`, `.mcp.json`, `CLAUDE.md`)
 
 ---
 
@@ -16,86 +85,43 @@
 
 First complete baseline of the SmartStylist iOS app.
 
----
+### Modules
 
-### Modules implemented
+#### Design System
+- `DS+Colors.swift` — 9 colour tokens (dsDeepSlate, dsCardSlate, dsSurface, dsAccentGold, dsSoftGold, dsErrorRed + text variants); `Color.init(hex:)`
+- `DS+Typography.swift` — 7 font styles; `EditorialStyle` ViewModifier; `View.editorialStyle()`
+- `DS+Shapes.swift` — `ContinuousCard`; `LuxuryCardStyle`; `View.luxuryCard(cornerRadius:)`
+- `DS+Animations.swift` — `dsDefault` (easeInOut 0.3 s), `dsFast` (0.18 s), `dsSpring`
 
-#### Git & Project Scaffold
-- Private GitHub repository under `rubenaparicio-byte/smartstylist`
-- Strict `.gitignore` covering Xcode artefacts, DerivedData, SPM cache, CocoaPods, Fastlane, secrets, and OS files
-- `project.yml` XcodeGen manifest targeting iOS 17+, Swift 5.10, with app + unit-test targets and all required privacy usage descriptions
-- `APIKeys.swift.template` committed as a safe placeholder; `APIKeys.swift` is gitignored
+#### Data Models
+- `UserProfile` — seasonal colorimetry fields, `onboardingCompleted`, recommended/avoid colour arrays
+- `ClothingItem` — `ItemStatus` enum, `ClothingCategory` enum (Spanish raw values for Gemini), image path, style, pattern, tags
+- `OutfitHistory` — clothingItemIds `[UUID]`, date, context, weatherContext
+- `StyleResponse` — Codable with snake_case keys; `allItemIds` computed property
 
-#### Design System (`SmartStylist/DesignSystem/`)
-- **DS+Colors.swift** — 9 colour tokens: `dsDeepSlate` (#1C1C1E), `dsCardSlate` (#2C2C2E), `dsSurface` (#3A3A3C), `dsAccentGold` (#D4AF37), `dsSoftGold` (#E9C46A), `dsErrorRed` (#E63946), plus three text-opacity variants; hex `Color.init(hex:)` initialiser
-- **DS+Typography.swift** — 7 font styles across serif editorial (large title, title, title2) and default-design readable (body, bodyMedium, caption, label) weights; `EditorialStyle` ViewModifier with 2.5pt tracking; `View.editorialStyle()` extension
-- **DS+Shapes.swift** — `ContinuousCard` Shape; `LuxuryCardStyle` ViewModifier applying `dsCardSlate` background, continuous-corner clip, and 0.5pt AccentGold border at 0.15 opacity; `View.luxuryCard(cornerRadius:)` extension
-- **DS+Animations.swift** — `Animation.dsDefault` (easeInOut 0.3s), `dsFast` (0.18s), `dsSpring` (response 0.4, damping 0.75)
-
-#### Data Models (`SmartStylist/Models/`)
-- **UserProfile** — `@Model` with `@Attribute(.unique)` UUID, bodyType, skinTone, eyeColor, hairColor, seasonalColorimetry, styleGuidelines, onboardingCompleted
-- **ClothingItem** — `@Model`; `ItemStatus` enum (`.active`, `.archived`, `.disposed`) and `ClothingCategory` enum (`.top`/"superior", `.bottom`/"inferior", `.footwear`/"calzado", `.outerwear`/"abrigo", `.accessory`/"accesorio"); imagePath, primaryColor, pattern, style, tags, status, createdAt fields
-- **OutfitHistory** — `@Model` with UUID, date, clothingItemIds ([UUID]), context, weatherContext
-- **StyleResponse** — `Codable` struct with snake_case CodingKeys; nested `OutfitSuggestion` with four optional UUID fields; `allItemIds: [UUID]` computed property
-
-#### Services (`SmartStylist/Services/`)
-- **LocationService** — `@MainActor` CoreLocation async wrapper; `requestCoordinate() async throws` using `CheckedContinuation`; cached-coordinate fast-path; `nonisolated` delegate methods dispatching back to `@MainActor` via `Task`; `LocationError.denied`
-- **WeatherService** — OpenWeather One Call 3.0 REST client; `fetchWeather(for: CLLocationCoordinate2D) async throws -> WeatherData`; parses `current.temp`, `current.feels_like`, `current.weather[0].main`; rain heuristic from condition string; `WeatherData.displayString` convenience property
-- **GeminiService** — Gemini 1.5 Flash REST client; `generate(prompt:) async throws -> String`; `analyseProfile(bodyType:skinTone:eyeColor:hairColor:)` returning `(season, guidelines)`; `suggestOutfit(...)` returning a decoded `StyleResponse`; prompt enforces 4 rules: inventory UUIDs only, no-repeat last 14 days, colorimetry harmony, weather/occasion match
-
-#### Reusable UI Components (`SmartStylist/Views/Components/`)
-- **LuxuryCard** — generic `@ViewBuilder` container applying `.luxuryCard()`
-- **SelectionChip** — toggle button with AccentGold/dsSurface states and `dsDefault` animation
-- **GoldDivider** — 0.5pt AccentGold hairline at 0.25 opacity
-- **LoadingPulse** — pulsing AccentGold circle with `repeatForever(autoreverses:)` animation
-- **FlowLayout** — custom `Layout` conformance wrapping chips into rows respecting available width
-
-#### Clothing Silhouette (`SmartStylist/Views/Closet/SilhouetteView.swift`)
-- `Canvas`-based golden wire outlines for all five `ClothingCategory` cases (T-shirt, trousers, shoe, coat, diamond accessory); proportional scaling to `size` parameter; gold stroke at 0.35 opacity
+#### Services
+- `LocationService` — `@MainActor` CoreLocation async wrapper with `CheckedContinuation`
+- `WeatherService` — OpenWeather One Call 3.0; rain heuristic from condition string
+- `GeminiService` — Gemini 1.5 Flash REST; `analyseProfile` + `suggestOutfit` with 4-rule prompt
 
 #### Onboarding Module
-- **OnboardingViewModel** — `@Observable` step machine (`bodyType → skinTone → hairEye → result`); `canAdvance` guard per step; async Gemini profile analysis on `.hairEye` advance; `save(to:)` persisting completed `UserProfile` to SwiftData; preset option arrays for body types, skin tones, eye and hair colours
-- **OnboardingContainerView** — paged `TabView` with gold progress-capsule bar, loading overlay with `LoadingPulse`, advance/CTA button that switches label on final input step, error alert; uses `@Bindable` shadow to bind into `@Observable` VM
-- **BodyTypeStepView / SkinToneStepView / HairEyeStepView** — `@Bindable` VM input; editorial heading, `GoldDivider`, `FlowLayout` of `SelectionChip` items
-- **ColorimetryResultView** — displays analysed season in AccentGold with SF Symbol icon, style guidelines in `LuxuryCard`, "Enter My Wardrobe" CTA
+- 4-step `TabView` wizard; `OnboardingViewModel` step machine; async Gemini profile analysis; `ColorimetryResultView` with AccentGold season display
 
-#### Virtual Closet Module
-- **ClosetViewModel** — `@Observable`; `activeItems(from:)` filters to `.active` only (`.disposed` and `.archived` are permanently excluded from suggestions); `filteredItems(from:)` chains category and text search; `disposeItem / archiveItem / restoreItem` mutations; `itemsByCategory` grouping in `ClothingCategory.allCases` order
-- **ClothingItemCard** — ZStack with real image or golden silhouette fallback, category badge with `ultraThinMaterial`, context-menu "Retire this piece" destructive action
-- **VirtualClosetView** — `@Query` allItems, horizontal `SelectionChip` category filter, `LazyVGrid` 2-column layout, `NavigationLink` to detail, AccentGold FAB, `searchable` modifier, `ultraThinMaterial` toolbar
-- **AddItemView** — Form with `Picker` (category), TextFields (style, colour, tags), creates and inserts `ClothingItem` on save
-- **ItemDetailView** — large silhouette, `LuxuryCard` detail rows, "Retire this piece" destructive button shown only when `status == .active`
+#### Virtual Closet Module (baseline)
+- `ClosetViewModel` with `activeItems`, `filteredItems`, `disposeItem / archiveItem / restoreItem`
+- `VirtualClosetView` — 2-column `LazyVGrid`, category chips, FAB, `searchable`
+- `AddItemView`, `ItemDetailView`, `ClothingItemCard` with silhouette fallback
 
 #### Style Engine Module
-- **StyleEngineViewModel** — `@MainActor @Observable`; `generateOutfit(profile:activeItems:history:) async` orchestrates GPS → weather → Gemini pipeline; history filtered to last 14 days; JSON payload encoders for profile, weather, inventory, and history
-- **WeatherBadgeView** — gold weather SF Symbol icon, `displayString`, feels-like temperature, `luxuryCard` wrapper
-- **OutfitSuggestionCard** — `LuxuryCard` showing context analysis, 2×2 silhouette grid for non-nil outfit slots, style tip with sparkles icon
-- **StyleEngineView** — `@Query` all items (in-memory `.active` filter), occasion picker (6 options), conditional content states (suggestion / loading / empty), refresh toolbar button, auto-generate `.task` on first appear, error alert
+- `StyleEngineViewModel` — GPS → weather → Gemini pipeline; 14-day history dedup
+- `StyleEngineView` — occasion picker (6 contexts), loading / suggestion / empty states, save-outfit action
 
 #### App Shell
-- **SmartStylistApp** — `@main` entry, `WindowGroup { RootView() }`, shared `modelContainer` for all three model types
-- **RootView** — `@Query` profiles gate: shows `OnboardingContainerView` until `onboardingCompleted == true`, then `MainTabView`
-- **MainTabView** — two-tab `TabView` (Today → `StyleEngineView`, Wardrobe → `VirtualClosetView`) tinted with `dsAccentGold`
+- `SmartStylistApp` — shared `modelContainer` for all three model types
+- `RootView` — `@Query` onboarding gate
+- `MainTabView` — 2-tab baseline (Today + Wardrobe)
 
----
-
-### Test Coverage
-
-| File | Tests |
-|---|---|
-| `ClothingItemTests.swift` | ItemStatus raw values, allCases count, StyleResponse full decode, nil-UUID exclusion |
-| `GeminiServiceTests.swift` | Full outfit decode (4 UUIDs), missing abrigo decode (3 UUIDs) |
-| `ClosetViewModelTests.swift` | activeItems excludes disposed, excludes archived, category filter, nil-category returns all, itemsByCategory grouping |
-
----
-
-### Setup Instructions
-
-1. Clone: `git clone https://github.com/rubenaparicio-byte/smartstylist.git`
-2. Install XcodeGen: `brew install xcodegen`
-3. Generate project: `cd smartstylist && xcodegen generate`
-4. Copy API keys template: `cp SmartStylist/Config/APIKeys.swift.template SmartStylist/Config/APIKeys.swift`
-5. Fill in your Gemini and OpenWeather API keys in `APIKeys.swift`
-6. Open `SmartStylist.xcodeproj` in Xcode 16+
-7. Select a simulator (iPhone 16 recommended) and run
-8. Grant location permission when prompted — required for weather-based outfit suggestions
+#### Test Coverage (baseline)
+- `ClothingItemTests` — `ItemStatus` raw values, `ClothingCategory.allCases`, `StyleResponse` Codable
+- `GeminiServiceTests` — full/partial outfit JSON decode
+- `ClosetViewModelTests` — activeItems, filteredItems, itemsByCategory (11 tests)
