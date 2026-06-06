@@ -1,0 +1,162 @@
+name: iOS CD — TestFlight
+
+# Disparo manual (workflow_dispatch) o al publicar un tag v*
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: 'Notas de versión para TestFlight (opcional)'
+        required: false
+        default: 'Nueva versión desde CI'
+  push:
+    tags:
+      - 'v*'
+
+# Impide despliegues paralelos; nunca cancela un vuelo en curso
+concurrency:
+  group: testflight-deploy
+  cancel-in-progress: false
+
+env:
+  SCHEME: SmartStylist
+  ARCHIVE_PATH: ${{ github.workspace }}/build/SmartStylist.xcarchive
+  EXPORT_PATH: ${{ github.workspace }}/build/export
+
+jobs:
+  deploy:
+    name: Archive & Upload to TestFlight
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      # ── 1. Código ─────────────────────────────────────────────────────────
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      # ── 2. Herramientas ───────────────────────────────────────────────────
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      # ── 3. Secrets de API internas ────────────────────────────────────────
+      - name: Inyectar API Keys (Gemini + OpenWeather)
+        env:
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WEATHER_KEY: ${{ secrets.WEATHER_API_KEY }}
+        run: |
+          mkdir -p SmartStylist/Config
+          cat > SmartStylist/Config/APIKeys.swift << EOF
+          import Foundation
+
+          enum APIKeys {
+              static let gemini = "${GEMINI_KEY}"
+              static let openWeather = "${WEATHER_KEY}"
+          }
+          EOF
+
+      # ── 4. Proyecto Xcode ─────────────────────────────────────────────────
+      - name: Generar proyecto Xcode con XcodeGen
+        run: xcodegen generate
+
+      # ── 5. Clave App Store Connect (.p8) ──────────────────────────────────
+      # La clave se almacena en el directorio estándar que busca xcodebuild
+      # de forma automática con -allowProvisioningUpdates.
+      - name: Configurar clave App Store Connect
+        env:
+          ASC_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT }}
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_CONTENT" \
+            > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+      # ── 6. ExportOptions.plist ────────────────────────────────────────────
+      # method: app-store + signingStyle: automatic → Xcode gestiona
+      # perfiles y certificados vía la API de App Store Connect.
+      - name: Generar ExportOptions.plist
+        env:
+          TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          mkdir -p build
+          cat > ExportOptions.plist << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>${TEAM_ID}</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+      # ── 7. Archive ────────────────────────────────────────────────────────
+      # -allowProvisioningUpdates: Xcode descarga/renueva perfiles en la nube
+      #   autenticándose con la API key. CURRENT_PROJECT_VERSION se fija al
+      #   número de ejecución para garantizar builds únicos en TestFlight.
+      - name: Compilar y archivar (xcodebuild archive)
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          xcodebuild archive \
+            -project SmartStylist.xcodeproj \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$ARCHIVE_PATH" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath \
+              ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}"
+
+      # ── 8. Export IPA ─────────────────────────────────────────────────────
+      - name: Exportar IPA
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$ARCHIVE_PATH" \
+            -exportPath "$EXPORT_PATH" \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath \
+              ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+
+      # ── 9. Upload a TestFlight ────────────────────────────────────────────
+      # xcrun altool --upload-app es la herramienta CLI oficial de Apple para
+      # enviar IPA a App Store Connect / TestFlight con autenticación API key.
+      - name: Subir a TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$EXPORT_PATH/SmartStylist.ipa" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID" \
+            --verbose
+
+      # ── 10. Artefacto de diagnóstico ──────────────────────────────────────
+      # Disponible 30 días en la pestaña Actions para inspeccionar el IPA
+      # incluso si el upload falló (if: always()).
+      - name: Publicar IPA como artefacto de GitHub
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartStylist-build-${{ github.run_number }}.ipa
+          path: ${{ env.EXPORT_PATH }}/SmartStylist.ipa
+          if-no-files-found: ignore
+          retention-days: 30

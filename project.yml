@@ -29,6 +29,9 @@ targets:
     settings:
       base:
         ENABLE_PREVIEWS: YES
+        PRODUCT_BUNDLE_IDENTIFIER: "com.rubenaparicio.SmartStylist"
+        DEVELOPMENT_TEAM: "AQUÍ_TU_TEAM_ID_DE_10_CARACTERES"
+        CODE_SIGN_STYLE: "Automatic"
     dependencies: []
 
   SmartStylistTests:
