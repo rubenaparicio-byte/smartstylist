@@ -32,25 +32,25 @@ struct OnboardingContainerView: View {
                 }
             }
 
+            // Premium loading overlay during Gemini analysis
             if vm.isLoading {
-                Color.dsDeepSlate.opacity(0.7).ignoresSafeArea()
-                VStack(spacing: 16) {
-                    LoadingPulse()
-                    Text("Analysing your profile…")
-                        .font(.dsBody)
-                        .foregroundStyle(Color.dsTextSecondary)
-                }
+                Color.dsDeepSlate.opacity(0.82)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                LuxuryLoadingView()
+                    .transition(.opacity)
             }
         }
-        .alert("Error", isPresented: Binding(
+        .animation(.dsDefault, value: vm.isLoading)
+        .alert(Strings.commonError, isPresented: Binding(
             get: { vm.errorMessage != nil },
             set: { _ in vm.errorMessage = nil }
         )) {
-            Button("Try Again") {
+            Button(Strings.commonRetry) {
                 vm.errorMessage = nil
                 Task { await vm.analyseProfile() }
             }
-            Button("Cancel", role: .cancel) { vm.errorMessage = nil }
+            Button(Strings.commonCancel, role: .cancel) { vm.errorMessage = nil }
         } message: {
             Text(vm.errorMessage ?? "")
         }
@@ -72,7 +72,9 @@ struct OnboardingContainerView: View {
         Button {
             withAnimation(.dsDefault) { vm.advance() }
         } label: {
-            Text(vm.currentStep == .hairEye ? "Analyse My Style" : "Continue")
+            Text(vm.currentStep == .hairEye
+                 ? Strings.onboardingAnalyseMyStyle
+                 : Strings.onboardingContinue)
                 .font(.dsBodyMedium)
                 .foregroundStyle(Color.dsDeepSlate)
                 .frame(maxWidth: .infinity)

@@ -1,0 +1,57 @@
+/* SmartStylist — Spanish strings (Español) */
+
+/* Común */
+"common.retry"          = "Reintentar";
+"common.cancel"         = "Cancelar";
+"common.error"          = "Error";
+"common.open_settings"  = "Abrir Ajustes";
+
+/* Mensajes de carga */
+"loading.analysing_wardrobe" = "Analizando tu armario…";
+"loading.reading_colour"     = "Leyendo la armonía de color…";
+"loading.curating_look"      = "Preparando tu look…";
+"loading.almost_ready"       = "Casi listo…";
+
+/* Onboarding */
+"onboarding.cta.analyse"       = "Analizar Mi Estilo";
+"onboarding.cta.continue"      = "Continuar";
+"onboarding.loading.analysing" = "Analizando tu perfil…";
+
+/* Motor de Estilo */
+"style.nav.title"             = "LOOK DE HOY";
+"style.section.event_context" = "CONTEXTO DE EVENTO";
+"style.outfit.registered"     = "Outfit Registrado para Hoy";
+"style.outfit.save"           = "Llevar Este Outfit Hoy";
+"style.empty.title"           = "TU LOOK TE ESPERA";
+"style.empty.subtitle"        = "Pulsa ↻ para crear el outfit de hoy";
+"style.offline.mode"          = "Sin conexión — basado en tu perfil de color";
+
+/* Contextos de evento */
+"event.daily"           = "Diario";
+"event.work"            = "Reunión de Trabajo";
+"event.evening_date"    = "Cita Nocturna";
+"event.gym"             = "Gimnasio";
+"event.casual_weekend"  = "Fin de Semana Casual";
+"event.formal"          = "Evento Formal";
+
+/* Armario */
+"wardrobe.nav.title"           = "ARMARIO";
+"wardrobe.search.placeholder"  = "Buscar prendas…";
+"wardrobe.filter.all"          = "Todo";
+"wardrobe.status.active"       = "activo";
+"wardrobe.status.archived"     = "archivado";
+
+/* Categorías de ropa */
+"category.top"       = "Parte Superior";
+"category.bottom"    = "Parte Inferior";
+"category.footwear"  = "Calzado";
+"category.outerwear" = "Abrigos";
+"category.accessory" = "Accesorios";
+
+/* Estados de error */
+"error.wardrobe.title"    = "ARMARIO VACÍO";
+"error.wardrobe.subtitle" = "Añade al menos 2 prendas activas en el Armario para generar un outfit.";
+"error.location.title"    = "UBICACIÓN DENEGADA";
+"error.location.subtitle" = "Permite el acceso a la ubicación en Ajustes para obtener el clima en tiempo real.";
+"error.ai.title"          = "SERVICIO NO DISPONIBLE";
+"error.ai.subtitle"       = "No se pudo contactar con la IA. Comprueba tu conexión y vuelve a intentarlo.";

@@ -34,14 +34,14 @@ struct VirtualClosetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("WARDROBE")
+                    Text(Strings.wardrobeNavTitle)
                         .font(.dsTitle2)
                         .foregroundStyle(Color.dsAccentGold)
                         .tracking(3)
                 }
             }
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
-            .searchable(text: $vm.searchText, prompt: "Search pieces…")
+            .searchable(text: $vm.searchText, prompt: Strings.wardrobeSearchPlaceholder)
             .sheet(isPresented: $showAddItem) { AddItemView() }
             .sheet(item: $itemToDispose) { item in DisposeItemSheet(item: item) }
         }
@@ -52,11 +52,12 @@ struct VirtualClosetView: View {
     private var categoryFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                SelectionChip(label: "All", isSelected: vm.selectedCategory == nil) {
+                SelectionChip(label: Strings.wardrobeFilterAll,
+                              isSelected: vm.selectedCategory == nil) {
                     vm.selectedCategory = nil
                 }
                 ForEach(ClothingCategory.allCases, id: \.self) { cat in
-                    SelectionChip(label: cat.rawValue.capitalized,
+                    SelectionChip(label: cat.localizedName,
                                   isSelected: vm.selectedCategory == cat) {
                         vm.selectedCategory = cat
                     }
@@ -68,16 +69,16 @@ struct VirtualClosetView: View {
 
     @ViewBuilder
     private var statusSummary: some View {
-        let visible = vm.visibleItems(from: allItems)
+        let visible       = vm.visibleItems(from: allItems)
         let activeCount   = visible.filter { $0.status == .active }.count
         let archivedCount = visible.filter { $0.status == .archived }.count
         if archivedCount > 0 {
             HStack(spacing: 4) {
-                Text("\(activeCount) active")
+                Text("\(activeCount) \(Strings.wardrobeStatusActive)")
                     .foregroundStyle(Color.dsTextSecondary)
                 Text("·")
                     .foregroundStyle(Color.dsTextTertiary)
-                Text("\(archivedCount) archived")
+                Text("\(archivedCount) \(Strings.wardrobeStatusArchived)")
                     .foregroundStyle(Color.dsTextTertiary)
             }
             .font(.dsCaption)

@@ -1,0 +1,58 @@
+/* SmartStylist — English strings
+   Development locale. All keys must exist here as fallback.        */
+
+/* Common */
+"common.retry"          = "Try Again";
+"common.cancel"         = "Cancel";
+"common.error"          = "Error";
+"common.open_settings"  = "Open Settings";
+
+/* Loading messages */
+"loading.analysing_wardrobe" = "Analysing your wardrobe…";
+"loading.reading_colour"     = "Reading colour harmony…";
+"loading.curating_look"      = "Curating your look…";
+"loading.almost_ready"       = "Almost ready…";
+
+/* Onboarding */
+"onboarding.cta.analyse"        = "Analyse My Style";
+"onboarding.cta.continue"       = "Continue";
+"onboarding.loading.analysing"  = "Analysing your profile…";
+
+/* Style Engine */
+"style.nav.title"           = "TODAY'S LOOK";
+"style.section.event_context" = "EVENT CONTEXT";
+"style.outfit.registered"   = "Outfit Registered for Today";
+"style.outfit.save"         = "Wear This Outfit Today";
+"style.empty.title"         = "YOUR LOOK AWAITS";
+"style.empty.subtitle"      = "Tap ↻ to curate today's outfit";
+"style.offline.mode"        = "Offline — based on your colour profile";
+
+/* Event contexts */
+"event.daily"           = "Daily";
+"event.work"            = "Work Meeting";
+"event.evening_date"    = "Evening Date";
+"event.gym"             = "Gym";
+"event.casual_weekend"  = "Casual Weekend";
+"event.formal"          = "Formal Event";
+
+/* Wardrobe */
+"wardrobe.nav.title"            = "WARDROBE";
+"wardrobe.search.placeholder"   = "Search pieces…";
+"wardrobe.filter.all"           = "All";
+"wardrobe.status.active"        = "active";
+"wardrobe.status.archived"      = "archived";
+
+/* Clothing categories */
+"category.top"       = "Tops";
+"category.bottom"    = "Bottoms";
+"category.footwear"  = "Footwear";
+"category.outerwear" = "Outerwear";
+"category.accessory" = "Accessories";
+
+/* Error states */
+"error.wardrobe.title"    = "WARDROBE EMPTY";
+"error.wardrobe.subtitle" = "Add at least 2 active pieces in the Wardrobe tab to generate an outfit.";
+"error.location.title"    = "LOCATION DENIED";
+"error.location.subtitle" = "Grant location access in Settings so SmartStylist can fetch real-time weather.";
+"error.ai.title"          = "SERVICE UNAVAILABLE";
+"error.ai.subtitle"       = "Could not reach the AI. Check your connection and try again.";

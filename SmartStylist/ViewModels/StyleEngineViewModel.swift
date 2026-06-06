@@ -2,6 +2,23 @@ import Foundation
 import SwiftData
 import Observation
 
+// ── StyleEngineError ──────────────────────────────────────────────────────────
+
+enum StyleEngineError: Equatable {
+    case insufficientWardrobe
+    case locationDenied
+    case aiUnavailable(String)
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+        case (.insufficientWardrobe, .insufficientWardrobe): return true
+        case (.locationDenied, .locationDenied):             return true
+        case (.aiUnavailable(let a), .aiUnavailable(let b)): return a == b
+        default:                                             return false
+        }
+    }
+}
+
 // ── EventContext ──────────────────────────────────────────────────────────────
 
 enum EventContext: String, CaseIterable {
@@ -12,6 +29,7 @@ enum EventContext: String, CaseIterable {
     case casualWeekend = "Casual Weekend"
     case formal        = "Formal Event"
 
+    // rawValue sent to Gemini (English, not localised)
     var dresscode: String {
         switch self {
         case .daily:         return "Smart casual, versatile for any daytime activity"
@@ -33,6 +51,18 @@ enum EventContext: String, CaseIterable {
         case .formal:        return "sparkles"
         }
     }
+
+    // UI-facing label, resolved from Localizable.strings
+    var localizedName: String {
+        switch self {
+        case .daily:         return Strings.eventDaily
+        case .work:          return Strings.eventWork
+        case .eveningDate:   return Strings.eventEveningDate
+        case .gym:           return Strings.eventGym
+        case .casualWeekend: return Strings.eventCasualWeekend
+        case .formal:        return Strings.eventFormal
+        }
+    }
 }
 
 // ── ViewModel ─────────────────────────────────────────────────────────────────
@@ -42,10 +72,11 @@ enum EventContext: String, CaseIterable {
 final class StyleEngineViewModel {
     var currentWeather: CurrentWeatherData?
     var suggestion: StyleResponse?
-    var isLoading = false
-    var errorMessage: String?
+    var isLoading          = false
+    var currentError: StyleEngineError?
     var occasion: EventContext = .daily
-    var outfitSaved = false
+    var outfitSaved        = false
+    var isOfflineSuggestion = false
 
     private let gemini = GeminiService()
     private let wxSvc  = LocationWeatherService()
@@ -54,30 +85,58 @@ final class StyleEngineViewModel {
                         activeItems: [ClothingItem],
                         history: [OutfitHistory]) async {
         guard activeItems.count >= 2 else {
-            errorMessage = "Add at least 2 active pieces to your wardrobe before generating a suggestion."
+            withAnimation(.dsDefault) { currentError = .insufficientWardrobe }
             return
         }
 
-        isLoading = true
-        outfitSaved = false
-        errorMessage = nil
+        withAnimation(.dsDefault) {
+            isLoading           = true
+            outfitSaved         = false
+            currentError        = nil
+            suggestion          = nil
+            isOfflineSuggestion = false
+        }
 
+        // ── Step 1: Weather (best-effort; LocationError is a hard stop) ────────
         do {
-            let wx = try await wxSvc.refresh()
-            currentWeather = wx
+            currentWeather = try await wxSvc.refresh()
+        } catch is LocationError {
+            withAnimation(.dsDefault) {
+                isLoading    = false
+                currentError = .locationDenied
+            }
+            return
+        } catch {
+            // Network/weather unavailable — proceed without weather context.
+        }
 
+        // ── Step 2: AI outfit suggestion (offline fallback on any failure) ─────
+        do {
             let result = try await gemini.suggestOutfit(
                 profileJSON:   encodeProfile(profile),
-                weatherJSON:   encodeWeather(wx),
+                weatherJSON:   currentWeather.map { encodeWeather($0) } ?? "{}",
                 inventoryJSON: encodeInventory(activeItems),
                 historyJSON:   encodeHistory(history14Days(from: history)),
                 occasion:      "\(occasion.rawValue) — \(occasion.dresscode)"
             )
-            suggestion = result
+            withAnimation(.dsDefault) {
+                suggestion          = result
+                isOfflineSuggestion = false
+            }
         } catch {
-            errorMessage = error.localizedDescription
+            if let offline = buildOfflineSuggestion(profile: profile, activeItems: activeItems) {
+                withAnimation(.dsDefault) {
+                    suggestion          = offline
+                    isOfflineSuggestion = true
+                }
+            } else {
+                withAnimation(.dsDefault) {
+                    currentError = .aiUnavailable(error.localizedDescription)
+                }
+            }
         }
-        isLoading = false
+
+        withAnimation(.dsDefault) { isLoading = false }
     }
 
     func saveOutfit(to context: ModelContext) {
@@ -92,6 +151,55 @@ final class StyleEngineViewModel {
         context.insert(entry)
         try? context.save()
         outfitSaved = true
+    }
+
+    // ── Offline Fallback ──────────────────────────────────────────────────────
+    // Builds a local outfit using colorimetry scoring when Gemini is unavailable.
+    // Returns nil if the wardrobe lacks the minimum categories (top + bottom + shoes).
+
+    private func buildOfflineSuggestion(profile: UserProfile,
+                                        activeItems: [ClothingItem]) -> StyleResponse? {
+        let recommendedHexes = Set(profile.recommendedColorHexes.map { $0.lowercased() })
+        let neutralHexes: Set<String> = [
+            "#000000", "#ffffff", "#f5f5dc", "#808080",
+            "#c0c0c0", "#000080", "#f5f5f5", "#d3d3d3", "#2f4f4f"
+        ]
+
+        func score(_ item: ClothingItem) -> Int {
+            let hex = item.primaryColor.lowercased()
+            if recommendedHexes.contains(hex) { return 2 }
+            if neutralHexes.contains(hex)     { return 1 }
+            return 0
+        }
+
+        let tops    = activeItems.filter { $0.category == .top }
+                                 .sorted { score($0) > score($1) }
+        let bottoms = activeItems.filter { $0.category == .bottom }
+                                 .sorted { score($0) > score($1) }
+        let shoes   = activeItems.filter { $0.category == .footwear }
+                                 .sorted { score($0) > score($1) }
+        let outers  = activeItems.filter { $0.category == .outerwear }
+                                 .sorted { score($0) > score($1) }
+
+        guard let top = tops.first, let bottom = bottoms.first, let shoe = shoes.first else {
+            return nil
+        }
+
+        let season = profile.seasonalColorimetry.isEmpty
+            ? "your season"
+            : profile.seasonalColorimetry
+
+        return StyleResponse(
+            climaProcesado:   "Offline — weather unavailable",
+            analisisContexto: "Curated from your \(season) palette without AI",
+            outfitSugerido: StyleResponse.OutfitSuggestion(
+                superior: top.id,
+                inferior: bottom.id,
+                calzado:  shoe.id,
+                abrigo:   outers.first?.id
+            ),
+            consejoEstilo: "Trust your \(season) season — your wardrobe knows you."
+        )
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

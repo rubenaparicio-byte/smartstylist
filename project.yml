@@ -5,6 +5,7 @@ options:
     iOS: "17.0"
   defaultConfig: Debug
   xcodeVersion: "16.0"
+  developmentLanguage: en
 
 settings:
   base:

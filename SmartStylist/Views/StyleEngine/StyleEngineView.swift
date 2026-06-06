@@ -11,6 +11,18 @@ struct StyleEngineView: View {
     private var activeItems: [ClothingItem] { allItems.filter { $0.status == .active } }
     private var profile: UserProfile? { profiles.first(where: { $0.onboardingCompleted }) }
 
+    // Maps ViewModel state to a single Equatable key for SwiftUI transitions.
+    private enum DisplayState: Equatable {
+        case loading, error, suggestion, empty
+    }
+
+    private var displayState: DisplayState {
+        if vm.isLoading         { return .loading }
+        if vm.currentError != nil { return .error }
+        if vm.suggestion != nil  { return .suggestion }
+        return .empty
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -21,19 +33,19 @@ struct StyleEngineView: View {
                         if let wx = vm.currentWeather {
                             WeatherBadgeView(weather: wx)
                         }
-
                         eventContextPicker
                         contentSection
                     }
                     .padding(16)
                     .padding(.bottom, 32)
+                    .animation(.dsDefault, value: displayState)
                 }
             }
             .navigationTitle("Style")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("TODAY'S LOOK")
+                    Text(Strings.styleNavTitle)
                         .font(.dsTitle2)
                         .foregroundStyle(Color.dsAccentGold)
                         .tracking(3)
@@ -47,7 +59,7 @@ struct StyleEngineView: View {
                                                     history: history)
                         }
                     } label: {
-                        Image(systemName: vm.isLoading ? "arrow.clockwise" : "arrow.clockwise")
+                        Image(systemName: "arrow.clockwise")
                             .foregroundStyle(Color.dsAccentGold)
                             .rotationEffect(.degrees(vm.isLoading ? 360 : 0))
                             .animation(
@@ -61,21 +73,6 @@ struct StyleEngineView: View {
                 }
             }
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
-            .alert("Error", isPresented: Binding(
-                get: { vm.errorMessage != nil },
-                set: { _ in vm.errorMessage = nil }
-            )) {
-                Button("Try Again") {
-                    vm.errorMessage = nil
-                    Task {
-                        guard let p = profile else { return }
-                        await vm.generateOutfit(profile: p, activeItems: activeItems, history: history)
-                    }
-                }
-                Button("Cancel", role: .cancel) { vm.errorMessage = nil }
-            } message: {
-                Text(vm.errorMessage ?? "")
-            }
             .task {
                 guard let p = profile, vm.suggestion == nil, !vm.isLoading else { return }
                 await vm.generateOutfit(profile: p, activeItems: activeItems, history: history)
@@ -87,32 +84,32 @@ struct StyleEngineView: View {
 
     private var eventContextPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("EVENT CONTEXT")
+            Text(Strings.styleEventContext)
                 .font(.dsLabel)
                 .foregroundStyle(Color.dsTextSecondary)
                 .tracking(2)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
-                    ForEach(EventContext.allCases, id: \.self) { ctx in
+                    ForEach(EventContext.allCases, id: \.self) { context in
                         Button {
-                            vm.occasion = ctx
+                            vm.occasion = context
                         } label: {
                             HStack(spacing: 6) {
-                                Image(systemName: ctx.icon).font(.caption)
-                                Text(ctx.rawValue).font(.dsLabel)
+                                Image(systemName: context.icon).font(.caption)
+                                Text(context.localizedName).font(.dsLabel)
                             }
                             .foregroundStyle(
-                                vm.occasion == ctx ? Color.dsDeepSlate : Color.dsTextSecondary
+                                vm.occasion == context ? Color.dsDeepSlate : Color.dsTextSecondary
                             )
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(vm.occasion == ctx ? Color.dsAccentGold : Color.dsSurface)
+                            .background(vm.occasion == context ? Color.dsAccentGold : Color.dsSurface)
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .stroke(
-                                        Color.dsAccentGold.opacity(vm.occasion == ctx ? 0 : 0.3),
+                                        Color.dsAccentGold.opacity(vm.occasion == context ? 0 : 0.3),
                                         lineWidth: 0.5
                                     )
                             )
@@ -130,16 +127,57 @@ struct StyleEngineView: View {
     @ViewBuilder
     private var contentSection: some View {
         if vm.isLoading {
-            loadingState
+            LuxuryLoadingView()
+                .transition(.opacity)
+
+        } else if let err = vm.currentError {
+            LuxuryErrorView(error: err) {
+                Task {
+                    guard let p = profile else { return }
+                    await vm.generateOutfit(profile: p,
+                                            activeItems: activeItems,
+                                            history: history)
+                }
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+
         } else if let suggestion = vm.suggestion {
-            OutfitSuggestionCard(response: suggestion, items: activeItems)
-            usarOutfitButton
+            VStack(spacing: 12) {
+                if vm.isOfflineSuggestion { offlineBanner }
+                OutfitSuggestionCard(response: suggestion, items: activeItems)
+                usarOutfitButton
+            }
+            .transition(.opacity.combined(with: .move(edge: .bottom)))
+
         } else {
             emptyState
+                .transition(.opacity)
         }
     }
 
-    // ── "Usar Outfit Hoy" button ──────────────────────────────────────────────
+    // ── Offline banner ────────────────────────────────────────────────────────
+
+    private var offlineBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.caption)
+                .foregroundStyle(Color.dsAccentGold.opacity(0.65))
+            Text(Strings.styleOfflineMode)
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsTextTertiary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.dsSurface.opacity(0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.dsAccentGold.opacity(0.18), lineWidth: 0.5)
+        )
+    }
+
+    // ── Save button ───────────────────────────────────────────────────────────
 
     @ViewBuilder
     private var usarOutfitButton: some View {
@@ -147,7 +185,7 @@ struct StyleEngineView: View {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(Color.dsAccentGold)
-                Text("Outfit Registered for Today")
+                Text(Strings.styleOutfitRegistered)
                     .font(.dsBodyMedium)
                     .foregroundStyle(Color.dsAccentGold)
             }
@@ -166,7 +204,7 @@ struct StyleEngineView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle")
-                    Text("Usar Outfit Hoy")
+                    Text(Strings.styleOutfitSave)
                 }
                 .font(.dsBodyMedium)
                 .foregroundStyle(Color.dsDeepSlate)
@@ -180,18 +218,7 @@ struct StyleEngineView: View {
         }
     }
 
-    // ── States ────────────────────────────────────────────────────────────────
-
-    private var loadingState: some View {
-        VStack(spacing: 16) {
-            LoadingPulse()
-            Text("Curating your look…")
-                .font(.dsBody)
-                .foregroundStyle(Color.dsTextSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 80)
-    }
+    // ── Empty state ───────────────────────────────────────────────────────────
 
     private var emptyState: some View {
         VStack(spacing: 20) {
@@ -200,11 +227,11 @@ struct StyleEngineView: View {
                 .foregroundStyle(Color.dsAccentGold.opacity(0.45))
 
             VStack(spacing: 6) {
-                Text("YOUR LOOK AWAITS")
+                Text(Strings.styleEmptyTitle)
                     .font(.dsTitle2)
                     .foregroundStyle(Color.dsTextSecondary)
                     .tracking(2)
-                Text("Tap ↻ to curate today's outfit")
+                Text(Strings.styleEmptySubtitle)
                     .font(.dsBody)
                     .foregroundStyle(Color.dsTextTertiary)
             }
