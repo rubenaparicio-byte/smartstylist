@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.2.1] — 2026-06-06 · Legal Docs Live
+
+### Changed
+- Repository visibility set to **public** — enables GitHub Pages on the free GitHub plan; API keys remain gitignored and are never committed
+- GitHub Pages activated from `docs/` on `main`; legal docs now live:
+  - **Privacy Policy**: https://rubenaparicio-byte.github.io/smartstylist/privacy.html
+  - **Terms of Use**: https://rubenaparicio-byte.github.io/smartstylist/terms.html
+- `README.md` updated with canonical GitHub Pages URLs (replaces placeholder note)
+
+---
+
 ## [v0.2.0] — 2026-06-06 · App Store Feature Complete
 
 ### Added
