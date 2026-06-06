@@ -183,9 +183,9 @@ To add a locale: create `xx.lproj/Localizable.strings`, mirror all 78 keys, add 
 
 ---
 
-## Legal (GitHub Pages)
+## Legal
 
-Hosted from `docs/` — enable GitHub Pages on `main / docs` to publish:
+Hosted via GitHub Pages from `docs/` on `main`:
 
-- **Privacy Policy**: `docs/privacy.html` — local-only SwiftData storage, transient Gemini/OpenWeather use, no analytics
-- **Terms of Use**: `docs/terms.html` — EULA, AI disclaimer, weather disclaimer, limitation of liability
+- **Privacy Policy**: https://rubenaparicio-byte.github.io/smartstylist/privacy.html
+- **Terms of Use**: https://rubenaparicio-byte.github.io/smartstylist/terms.html
