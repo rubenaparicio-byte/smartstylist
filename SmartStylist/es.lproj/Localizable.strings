@@ -55,3 +55,13 @@
 "error.location.subtitle" = "Permite el acceso a la ubicación en Ajustes para obtener el clima en tiempo real.";
 "error.ai.title"          = "SERVICIO NO DISPONIBLE";
 "error.ai.subtitle"       = "No se pudo contactar con la IA. Comprueba tu conexión y vuelve a intentarlo.";
+
+/* Filtros del armario */
+"filter.section.status"        = "ESTADO";
+"filter.section.styles"        = "ESTILOS";
+"filter.section.patterns"      = "ESTAMPADOS";
+"filter.status.active"         = "Activo";
+"filter.status.archived"       = "Archivado";
+"filter.clear_all"             = "Borrar Filtros";
+"filter.no_results.title"      = "SIN PRENDAS";
+"filter.no_results.subtitle"   = "Ninguna prenda coincide con los filtros actuales.";

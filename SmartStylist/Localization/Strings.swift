@@ -69,6 +69,16 @@ enum Strings {
     static var errorLocationSubtitle: String { String(localized: "error.location.subtitle") }
     static var errorAITitle:          String { String(localized: "error.ai.title") }
     static var errorAISubtitle:       String { String(localized: "error.ai.subtitle") }
+
+    // MARK: — Wardrobe filters
+    static var filterSectionStatus:     String { String(localized: "filter.section.status") }
+    static var filterSectionStyles:     String { String(localized: "filter.section.styles") }
+    static var filterSectionPatterns:   String { String(localized: "filter.section.patterns") }
+    static var filterStatusActive:      String { String(localized: "filter.status.active") }
+    static var filterStatusArchived:    String { String(localized: "filter.status.archived") }
+    static var filterClearAll:          String { String(localized: "filter.clear_all") }
+    static var filterNoResultsTitle:    String { String(localized: "filter.no_results.title") }
+    static var filterNoResultsSubtitle: String { String(localized: "filter.no_results.subtitle") }
 }
 
 // ── ClothingCategory display names ────────────────────────────────────────────

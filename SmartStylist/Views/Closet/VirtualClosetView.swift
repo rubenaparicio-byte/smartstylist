@@ -7,6 +7,7 @@ struct VirtualClosetView: View {
     @State private var vm = ClosetViewModel()
     @State private var showAddItem = false
     @State private var itemToDispose: ClothingItem?
+    @State private var showFilters = false
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -19,12 +20,19 @@ struct VirtualClosetView: View {
                 Color.dsDeepSlate.ignoresSafeArea()
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        searchRow
+                        if showFilters {
+                            filterPanel
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                         categoryFilter
                         statusSummary
-                        itemGrid
+                        gridSection
                     }
                     .padding(16)
+                    .animation(.dsDefault, value: showFilters)
+                    .animation(.easeInOut(duration: 0.22), value: filterKey)
                 }
 
                 addButton
@@ -41,31 +49,193 @@ struct VirtualClosetView: View {
                 }
             }
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
-            .searchable(text: $vm.searchText, prompt: Strings.wardrobeSearchPlaceholder)
             .sheet(isPresented: $showAddItem) { AddItemView() }
             .sheet(item: $itemToDispose) { item in DisposeItemSheet(item: item) }
         }
     }
 
-    // ── Subviews ──────────────────────────────────────────────────────────────
+    // ── Animation key ─────────────────────────────────────────────────────────
+    // Changes whenever any filter-driving state changes, triggering grid animation.
+
+    private var filterKey: String {
+        "\(vm.searchText)|\(vm.selectedCategory?.rawValue ?? "")|" +
+        "\(vm.selectedStyles.sorted().joined(separator: ","))|\(vm.selectedPattern ?? "")|\(vm.showOnlyStatus?.rawValue ?? "")"
+    }
+
+    // ── Search Row ────────────────────────────────────────────────────────────
+
+    private var searchRow: some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.subheadline)
+                    .foregroundStyle(vm.searchText.isEmpty ? Color.dsTextTertiary : Color.dsAccentGold)
+                    .animation(.dsDefault, value: vm.searchText.isEmpty)
+
+                TextField(Strings.wardrobeSearchPlaceholder, text: $vm.searchText)
+                    .font(.dsBody)
+                    .foregroundStyle(Color.dsTextPrimary)
+                    .autocorrectionDisabled()
+                    .tint(Color.dsAccentGold)
+
+                if !vm.searchText.isEmpty {
+                    Button { vm.searchText = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(Color.dsTextTertiary)
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 11)
+            .background(Color.dsCardSlate)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(
+                        vm.searchText.isEmpty
+                            ? Color.dsAccentGold.opacity(0.12)
+                            : Color.dsAccentGold.opacity(0.55),
+                        lineWidth: 0.5
+                    )
+                    .animation(.dsDefault, value: vm.searchText.isEmpty)
+            )
+
+            // Filter toggle button with active-filters badge
+            Button {
+                withAnimation(.dsDefault) { showFilters.toggle() }
+            } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: showFilters
+                          ? "line.3.horizontal.decrease.circle.fill"
+                          : "line.3.horizontal.decrease.circle")
+                        .font(.title3)
+                        .foregroundStyle(showFilters || vm.hasActiveFilters
+                                         ? Color.dsAccentGold : Color.dsTextSecondary)
+                    if vm.hasActiveFilters {
+                        Circle()
+                            .fill(Color.dsAccentGold)
+                            .frame(width: 7, height: 7)
+                            .offset(x: 2, y: -2)
+                    }
+                }
+                .frame(width: 38, height: 38)
+                .animation(.dsDefault, value: vm.hasActiveFilters)
+            }
+        }
+    }
+
+    // ── Filter Panel ──────────────────────────────────────────────────────────
+
+    private var filterPanel: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            filterSection(title: Strings.filterSectionStatus) {
+                HStack(spacing: 8) {
+                    SelectionChip(label: Strings.filterStatusActive,
+                                  isSelected: vm.showOnlyStatus == .active) {
+                        withAnimation(.dsDefault) {
+                            vm.showOnlyStatus = vm.showOnlyStatus == .active ? nil : .active
+                        }
+                    }
+                    SelectionChip(label: Strings.filterStatusArchived,
+                                  isSelected: vm.showOnlyStatus == .archived) {
+                        withAnimation(.dsDefault) {
+                            vm.showOnlyStatus = vm.showOnlyStatus == .archived ? nil : .archived
+                        }
+                    }
+                }
+            }
+
+            GoldDivider()
+
+            filterSection(title: Strings.filterSectionStyles) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(ClosetViewModel.knownStyles, id: \.self) { style in
+                            SelectionChip(label: style,
+                                          isSelected: vm.selectedStyles.contains(style)) {
+                                withAnimation(.dsDefault) {
+                                    if vm.selectedStyles.contains(style) {
+                                        vm.selectedStyles.remove(style)
+                                    } else {
+                                        vm.selectedStyles.insert(style)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            GoldDivider()
+
+            filterSection(title: Strings.filterSectionPatterns) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(ClosetViewModel.knownPatterns.prefix(4), id: \.self) { pattern in
+                            SelectionChip(label: pattern,
+                                          isSelected: vm.selectedPattern == pattern) {
+                                withAnimation(.dsDefault) {
+                                    vm.selectedPattern = vm.selectedPattern == pattern ? nil : pattern
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if vm.hasActiveFilters {
+                Button {
+                    withAnimation(.dsDefault) { vm.clearFilters() }
+                } label: {
+                    Text(Strings.filterClearAll)
+                        .font(.dsCaption)
+                        .foregroundStyle(Color.dsAccentGold)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
+        }
+        .padding(14)
+        .background(Material.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.dsAccentGold.opacity(0.18), lineWidth: 0.5)
+        )
+    }
+
+    @ViewBuilder
+    private func filterSection(title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsTextTertiary)
+                .tracking(2)
+            content()
+        }
+    }
+
+    // ── Category Filter ───────────────────────────────────────────────────────
 
     private var categoryFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 SelectionChip(label: Strings.wardrobeFilterAll,
                               isSelected: vm.selectedCategory == nil) {
-                    vm.selectedCategory = nil
+                    withAnimation(.dsDefault) { vm.selectedCategory = nil }
                 }
                 ForEach(ClothingCategory.allCases, id: \.self) { cat in
                     SelectionChip(label: cat.localizedName,
                                   isSelected: vm.selectedCategory == cat) {
-                        vm.selectedCategory = cat
+                        withAnimation(.dsDefault) { vm.selectedCategory = cat }
                     }
                 }
             }
             .padding(.horizontal, 2)
         }
     }
+
+    // ── Status Summary ────────────────────────────────────────────────────────
 
     @ViewBuilder
     private var statusSummary: some View {
@@ -86,21 +256,69 @@ struct VirtualClosetView: View {
         }
     }
 
-    private var itemGrid: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(vm.filteredItems(from: allItems)) { item in
-                NavigationLink(destination: ItemDetailView(item: item)) {
-                    ClothingItemCard(
-                        item: item,
-                        onDispose: { itemToDispose = item },
-                        onArchive: { vm.archiveItem(item, context: ctx) },
-                        onRestore: { vm.restoreItem(item, context: ctx) }
-                    )
+    // ── Grid Section ──────────────────────────────────────────────────────────
+
+    @ViewBuilder
+    private var gridSection: some View {
+        let filtered = vm.filteredItems(from: allItems)
+        let hasActiveQuery = !vm.searchText.isEmpty || vm.hasActiveFilters || vm.selectedCategory != nil
+        if filtered.isEmpty && hasActiveQuery {
+            noResultsView
+                .transition(.opacity)
+        } else {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(filtered) { item in
+                    NavigationLink(destination: ItemDetailView(item: item)) {
+                        ClothingItemCard(
+                            item: item,
+                            onDispose: { itemToDispose = item },
+                            onArchive: { vm.archiveItem(item, context: ctx) },
+                            onRestore: { vm.restoreItem(item, context: ctx) }
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
-                .buttonStyle(.plain)
             }
         }
     }
+
+    // ── No Results ────────────────────────────────────────────────────────────
+
+    private var noResultsView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 40, weight: .thin))
+                .foregroundStyle(Color.dsTextTertiary)
+
+            VStack(spacing: 8) {
+                Text(Strings.filterNoResultsTitle)
+                    .font(.dsTitle2)
+                    .foregroundStyle(Color.dsTextPrimary)
+                    .tracking(2)
+                Text(Strings.filterNoResultsSubtitle)
+                    .font(.dsBody)
+                    .foregroundStyle(Color.dsTextSecondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            Button {
+                withAnimation(.dsDefault) { vm.clearFilters() }
+            } label: {
+                Text(Strings.filterClearAll)
+                    .font(.dsBodyMedium)
+                    .foregroundStyle(Color.dsDeepSlate)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color.dsAccentGold)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+        }
+        .padding(.vertical, 48)
+        .frame(maxWidth: .infinity)
+    }
+
+    // ── Add Button ────────────────────────────────────────────────────────────
 
     private var addButton: some View {
         Button { showAddItem = true } label: {

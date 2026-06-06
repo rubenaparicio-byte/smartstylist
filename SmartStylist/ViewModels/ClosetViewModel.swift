@@ -37,6 +37,27 @@ final class ClosetViewModel {
     var searchText = ""
     var isAddingItem = false
 
+    // Panel-level filters (drive badge dot on filter button)
+    var selectedStyles: Set<String> = []
+    var selectedPattern: String? = nil
+    var showOnlyStatus: ItemStatus? = nil
+
+    // Canonical style and pattern values — must match ValidationWorkspaceSheet options
+    static let knownStyles: [String]   = ["Casual", "Formal", "Smart Casual", "Athletic", "Evening"]
+    static let knownPatterns: [String] = ["Solid", "Stripes", "Checks", "Floral", "Abstract", "Animal Print"]
+
+    var hasActiveFilters: Bool {
+        !selectedStyles.isEmpty || selectedPattern != nil || showOnlyStatus != nil
+    }
+
+    func clearFilters() {
+        selectedStyles = []
+        selectedPattern = nil
+        showOnlyStatus = nil
+        selectedCategory = nil
+        searchText = ""
+    }
+
     // Active + archived — disposed items are permanently excluded
     func visibleItems(from all: [ClothingItem]) -> [ClothingItem] {
         all.filter { $0.status != .disposed }
@@ -48,16 +69,12 @@ final class ClosetViewModel {
     }
 
     func filteredItems(from all: [ClothingItem]) -> [ClothingItem] {
-        let visible = visibleItems(from: all)
-        let categoryFiltered = selectedCategory == nil
-            ? visible
-            : visible.filter { $0.category == selectedCategory }
-        guard !searchText.isEmpty else { return categoryFiltered }
-        return categoryFiltered.filter {
-            $0.tags.joined(separator: " ").localizedCaseInsensitiveContains(searchText) ||
-            $0.style.localizedCaseInsensitiveContains(searchText) ||
-            $0.primaryColor.localizedCaseInsensitiveContains(searchText)
-        }
+        visibleItems(from: all)
+            .filter(statusMatches)
+            .filter(categoryMatches)
+            .filter(styleMatches)
+            .filter(patternMatches)
+            .filter(textMatches)
     }
 
     func disposeItem(_ item: ClothingItem, reason: DisposeReason = .unused, context: ModelContext) {
@@ -81,5 +98,36 @@ final class ClosetViewModel {
             let items = filteredItems(from: all).filter { $0.category == cat }
             return items.isEmpty ? nil : (cat, items)
         }
+    }
+
+    // ── Filter predicates ─────────────────────────────────────────────────────
+
+    private func statusMatches(_ item: ClothingItem) -> Bool {
+        guard let s = showOnlyStatus else { return true }
+        return item.status == s
+    }
+
+    private func categoryMatches(_ item: ClothingItem) -> Bool {
+        guard let cat = selectedCategory else { return true }
+        return item.category == cat
+    }
+
+    private func styleMatches(_ item: ClothingItem) -> Bool {
+        guard !selectedStyles.isEmpty else { return true }
+        return selectedStyles.contains(item.style)
+    }
+
+    private func patternMatches(_ item: ClothingItem) -> Bool {
+        guard let pattern = selectedPattern else { return true }
+        return item.pattern.localizedCaseInsensitiveContains(pattern)
+    }
+
+    // Searches: category raw value (Spanish), primary color hex, style, and individual tags
+    private func textMatches(_ item: ClothingItem) -> Bool {
+        guard !searchText.isEmpty else { return true }
+        return item.category.rawValue.localizedCaseInsensitiveContains(searchText)
+            || item.primaryColor.localizedCaseInsensitiveContains(searchText)
+            || item.style.localizedCaseInsensitiveContains(searchText)
+            || item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
     }
 }

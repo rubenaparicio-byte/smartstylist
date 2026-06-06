@@ -56,3 +56,13 @@
 "error.location.subtitle" = "Grant location access in Settings so SmartStylist can fetch real-time weather.";
 "error.ai.title"          = "SERVICE UNAVAILABLE";
 "error.ai.subtitle"       = "Could not reach the AI. Check your connection and try again.";
+
+/* Wardrobe filters */
+"filter.section.status"        = "STATUS";
+"filter.section.styles"        = "STYLES";
+"filter.section.patterns"      = "PATTERNS";
+"filter.status.active"         = "Active";
+"filter.status.archived"       = "Archived";
+"filter.clear_all"             = "Clear Filters";
+"filter.no_results.title"      = "NO PIECES FOUND";
+"filter.no_results.subtitle"   = "No items match your current filters.";
