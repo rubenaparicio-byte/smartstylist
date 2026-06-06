@@ -85,26 +85,22 @@ final class StyleEngineViewModel {
                         activeItems: [ClothingItem],
                         history: [OutfitHistory]) async {
         guard activeItems.count >= 2 else {
-            withAnimation(.dsDefault) { currentError = .insufficientWardrobe }
+            currentError = .insufficientWardrobe
             return
         }
 
-        withAnimation(.dsDefault) {
-            isLoading           = true
-            outfitSaved         = false
-            currentError        = nil
-            suggestion          = nil
-            isOfflineSuggestion = false
-        }
+        isLoading           = true
+        outfitSaved         = false
+        currentError        = nil
+        suggestion          = nil
+        isOfflineSuggestion = false
 
         // ── Step 1: Weather (best-effort; LocationError is a hard stop) ────────
         do {
             currentWeather = try await wxSvc.refresh()
         } catch is LocationError {
-            withAnimation(.dsDefault) {
-                isLoading    = false
-                currentError = .locationDenied
-            }
+            isLoading    = false
+            currentError = .locationDenied
             return
         } catch {
             // Network/weather unavailable — proceed without weather context.
@@ -119,24 +115,18 @@ final class StyleEngineViewModel {
                 historyJSON:   encodeHistory(history14Days(from: history)),
                 occasion:      "\(occasion.rawValue) — \(occasion.dresscode)"
             )
-            withAnimation(.dsDefault) {
-                suggestion          = result
-                isOfflineSuggestion = false
-            }
+            suggestion          = result
+            isOfflineSuggestion = false
         } catch {
             if let offline = buildOfflineSuggestion(profile: profile, activeItems: activeItems) {
-                withAnimation(.dsDefault) {
-                    suggestion          = offline
-                    isOfflineSuggestion = true
-                }
+                suggestion          = offline
+                isOfflineSuggestion = true
             } else {
-                withAnimation(.dsDefault) {
-                    currentError = .aiUnavailable(error.localizedDescription)
-                }
+                currentError = .aiUnavailable(error.localizedDescription)
             }
         }
 
-        withAnimation(.dsDefault) { isLoading = false }
+        isLoading = false
     }
 
     func saveOutfit(to context: ModelContext) {
