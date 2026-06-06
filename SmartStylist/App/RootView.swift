@@ -16,17 +16,3 @@ struct RootView: View {
         }
     }
 }
-
-struct MainTabView: View {
-    var body: some View {
-        TabView {
-            StyleEngineView()
-                .tabItem { Label("Today", systemImage: "sparkles") }
-
-            VirtualClosetView()
-                .tabItem { Label("Wardrobe", systemImage: "tshirt") }
-        }
-        .tint(Color.dsAccentGold)
-        .background(Color.dsDeepSlate)
-    }
-}

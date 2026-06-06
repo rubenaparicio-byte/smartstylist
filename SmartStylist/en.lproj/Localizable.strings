@@ -57,6 +57,42 @@
 "error.ai.title"          = "SERVICE UNAVAILABLE";
 "error.ai.subtitle"       = "Could not reach the AI. Check your connection and try again.";
 
+/* Tabs */
+"tabs.today"    = "Today";
+"tabs.wardrobe" = "Wardrobe";
+"tabs.insights" = "Insights";
+"tabs.profile"  = "Profile";
+
+/* Insights */
+"insights.nav.title"        = "INSIGHTS";
+"insights.style.title"      = "STYLE DISTRIBUTION";
+"insights.top.title"        = "MOST WORN";
+"insights.health.title"     = "CLOSET HEALTH";
+"insights.health.active"    = "Active";
+"insights.health.archived"  = "Archived";
+"insights.health.disposed"  = "Disposed";
+"insights.empty.title"      = "NO DATA YET";
+"insights.empty.subtitle"   = "Add items and generate outfits to see your wardrobe insights.";
+"insights.worn"             = "times";
+
+/* Profile & settings */
+"profile.nav.title"              = "MY PROFILE";
+"profile.section.colorimetry"    = "COLOUR PALETTE";
+"profile.section.avoid"          = "AVOID";
+"profile.section.traits"         = "PHYSICAL PROFILE";
+"profile.trait.body"             = "Body Type";
+"profile.trait.skin"             = "Skin Tone";
+"profile.trait.eye"              = "Eye Colour";
+"profile.trait.hair"             = "Hair Colour";
+"profile.trait.metal"            = "Metal Preference";
+"profile.retake.button"          = "Retake Analysis";
+"profile.retake.title"           = "Retake Style Analysis?";
+"profile.retake.message"         = "Your wardrobe will be kept, but your colour profile will be reset. Gemini will re-analyse your style from scratch.";
+"profile.danger.zone"            = "DANGER ZONE";
+"profile.delete.button"          = "Delete All My Data";
+"profile.delete.title"           = "Delete All Data?";
+"profile.delete.message"         = "This will permanently erase your profile, wardrobe and outfit history. This action cannot be undone.";
+
 /* Wardrobe filters */
 "filter.section.status"        = "STATUS";
 "filter.section.styles"        = "STYLES";

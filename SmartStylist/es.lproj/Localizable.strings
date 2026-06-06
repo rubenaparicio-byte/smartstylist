@@ -56,6 +56,42 @@
 "error.ai.title"          = "SERVICIO NO DISPONIBLE";
 "error.ai.subtitle"       = "No se pudo contactar con la IA. Comprueba tu conexión y vuelve a intentarlo.";
 
+/* Pestañas */
+"tabs.today"    = "Hoy";
+"tabs.wardrobe" = "Armario";
+"tabs.insights" = "Estadísticas";
+"tabs.profile"  = "Perfil";
+
+/* Estadísticas */
+"insights.nav.title"        = "ESTADÍSTICAS";
+"insights.style.title"      = "DISTRIBUCIÓN DE ESTILOS";
+"insights.top.title"        = "MÁS USADAS";
+"insights.health.title"     = "SALUD DEL ARMARIO";
+"insights.health.active"    = "Activo";
+"insights.health.archived"  = "Archivado";
+"insights.health.disposed"  = "Dado de baja";
+"insights.empty.title"      = "SIN DATOS AÚN";
+"insights.empty.subtitle"   = "Añade prendas y genera outfits para ver tus estadísticas.";
+"insights.worn"             = "veces";
+
+/* Perfil y ajustes */
+"profile.nav.title"              = "MI PERFIL";
+"profile.section.colorimetry"    = "PALETA DE COLORES";
+"profile.section.avoid"          = "EVITAR";
+"profile.section.traits"         = "PERFIL FÍSICO";
+"profile.trait.body"             = "Tipo de Cuerpo";
+"profile.trait.skin"             = "Tono de Piel";
+"profile.trait.eye"              = "Color de Ojos";
+"profile.trait.hair"             = "Color de Cabello";
+"profile.trait.metal"            = "Metal Preferido";
+"profile.retake.button"          = "Repetir Análisis";
+"profile.retake.title"           = "¿Repetir el Análisis?";
+"profile.retake.message"         = "Tu armario se conservará, pero tu perfil de color se borrará. Gemini analizará tu estilo desde cero.";
+"profile.danger.zone"            = "ZONA PELIGROSA";
+"profile.delete.button"          = "Borrar Todos mis Datos";
+"profile.delete.title"           = "¿Borrar Todos los Datos?";
+"profile.delete.message"         = "Se borrarán permanentemente tu perfil, armario e historial de outfits. Esta acción no se puede deshacer.";
+
 /* Filtros del armario */
 "filter.section.status"        = "ESTADO";
 "filter.section.styles"        = "ESTILOS";

@@ -70,6 +70,42 @@ enum Strings {
     static var errorAITitle:          String { String(localized: "error.ai.title") }
     static var errorAISubtitle:       String { String(localized: "error.ai.subtitle") }
 
+    // MARK: — Tab labels
+    static var tabsToday:    String { String(localized: "tabs.today") }
+    static var tabsWardrobe: String { String(localized: "tabs.wardrobe") }
+    static var tabsInsights: String { String(localized: "tabs.insights") }
+    static var tabsProfile:  String { String(localized: "tabs.profile") }
+
+    // MARK: — Insights
+    static var insightsNavTitle:       String { String(localized: "insights.nav.title") }
+    static var insightsStyleTitle:     String { String(localized: "insights.style.title") }
+    static var insightsTopTitle:       String { String(localized: "insights.top.title") }
+    static var insightsHealthTitle:    String { String(localized: "insights.health.title") }
+    static var insightsHealthActive:   String { String(localized: "insights.health.active") }
+    static var insightsHealthArchived: String { String(localized: "insights.health.archived") }
+    static var insightsHealthDisposed: String { String(localized: "insights.health.disposed") }
+    static var insightsEmptyTitle:     String { String(localized: "insights.empty.title") }
+    static var insightsEmptySubtitle:  String { String(localized: "insights.empty.subtitle") }
+    static var insightsWorn:           String { String(localized: "insights.worn") }
+
+    // MARK: — Profile & settings
+    static var profileNavTitle:            String { String(localized: "profile.nav.title") }
+    static var profileSectionColorimetry:  String { String(localized: "profile.section.colorimetry") }
+    static var profileSectionAvoid:        String { String(localized: "profile.section.avoid") }
+    static var profileSectionTraits:       String { String(localized: "profile.section.traits") }
+    static var profileTraitBody:           String { String(localized: "profile.trait.body") }
+    static var profileTraitSkin:           String { String(localized: "profile.trait.skin") }
+    static var profileTraitEye:            String { String(localized: "profile.trait.eye") }
+    static var profileTraitHair:           String { String(localized: "profile.trait.hair") }
+    static var profileTraitMetal:          String { String(localized: "profile.trait.metal") }
+    static var profileRetakeButton:        String { String(localized: "profile.retake.button") }
+    static var profileRetakeTitle:         String { String(localized: "profile.retake.title") }
+    static var profileRetakeMessage:       String { String(localized: "profile.retake.message") }
+    static var profileDangerZone:          String { String(localized: "profile.danger.zone") }
+    static var profileDeleteButton:        String { String(localized: "profile.delete.button") }
+    static var profileDeleteTitle:         String { String(localized: "profile.delete.title") }
+    static var profileDeleteMessage:       String { String(localized: "profile.delete.message") }
+
     // MARK: — Wardrobe filters
     static var filterSectionStatus:     String { String(localized: "filter.section.status") }
     static var filterSectionStyles:     String { String(localized: "filter.section.styles") }
