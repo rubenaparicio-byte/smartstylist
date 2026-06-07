@@ -52,8 +52,7 @@ final class GeminiService {
             "contents": [["parts": [["text": prompt]]]],
             "generationConfig": [
                 "temperature": 0.7,
-                "maxOutputTokens": 2048,
-                "responseMimeType": "application/json"
+                "maxOutputTokens": 2048
             ]
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -281,8 +280,7 @@ final class GeminiService {
             ]],
             "generationConfig": [
                 "temperature": 0.3,
-                "maxOutputTokens": 1024,
-                "responseMimeType": "application/json"
+                "maxOutputTokens": 1024
             ]
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
