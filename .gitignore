@@ -35,6 +35,13 @@ fastlane/test_output
 *.env
 Config/Secrets.xcconfig
 SmartStylist/Config/APIKeys.swift
+# Code signing artifacts (keep out of git)
+*.p12
+*.cer
+*.pem
+*.mobileprovision
+private.key
+*.certSigningRequest
 
 # ── OS ────────────────────────────────────────────────────
 .DS_Store
