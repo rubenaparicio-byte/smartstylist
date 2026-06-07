@@ -10,7 +10,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.10"
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: "CY3J5RM5UX"
     PRODUCT_BUNDLE_IDENTIFIER: com.smartstylist.app
     INFOPLIST_FILE: SmartStylist/Info.plist
 
