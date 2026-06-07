@@ -26,7 +26,7 @@ targets:
         NSLocationWhenInUseUsageDescription: "SmartStylist uses your location to fetch real-time weather for outfit suggestions."
         NSLocationAlwaysAndWhenInUseUsageDescription: "Background location enables automatic morning outfit suggestions."
         NSPhotoLibraryUsageDescription: "Access your photo library to add clothing items."
-        NSCameraUsageDescription: "Take photos of new clothing items."
+        NSCameraUsageDescription: "SmartStylist uses the camera to photograph clothing items and automatically segment them from the background using on-device Vision analysis."
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleIconName: AppIcon

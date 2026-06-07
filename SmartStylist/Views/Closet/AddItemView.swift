@@ -6,13 +6,17 @@ struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var category: ClothingCategory = .top
+    @State private var thermalLayer: ThermalLayer = .inner
     @State private var style = ""
     @State private var primaryColor = "#000000"
     @State private var pattern = "Solid"
     @State private var tags = ""
 
     @State private var selectedPhoto: PhotosPickerItem?
-    @State private var imageData: Data?
+    @State private var rawCameraData: Data?       // direct from CameraPicker
+    @State private var imageData: Data?            // segmented/processed result
+    @State private var isSegmenting = false
+    @State private var segmentError: String?
     @State private var showCamera = false
     @State private var isAnalysing = false
     @State private var aiError: String?
@@ -20,6 +24,7 @@ struct AddItemView: View {
     @State private var showValidation = false
 
     private let gemini = GeminiService()
+    private let segService = GarmentSegmentationService()
 
     var body: some View {
         NavigationStack {
@@ -39,6 +44,17 @@ struct AddItemView: View {
                                 Text(c.rawValue.capitalized).tag(c)
                             }
                         }
+                        .onChange(of: category) { _, newCat in
+                            thermalLayer = newCat.defaultThermalLayer
+                        }
+                        Picker("Thermal Layer", selection: $thermalLayer) {
+                            ForEach(ThermalLayer.allCases, id: \.self) { layer in
+                                Label(
+                                    "Layer \(layer.layerNumber) — \(layer.displayName)",
+                                    systemImage: layer.icon
+                                ).tag(layer)
+                            }
+                        }
                         TextField("Style (Casual, Formal…)", text: $style)
                         TextField("Colour hex (#000000)", text: $primaryColor)
                             .autocorrectionDisabled()
@@ -55,15 +71,19 @@ struct AddItemView: View {
             .navigationTitle("New Piece")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { saveManual() }
+                    Button("Save") { Task { await saveManual() } }
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
             .sheet(isPresented: $showCamera) {
-                CameraPicker(imageData: $imageData)
+                CameraPicker(imageData: $rawCameraData)
                     .ignoresSafeArea()
+            }
+            .onChange(of: rawCameraData) { _, data in
+                guard let data else { return }
+                Task { await processCapture(data) }
             }
             .sheet(isPresented: $showValidation) {
                 if let prediction = pendingPrediction {
@@ -81,7 +101,6 @@ struct AddItemView: View {
 
     @ViewBuilder
     private var photoScanSection: some View {
-        // Thumbnail preview
         HStack {
             Spacer()
             photoThumbnail
@@ -90,7 +109,6 @@ struct AddItemView: View {
         .listRowBackground(Color.clear)
         .padding(.vertical, 4)
 
-        // Camera + Gallery buttons
         HStack(spacing: 12) {
             Button {
                 showCamera = true
@@ -103,11 +121,21 @@ struct AddItemView: View {
                 sourceButtonLabel(icon: "photo.on.rectangle", title: "Gallery")
             }
             .onChange(of: selectedPhoto) { _, item in
-                Task { imageData = try? await item?.loadTransferable(type: Data.self) }
+                Task {
+                    if let data = try? await item?.loadTransferable(type: Data.self) {
+                        await processCapture(data)
+                    }
+                }
             }
         }
         .listRowBackground(Color.clear)
         .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+
+        if let err = segmentError {
+            Text(err)
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsErrorRed)
+        }
 
         if imageData != nil {
             Button {
@@ -128,7 +156,7 @@ struct AddItemView: View {
                 .background(Color.dsAccentGold)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
-            .disabled(isAnalysing)
+            .disabled(isAnalysing || isSegmenting)
         }
 
         if let err = aiError {
@@ -140,7 +168,19 @@ struct AddItemView: View {
 
     @ViewBuilder
     private var photoThumbnail: some View {
-        if let data = imageData, let uiImage = UIImage(data: data) {
+        if isSegmenting {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.dsSurface)
+                .frame(width: 96, height: 96)
+                .overlay(
+                    VStack(spacing: 6) {
+                        ProgressView().tint(Color.dsAccentGold)
+                        Text("Segmenting…")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundStyle(Color.dsTextTertiary)
+                    }
+                )
+        } else if let data = imageData, let uiImage = UIImage(data: data) {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFill()
@@ -179,6 +219,20 @@ struct AddItemView: View {
     // ── Actions ───────────────────────────────────────────────────────────────
 
     @MainActor
+    private func processCapture(_ raw: Data) async {
+        guard let img = UIImage(data: raw) else { return }
+        isSegmenting = true
+        segmentError = nil
+        do {
+            imageData = try await segService.segment(img)
+        } catch {
+            segmentError = error.localizedDescription
+            imageData = raw  // fall back to the original capture
+        }
+        isSegmenting = false
+    }
+
+    @MainActor
     private func analyseWithAI() async {
         guard let data = imageData else { return }
         isAnalysing = true
@@ -192,12 +246,21 @@ struct AddItemView: View {
         isAnalysing = false
     }
 
-    private func saveManual() {
+    @MainActor
+    private func saveManual() async {
+        let id = UUID()
+        var path: String? = nil
+        if let data = imageData {
+            path = try? await segService.saveToDocuments(data, for: id)
+        }
         let tagList = tags.split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
         let item = ClothingItem(
+            id: id,
+            imagePath: path,
             category: category,
+            thermalLayer: thermalLayer,
             primaryColor: primaryColor.isEmpty ? "#000000" : primaryColor,
             pattern: pattern.isEmpty ? "Solid" : pattern,
             style: style.isEmpty ? "Casual" : style,

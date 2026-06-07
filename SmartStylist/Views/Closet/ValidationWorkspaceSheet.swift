@@ -9,11 +9,14 @@ struct ValidationWorkspaceSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var category: ClothingCategory
+    @State private var thermalLayer: ThermalLayer
     @State private var primaryColor: String
     @State private var pattern: String
     @State private var style: String
     @State private var tagsText: String
+    @State private var isSaving = false
 
+    private let segService = GarmentSegmentationService()
     private let patternOptions = ["Solid", "Stripes", "Checks", "Floral", "Abstract", "Animal Print"]
     private let styleOptions   = ["Casual", "Formal", "Smart Casual", "Athletic", "Evening"]
 
@@ -21,7 +24,9 @@ struct ValidationWorkspaceSheet: View {
         self.prediction = prediction
         self.imageData  = imageData
         self.onSaved    = onSaved
-        self._category     = State(initialValue: ClothingCategory(rawValue: prediction.category) ?? .top)
+        let detectedCategory = ClothingCategory(rawValue: prediction.category) ?? .top
+        self._category     = State(initialValue: detectedCategory)
+        self._thermalLayer = State(initialValue: detectedCategory.defaultThermalLayer)
         self._primaryColor = State(initialValue: prediction.primaryColor)
         self._pattern      = State(initialValue: prediction.pattern)
         self._style        = State(initialValue: prediction.style)
@@ -55,6 +60,7 @@ struct ValidationWorkspaceSheet: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                         .foregroundStyle(Color.dsTextSecondary)
+                        .disabled(isSaving)
                 }
             }
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
@@ -104,6 +110,18 @@ struct ValidationWorkspaceSheet: View {
                     Picker("", selection: $category) {
                         ForEach(ClothingCategory.allCases, id: \.self) { c in
                             Text(c.rawValue.capitalized).tag(c)
+                        }
+                    }
+                    .tint(Color.dsAccentGold)
+                    .onChange(of: category) { _, newCat in
+                        thermalLayer = newCat.defaultThermalLayer
+                    }
+                }
+                cardDivider
+                pickerRow("Layer") {
+                    Picker("", selection: $thermalLayer) {
+                        ForEach(ThermalLayer.allCases, id: \.self) { layer in
+                            Text("L\(layer.layerNumber) \(layer.displayName)").tag(layer)
                         }
                     }
                     .tint(Color.dsAccentGold)
@@ -163,16 +181,26 @@ struct ValidationWorkspaceSheet: View {
     }
 
     private var confirmButton: some View {
-        Button(action: confirm) {
-            Text("Confirm & Add to Wardrobe")
-                .font(.dsBodyMedium)
-                .foregroundStyle(Color.dsDeepSlate)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.dsAccentGold)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .shadow(color: Color.dsAccentGold.opacity(0.3), radius: 12, y: 6)
+        Button {
+            isSaving = true
+            Task { await confirm() }
+        } label: {
+            Group {
+                if isSaving {
+                    ProgressView().tint(Color.dsDeepSlate)
+                } else {
+                    Text("Confirm & Add to Wardrobe")
+                        .font(.dsBodyMedium)
+                }
+            }
+            .foregroundStyle(Color.dsDeepSlate)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(Color.dsAccentGold)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .shadow(color: Color.dsAccentGold.opacity(0.3), radius: 12, y: 6)
         }
+        .disabled(isSaving)
     }
 
     private var cardDivider: some View {
@@ -196,13 +224,22 @@ struct ValidationWorkspaceSheet: View {
 
     // ── Save ──────────────────────────────────────────────────────────────────
 
-    private func confirm() {
+    @MainActor
+    private func confirm() async {
+        let id = UUID()
+        var path: String? = nil
+        if let data = imageData {
+            path = try? await segService.saveToDocuments(data, for: id)
+        }
         let tagList = tagsText
             .split(separator: ",")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
         let item = ClothingItem(
+            id: id,
+            imagePath: path,
             category: category,
+            thermalLayer: thermalLayer,
             primaryColor: primaryColor,
             pattern: pattern,
             style: style.isEmpty ? "Casual" : style,

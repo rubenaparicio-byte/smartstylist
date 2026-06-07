@@ -220,6 +220,7 @@ final class StyleEngineViewModel {
             let tagsJSON = item.tags.map { "\"\($0)\"" }.joined(separator: ",")
             return """
             {"id":"\(item.id.uuidString)","category":"\(item.category.rawValue)",\
+            "thermalLayer":"\(item.thermalLayer.rawValue)","layerNumber":\(item.thermalLayer.layerNumber),\
             "primaryColor":"\(item.primaryColor)","pattern":"\(item.pattern)",\
             "style":"\(item.style)","tags":[\(tagsJSON)]}
             """

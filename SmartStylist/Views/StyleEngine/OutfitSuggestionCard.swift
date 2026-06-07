@@ -4,60 +4,272 @@ struct OutfitSuggestionCard: View {
     let response: StyleResponse
     let items: [ClothingItem]
 
-    private func item(for id: UUID?) -> ClothingItem? {
-        guard let id else { return nil }
+    // ── Data helpers ──────────────────────────────────────────────────────────
+
+    private struct LayerGroup: Identifiable {
+        let layer: ThermalLayer
+        let outfitItems: [ClothingItem]
+        var id: String { layer.rawValue }
+    }
+
+    // Non-footwear items sorted outer→base
+    private var layerGroups: [LayerGroup] {
+        let ids = [
+            response.outfitSugerido.superior,
+            response.outfitSugerido.inferior,
+            response.outfitSugerido.abrigo
+        ]
+        let clothingItems = ids.compactMap { id -> ClothingItem? in
+            guard let id else { return nil }
+            return items.first { $0.id == id }
+        }
+        let grouped = Dictionary(grouping: clothingItems, by: \.thermalLayer)
+        return grouped
+            .map { LayerGroup(layer: $0.key, outfitItems: $0.value) }
+            .sorted { $0.layer.layerNumber > $1.layer.layerNumber }
+    }
+
+    private var footwearItem: ClothingItem? {
+        guard let id = response.outfitSugerido.calzado else { return nil }
         return items.first { $0.id == id }
     }
 
+    // ── Body ──────────────────────────────────────────────────────────────────
+
     var body: some View {
-        LuxuryCard {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(response.analisisContexto)
-                    .font(.dsBody)
-                    .foregroundStyle(Color.dsTextSecondary)
-
-                GoldDivider()
-
-                outfitGrid
-
-                GoldDivider()
-
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "sparkles")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(Color.dsAccentGold)
-                    Text(response.consejoEstilo)
-                        .font(.dsCaption)
-                        .foregroundStyle(Color.dsTextSecondary)
-                        .italic()
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            contextHeader
+            GoldDivider().padding(.horizontal, 20)
+            layerStackSection
+            if let shoe = footwearItem {
+                GoldDivider().padding(.horizontal, 20)
+                footwearRow(shoe)
             }
-            .padding(20)
+            GoldDivider().padding(.horizontal, 20)
+            styleTipSection
+        }
+        .luxuryCard()
+    }
+
+    // ── Context header ────────────────────────────────────────────────────────
+
+    private var contextHeader: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.seal.fill")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Color.dsAccentGold)
+                    .font(.caption)
+                Text(response.climaProcesado)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+            }
+            Text(response.analisisContexto)
+                .font(.dsBody)
+                .foregroundStyle(Color.dsTextSecondary)
+                .italic()
+        }
+        .padding(20)
+    }
+
+    // ── Layer stack ───────────────────────────────────────────────────────────
+
+    private var layerStackSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Section header
+            HStack(spacing: 6) {
+                Image(systemName: "square.3.layers.3d")
+                    .font(.caption)
+                    .foregroundStyle(Color.dsAccentGold)
+                Text("LAYER COMPOSITION")
+                    .font(.dsLabel)
+                    .foregroundStyle(Color.dsAccentGold)
+                    .tracking(2)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+            .padding(.bottom, 14)
+
+            if layerGroups.isEmpty {
+                Text("No items matched")
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 18)
+            } else {
+                ForEach(Array(layerGroups.enumerated()), id: \.element.id) { index, group in
+                    VStack(spacing: 10) {
+                        layerTierView(group)
+                        if index < layerGroups.count - 1 {
+                            layerConnector
+                        }
+                    }
+                }
+                .padding(.bottom, 18)
+            }
         }
     }
 
-    private var outfitGrid: some View {
-        let slots: [(String, UUID?)] = [
-            ("Top",       response.outfitSugerido.superior),
-            ("Bottom",    response.outfitSugerido.inferior),
-            ("Shoes",     response.outfitSugerido.calzado),
-            ("Outerwear", response.outfitSugerido.abrigo)
-        ]
-        return LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            ForEach(slots, id: \.0) { label, id in
-                if let id, let clothingItem = item(for: id) {
-                    VStack(spacing: 6) {
-                        SilhouetteView(category: clothingItem.category, size: 60)
-                        Text(label)
-                            .font(.dsCaption)
-                            .foregroundStyle(Color.dsTextTertiary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(12)
-                    .background(Material.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    private func layerTierView(_ group: LayerGroup) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Layer badge
+            HStack(spacing: 6) {
+                Text("\(group.layer.layerNumber)")
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Color.dsDeepSlate)
+                    .frame(width: 16, height: 16)
+                    .background(Color.dsAccentGold)
+                    .clipShape(Circle())
+
+                Text("LAYER \(group.layer.layerNumber)  ·  \(group.layer.displayName.uppercased())")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color.dsAccentGold)
+                    .tracking(1.5)
+            }
+            .padding(.horizontal, 20)
+
+            // Items row (fills width; 2 items → split equally)
+            HStack(spacing: 8) {
+                ForEach(group.outfitItems) { item in
+                    GarmentTile(item: item)
                 }
             }
+            .padding(.horizontal, 20)
         }
+    }
+
+    private var layerConnector: some View {
+        HStack {
+            Spacer().frame(width: 27)  // aligns with badge center
+            VStack(spacing: 0) {
+                Circle()
+                    .fill(Color.dsAccentGold.opacity(0.5))
+                    .frame(width: 3, height: 3)
+                Rectangle()
+                    .fill(Color.dsAccentGold.opacity(0.2))
+                    .frame(width: 0.5, height: 18)
+                Circle()
+                    .fill(Color.dsAccentGold.opacity(0.5))
+                    .frame(width: 3, height: 3)
+            }
+            Spacer()
+        }
+    }
+
+    // ── Footwear row ──────────────────────────────────────────────────────────
+
+    private func footwearRow(_ item: ClothingItem) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "shoeprints.fill")
+                    .font(.caption)
+                    .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                Text("FOOTWEAR")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Color.dsTextTertiary)
+                    .tracking(1.5)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 18)
+
+            HStack(spacing: 8) {
+                GarmentTile(item: item)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 18)
+        }
+    }
+
+    // ── Style tip ─────────────────────────────────────────────────────────────
+
+    private var styleTipSection: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "sparkles")
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(Color.dsAccentGold)
+                .font(.caption)
+                .padding(.top, 1)
+            Text(response.consejoEstilo)
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsTextSecondary)
+                .italic()
+        }
+        .padding(20)
+    }
+}
+
+// ── GarmentTile ───────────────────────────────────────────────────────────────
+
+private struct GarmentTile: View {
+    let item: ClothingItem
+
+    var body: some View {
+        HStack(spacing: 10) {
+            garmentThumbnail
+            itemDetails
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.dsSurface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(Color.dsAccentGold.opacity(0.12), lineWidth: 0.5)
+        )
+    }
+
+    @ViewBuilder
+    private var garmentThumbnail: some View {
+        let thumbnailSize = CGSize(width: 52, height: 68)
+        Group {
+            if let path = item.imagePath, let uiImage = UIImage(contentsOfFile: path) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Color.dsCardSlate
+                    .overlay(
+                        SilhouetteView(category: item.category, size: 38)
+                    )
+            }
+        }
+        .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+
+    private var itemDetails: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(item.category.rawValue.capitalized)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(Color.dsTextPrimary)
+                .tracking(0.5)
+
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(Color(hex: item.primaryColor))
+                    .frame(width: 10, height: 10)
+                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 0.5))
+                Text(item.primaryColor.uppercased())
+                    .font(.system(size: 9, weight: .regular, design: .monospaced))
+                    .foregroundStyle(Color.dsTextTertiary)
+            }
+
+            Text(item.style)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(Color.dsTextTertiary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.dsDeepSlate)
+                .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+
+            if !item.tags.isEmpty {
+                Text(item.tags.prefix(2).joined(separator: " · "))
+                    .font(.system(size: 8))
+                    .foregroundStyle(Color.dsTextTertiary.opacity(0.7))
+                    .lineLimit(1)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
