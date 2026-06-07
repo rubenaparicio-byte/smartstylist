@@ -42,27 +42,6 @@ final class GeminiService {
     private let apiKey = APIKeys.gemini
     private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
-    func listAvailableModels() async {
-        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models?key=\(apiKey)&pageSize=50") else { return }
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                await DebugLogger.shared.log("listModels: respuesta no JSON")
-                return
-            }
-            if let models = json["models"] as? [[String: Any]] {
-                let names = models.compactMap { $0["name"] as? String }
-                    .filter { $0.contains("flash") || $0.contains("pro") || $0.contains("gemini") }
-                await DebugLogger.shared.log("listModels (\(names.count)): \(names.joined(separator: ", "))")
-            } else {
-                let raw = String(data: data, encoding: .utf8) ?? ""
-                await DebugLogger.shared.log("listModels error: \(String(raw.prefix(300)))")
-            }
-        } catch {
-            await DebugLogger.shared.log("listModels network: \(error.localizedDescription)")
-        }
-    }
-
     func generate(prompt: String) async throws -> String {
         let url = URL(string: "\(baseURL)?key=\(apiKey)")!
         var request = URLRequest(url: url)

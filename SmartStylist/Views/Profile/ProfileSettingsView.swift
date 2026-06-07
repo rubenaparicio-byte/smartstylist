@@ -277,13 +277,6 @@ struct ProfileSettingsView: View {
                     .tracking(2)
                 Spacer()
                 Button {
-                    Task { await GeminiService().listAvailableModels() }
-                } label: {
-                    Text("List Models")
-                        .font(.dsCaption)
-                        .foregroundStyle(Color.dsAccentGold.opacity(0.7))
-                }
-                Button {
                     logger.clear()
                 } label: {
                     Text("Clear")
