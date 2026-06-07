@@ -1,6 +1,6 @@
 # SmartStylist — iOS App
 
-Native SwiftUI app (iOS 17+) that suggests outfits using Gemini AI and OpenWeather data.
+Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and OpenWeather data.
 
 > **Figma integration:** Design system tokens, component specs, and Figma↔code translation rules are in [`.claude/figma-design-system.md`](.claude/figma-design-system.md).
 
@@ -27,21 +27,42 @@ Edit `project.yml` to add targets, schemes, or build settings.
 `SmartStylist/Config/APIKeys.swift` is **gitignored** — it contains real keys and must never be committed.
 
 - Edit `APIKeys.swift.template` for structural changes (no `.swift` extension — XcodeGen ignores it)
-- CI injects the real file from GitHub Secrets (`GEMINI_API_KEY`, `WEATHER_API_KEY`)
+- CI injects the real file from GitHub Secrets (`OPENROUTER_API_KEY`, `WEATHER_API_KEY`)
 - Local dev: create `APIKeys.swift` manually from the template
 
 ## External APIs
 
 | Service | Enum key | Purpose |
 |---------|----------|---------|
-| Gemini 1.5 Flash | `APIKeys.gemini` | Colorimetry analysis + outfit suggestions |
+| OpenRouter (free tier) | `APIKeys.openRouter` | Colorimetry analysis, outfit suggestions, clothing vision |
 | OpenWeather 3.0 | `APIKeys.openWeather` | Real-time weather for outfit context |
 
-**Gemini prompt rules** (enforced in `GeminiService.swift`):
+### OpenRouter — modelo y fallback
+
+`GeminiService.swift` usa la API compatible con OpenAI de OpenRouter (`https://openrouter.ai/api/v1/chat/completions`). Si el modelo primario responde 429/404/503, prueba el siguiente automáticamente.
+
+**Modelos de texto** (en orden de prioridad):
+1. `meta-llama/llama-3.3-70b-instruct:free`
+2. `qwen/qwen3-next-80b-a3b-instruct:free`
+3. `openai/gpt-oss-120b:free`
+4. `moonshotai/kimi-k2.6:free`
+
+**Modelos de visión** (análisis de prendas por imagen):
+1. `nvidia/nemotron-nano-12b-v2-vl:free`
+2. `google/gemma-4-26b-a4b-it:free`
+3. `moonshotai/kimi-k2.6:free`
+
+> Los IDs de modelo `:free` son específicos de esta API key. Si se cambia de cuenta, consultar los modelos disponibles con `GET https://openrouter.ai/api/v1/models` y filtrar por `pricing.prompt == "0"`.
+
+**Reglas de prompt** (enforced in `GeminiService.swift`):
 1. Only reference `ClothingItem` UUIDs from the current inventory
 2. No outfit repeated within the last 14 days (`OutfitHistory`)
 3. Colorimetry harmony based on `UserProfile` skin/hair/eye tones
 4. Match weather conditions and occasion from context
+
+### Debug in-app
+
+`DebugLogger` (singleton `@MainActor`) retiene los últimos 30 eventos con timestamp. Se activa en `ProfileSettingsView` pulsando **5 veces el icono de perfil** → sección "DEVELOPER LOGS" con texto seleccionable. Los errores de red y de API se loguean automáticamente desde `GeminiService`.
 
 ## Testing
 
@@ -76,7 +97,7 @@ GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` 
 ### Pipeline steps
 
 1. Checkout + install XcodeGen
-2. Inject `APIKeys.swift` from `GEMINI_API_KEY` / `WEATHER_API_KEY`
+2. Inject `APIKeys.swift` from `OPENROUTER_API_KEY` / `WEATHER_API_KEY`
 3. `xcodegen generate`
 4. **Install distribution certificate** — decodes `DISTRIBUTION_CERTIFICATE_P12` (base64), imports into a temporary keychain via `security create-keychain` + `security import` + `security set-key-partition-list`
 5. **Install provisioning profile** — decodes `APP_STORE_PROVISIONING_PROFILE` (base64), extracts UUID via `security cms -D | plutil -extract UUID raw`, copies to `~/Library/MobileDevice/Provisioning Profiles/`
@@ -92,7 +113,7 @@ GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` 
 
 | Secret | Contents |
 |--------|----------|
-| `GEMINI_API_KEY` | Gemini 1.5 Flash API key |
+| `OPENROUTER_API_KEY` | OpenRouter API key (free tier) |
 | `WEATHER_API_KEY` | OpenWeather API key |
 | `DISTRIBUTION_CERTIFICATE_P12` | base64-encoded `.p12` (Apple Distribution cert + private key) |
 | `DISTRIBUTION_CERTIFICATE_PASSWORD` | Password for the `.p12` |
