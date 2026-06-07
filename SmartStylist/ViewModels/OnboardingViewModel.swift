@@ -52,7 +52,10 @@ final class OnboardingViewModel {
             analysisResult = result
             currentStep = .result
         } catch {
-            errorMessage = error.localizedDescription
+            let detail = DebugLogger.shared.entries.first ?? ""
+            errorMessage = detail.isEmpty
+                ? error.localizedDescription
+                : "\(error.localizedDescription)\n\n\(detail)"
         }
         isLoading = false
     }
