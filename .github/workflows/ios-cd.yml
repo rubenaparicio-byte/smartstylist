@@ -148,10 +148,16 @@ jobs:
           EOF
 
       # ── 9. Archive ────────────────────────────────────────────────────────
+      # BUILD_NUMBER: timestamp Unix en segundos — siempre estrictamente
+      # creciente, nunca colisiona con subidas anteriores (manuales o de CI)
+      # y cabe en 32 bits hasta 2038. github.run_number NO es fiable porque
+      # empieza en 1 por workflow y falla si hay subidas fuera de CI.
       - name: Compilar y archivar (xcodebuild archive)
         env:
           TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
+          BUILD_NUMBER=$(date +%s)
+          echo "Build number: $BUILD_NUMBER"
           xcodebuild archive \
             -project SmartStylist.xcodeproj \
             -scheme "$SCHEME" \
@@ -162,7 +168,7 @@ jobs:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            CURRENT_PROJECT_VERSION="${{ github.run_number }}"
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
 
       # ── 10. Export IPA ────────────────────────────────────────────────────
       - name: Exportar IPA
