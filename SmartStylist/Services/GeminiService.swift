@@ -40,7 +40,7 @@ struct ColorimetryAnalysis: Codable {
 
 final class GeminiService {
     private let apiKey = APIKeys.gemini
-    private let baseURL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
+    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
     func generate(prompt: String) async throws -> String {
         let url = URL(string: "\(baseURL)?key=\(apiKey)")!
@@ -52,7 +52,8 @@ final class GeminiService {
             "contents": [["parts": [["text": prompt]]]],
             "generationConfig": [
                 "temperature": 0.7,
-                "maxOutputTokens": 2048
+                "maxOutputTokens": 2048,
+                "responseMimeType": "application/json"
             ]
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -280,7 +281,8 @@ final class GeminiService {
             ]],
             "generationConfig": [
                 "temperature": 0.3,
-                "maxOutputTokens": 1024
+                "maxOutputTokens": 1024,
+                "responseMimeType": "application/json"
             ]
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
