@@ -8,10 +8,32 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
 
 **MVVM** with strict layer separation:
 - `Views/` — SwiftUI views, zero business logic
+  - `Auth/` — `LoginView` (Sign In with Apple + Google placeholder)
+  - `Closet/` — wardrobe CRUD, `AddItemView`, `ClothingItemCard`
+  - `Components/` — reusable primitives (`CameraPicker`, `SelectionChip`, …)
+  - `StyleEngine/` — AI outfit generation UI
+  - `Onboarding/` — colorimetry onboarding flow
 - `ViewModels/` — `@Observable` classes, own state and coordinate services
-- `Services/` — pure async functions (GeminiService, WeatherService, LocationService)
+- `Services/` — async service layer
+  - `AuthService` — Sign In with Apple + Keychain session management
+  - `GeminiService` — OpenRouter LLM + vision calls with model fallback
+  - `WeatherService` / `LocationService` — weather context
 - `Models/` — `@Model` SwiftData entities (ClothingItem, OutfitHistory, UserProfile)
 - `DesignSystem/` — design tokens (colors, typography, shapes, animations)
+
+### App navigation flow
+
+`RootView` drives three states based on `AuthService.isAuthenticated` and `UserProfile.onboardingCompleted`:
+
+```
+Cold launch
+  └─ auth.validateAppleCredential()   ← checks Apple servers
+       ├─ not authenticated           → LoginView
+       ├─ authenticated, no profile   → OnboardingContainerView
+       └─ authenticated + onboarded   → MainTabView
+```
+
+`AuthService` is injected as `@Environment(AuthService.self)` from `SmartStylistApp`.
 
 ## Project Generation
 
@@ -21,6 +43,39 @@ xcodegen generate   # regenerate after editing project.yml
 ```
 
 Edit `project.yml` to add targets, schemes, or build settings.
+
+## Authentication
+
+Sign In with Apple is the primary auth method. Google Sign-In UI is prepared but not yet wired to a SDK.
+
+### AuthService (`Services/AuthService.swift`)
+
+`@MainActor @Observable` class — inject via `@Environment(AuthService.self)`.
+
+| Method | Purpose |
+|--------|---------|
+| `handleAuthorization(_:)` | Called from `SignInWithAppleButton.onCompletion`; persists Apple user ID to Keychain |
+| `handleError(_:)` | Silently drops `.canceled`; sets `loginError` for other failures |
+| `validateAppleCredential()` | Async; calls Apple servers on cold launch; calls `signOut()` on `.revoked`/`.notFound` |
+| `signOut()` | Deletes Keychain entry; resets `isAuthenticated` |
+
+### Keychain storage
+
+- **Item class:** `kSecClassGenericPassword`
+- **Service:** `Bundle.main.bundleIdentifier`
+- **Account key:** `"appleUserID"`
+- **Accessibility:** `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` — device-only, no iCloud backup
+
+### Entitlement
+
+`com.apple.developer.applesignin: [Default]` is declared in both `project.yml` (under `targets.SmartStylist.entitlements`) and `SmartStylist/SmartStylist.entitlements`. XcodeGen applies the entitlement at project generation time. **Never remove this entitlement** — Sign In with Apple fails silently at runtime without it.
+
+### Wiring up Google Sign-In (future)
+
+1. Configure OAuth 2.0 credentials in Google Cloud Console
+2. Add `GoogleSignIn-iOS` package via Swift Package Manager
+3. Register the reversed client ID as `GIDClientID` in `project.yml` `info.properties`
+4. Replace the `TODO` placeholder in `LoginView.googleSignInButton` with `GIDSignIn.sharedInstance.signIn(withPresenting:)`
 
 ## API Keys
 
@@ -59,6 +114,43 @@ Edit `project.yml` to add targets, schemes, or build settings.
 2. No outfit repeated within the last 14 days (`OutfitHistory`)
 3. Colorimetry harmony based on `UserProfile` skin/hair/eye tones
 4. Match weather conditions and occasion from context
+
+## Design System
+
+Tokens live in `SmartStylist/DesignSystem/`. Never hardcode colors, fonts, radii, or animation curves — always reference a `DS+` token.
+
+### Card modifiers (`DS+Shapes.swift`)
+
+| Modifier | Background | Use when |
+|----------|-----------|---------|
+| `.luxuryCard(cornerRadius:)` | `Color.dsCardSlate` (opaque) | Cards with no image or over a known dark background |
+| `.glassCard(cornerRadius:)` | `Material.ultraThinMaterial` | Cards that float over content or images |
+
+Both share a `0.5pt` gold border at `0.15–0.18` opacity and `.continuous` corner style.
+
+### Button styles (`DS+Shapes.swift`)
+
+`CardPressStyle` — `ButtonStyle` that scales to `0.96` on press using `dsSnappy` spring. Apply to `NavigationLink` wrappers over cards:
+
+```swift
+NavigationLink(destination: ...) { ClothingItemCard(...) }
+    .buttonStyle(CardPressStyle())
+```
+
+### Animation tokens (`DS+Animations.swift`)
+
+| Token | Curve | Use |
+|-------|-------|-----|
+| `dsDefault` | `easeInOut(0.3s)` | General layout changes, filter toggles |
+| `dsFast` | `easeInOut(0.18s)` | Quick state feedback |
+| `dsSpring` | `spring(response: 0.4, damping: 0.75)` | Selection chips, content transitions |
+| `dsSnappy` | `spring(response: 0.28, damping: 0.68)` | Press reactions (`CardPressStyle`) |
+
+### Camera & photo picker (`Views/Components/`)
+
+`CameraPicker` — `UIViewControllerRepresentable` wrapping `UIImagePickerController(.camera)`. Returns JPEG at 85% quality via `@Binding<Data?>`. Check `UIImagePickerController.isSourceTypeAvailable(.camera)` before enabling (simulators lack a camera).
+
+`NSCameraUsageDescription` is already declared in `project.yml`.
 
 ### Debug in-app
 
