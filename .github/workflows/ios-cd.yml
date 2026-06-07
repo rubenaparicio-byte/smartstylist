@@ -43,14 +43,14 @@ jobs:
       # 'EOF' entre comillas: evita que el shell expanda nada dentro del heredoc.
       # El runner de Actions sustituye ${{ }} ANTES de ejecutar el script,
       # así que la clave llega literal al archivo .swift sin pasos intermedios.
-      - name: Inyectar API Keys (Gemini + OpenWeather)
+      - name: Inyectar API Keys (OpenRouter + OpenWeather)
         run: |
           mkdir -p SmartStylist/Config
           cat << 'EOF' > SmartStylist/Config/APIKeys.swift
           import Foundation
 
           enum APIKeys {
-              static let gemini = "${{ secrets.GEMINI_API_KEY }}"
+              static let openRouter = "${{ secrets.OPENROUTER_API_KEY }}"
               static let openWeather = "${{ secrets.WEATHER_API_KEY }}"
           }
           EOF

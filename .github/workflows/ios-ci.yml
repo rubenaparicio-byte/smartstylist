@@ -26,7 +26,7 @@ jobs:
         import Foundation
 
         enum APIKeys {
-            static let gemini = "${{ secrets.GEMINI_API_KEY }}"
+            static let openRouter = "${{ secrets.OPENROUTER_API_KEY }}"
             static let openWeather = "${{ secrets.WEATHER_API_KEY }}"
         }
         EOF

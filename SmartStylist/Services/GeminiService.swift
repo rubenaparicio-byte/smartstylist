@@ -39,52 +39,25 @@ struct ColorimetryAnalysis: Codable {
 // ── Service ───────────────────────────────────────────────────────────────────
 
 final class GeminiService {
-    private let apiKey = APIKeys.gemini
-    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
+    private let apiKey      = APIKeys.openRouter
+    private let endpoint    = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+    private let textModel   = "meta-llama/llama-3.3-70b-instruct:free"
+    private let visionModel = "meta-llama/llama-4-scout:free"
+
+    // ── Text generation ───────────────────────────────────────────────────────
 
     func generate(prompt: String) async throws -> String {
-        let url = URL(string: "\(baseURL)?key=\(apiKey)")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
         let body: [String: Any] = [
-            "contents": [["parts": [["text": prompt]]]],
-            "generationConfig": [
-                "temperature": 0.7,
-                "maxOutputTokens": 2048,
-                "responseMimeType": "application/json"
-            ]
+            "model": textModel,
+            "messages": [["role": "user", "content": prompt]],
+            "temperature": 0.7,
+            "max_tokens": 2048,
+            "response_format": ["type": "json_object"]
         ]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            await DebugLogger.shared.log("generate() network: \(error.localizedDescription)")
-            throw GeminiError.serverError
-        }
-
-        let http = response as? HTTPURLResponse
-        guard http?.statusCode == 200 else {
-            await logAPIError(context: "generate()", statusCode: http?.statusCode ?? -1, data: data)
-            throw GeminiError.serverError
-        }
-
-        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let candidates = json?["candidates"] as? [[String: Any]]
-        let firstCandidate = candidates?.first
-        let finishReason = firstCandidate?["finishReason"] as? String
-        let content = firstCandidate?["content"] as? [String: Any]
-        let parts   = content?["parts"] as? [[String: Any]]
-        guard let text = parts?.first?["text"] as? String else {
-            await DebugLogger.shared.log("generate() emptyResponse — finishReason: \(finishReason ?? "nil") candidates: \(candidates?.count ?? 0)")
-            throw GeminiError.emptyResponse
-        }
-        return text
+        return try await post(body: body, context: "generate()")
     }
+
+    // ── Colorimetry analysis ──────────────────────────────────────────────────
 
     func analyseProfile(bodyType: String, skinTone: String,
                         eyeColor: String, hairColor: String) async throws -> ColorimetryAnalysis {
@@ -130,15 +103,7 @@ final class GeminiService {
         }
     }
 
-    // Strips markdown code fences that the model sometimes wraps around JSON
-    private func stripMarkdownFences(_ raw: String) -> String {
-        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        if s.hasPrefix("```") {
-            let lines = s.components(separatedBy: "\n")
-            s = lines.dropFirst().dropLast().joined(separator: "\n")
-        }
-        return s.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
+    // ── Outfit suggestion ─────────────────────────────────────────────────────
 
     func suggestOutfit(profileJSON: String,
                        weatherJSON: String,
@@ -218,7 +183,8 @@ final class GeminiService {
           "tags": ["occasion1", "occasion2", "occasion3"]
         }
         """
-        let raw = try await generateWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt)
+        let raw = try await postWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt,
+                                          context: "analyseClothingItem()")
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
         do { return try JSONDecoder().decode(GarmentPrediction.self, from: data) }
@@ -252,7 +218,8 @@ final class GeminiService {
 
         Return 1–12 items. Include only clearly distinct garments.
         """
-        let raw = try await generateWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt)
+        let raw = try await postWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt,
+                                          context: "scanBulkWardrobe()")
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
         do { return try JSONDecoder().decode(BulkScanResult.self, from: data).items }
@@ -262,29 +229,14 @@ final class GeminiService {
         }
     }
 
-    // ── Multimodal request helper ─────────────────────────────────────────────
+    // ── OpenRouter request helpers ────────────────────────────────────────────
 
-    private func generateWithImage(imageData: Data,
-                                   mimeType: String,
-                                   prompt: String) async throws -> String {
-        let url = URL(string: "\(baseURL)?key=\(apiKey)")!
-        var request = URLRequest(url: url)
+    private func post(body: [String: Any], context: String) async throws -> String {
+        var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "contents": [[
-                "parts": [
-                    ["inline_data": ["mime_type": mimeType, "data": imageData.base64EncodedString()]],
-                    ["text": prompt]
-                ]
-            ]],
-            "generationConfig": [
-                "temperature": 0.3,
-                "maxOutputTokens": 1024,
-                "responseMimeType": "application/json"
-            ]
-        ]
+        request.setValue("SmartStylist", forHTTPHeaderField: "X-Title")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let data: Data
@@ -292,38 +244,60 @@ final class GeminiService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
-            await DebugLogger.shared.log("generateWithImage() network: \(error.localizedDescription)")
+            await DebugLogger.shared.log("\(context) network: \(error.localizedDescription)")
             throw GeminiError.serverError
         }
 
         let http = response as? HTTPURLResponse
         guard http?.statusCode == 200 else {
-            await logAPIError(context: "generateWithImage()", statusCode: http?.statusCode ?? -1, data: data)
+            await logAPIError(context: context, statusCode: http?.statusCode ?? -1, data: data)
             throw GeminiError.serverError
         }
 
         let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let candidates = json?["candidates"] as? [[String: Any]]
-        let firstCandidate = candidates?.first
-        let finishReason = firstCandidate?["finishReason"] as? String
-        let content = firstCandidate?["content"] as? [String: Any]
-        let parts   = content?["parts"] as? [[String: Any]]
-        guard let text = parts?.first?["text"] as? String else {
-            await DebugLogger.shared.log("generateWithImage() emptyResponse — finishReason: \(finishReason ?? "nil") candidates: \(candidates?.count ?? 0)")
+        let choices = json?["choices"] as? [[String: Any]]
+        let message = choices?.first?["message"] as? [String: Any]
+        guard let text = message?["content"] as? String else {
+            let finishReason = choices?.first?["finish_reason"] as? String
+            await DebugLogger.shared.log("\(context) emptyResponse — finish_reason: \(finishReason ?? "nil")")
             throw GeminiError.emptyResponse
         }
         return text
     }
 
-    // ── Error logging helper ──────────────────────────────────────────────────
+    private func postWithImage(imageData: Data, mimeType: String,
+                               prompt: String, context: String) async throws -> String {
+        let dataURL = "data:\(mimeType);base64,\(imageData.base64EncodedString())"
+        let body: [String: Any] = [
+            "model": visionModel,
+            "messages": [[
+                "role": "user",
+                "content": [
+                    ["type": "image_url", "image_url": ["url": dataURL]],
+                    ["type": "text", "text": prompt]
+                ]
+            ]],
+            "temperature": 0.3,
+            "max_tokens": 1024
+        ]
+        return try await post(body: body, context: context)
+    }
+
+    private func stripMarkdownFences(_ raw: String) -> String {
+        var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.hasPrefix("```") {
+            let lines = s.components(separatedBy: "\n")
+            s = lines.dropFirst().dropLast().joined(separator: "\n")
+        }
+        return s.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     private func logAPIError(context: String, statusCode: Int, data: Data) async {
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let err  = json["error"] as? [String: Any] {
-            let code = err["code"] as? Int ?? statusCode
             let msg  = err["message"] as? String ?? "?"
-            let stat = err["status"] as? String ?? "?"
-            await DebugLogger.shared.log("\(context) \(code) \(stat): \(msg)")
+            let type = err["type"] as? String ?? err["status"] as? String ?? "?"
+            await DebugLogger.shared.log("\(context) \(statusCode) \(type): \(msg)")
         } else {
             let raw = String(data: data, encoding: .utf8) ?? "<binary>"
             await DebugLogger.shared.log("\(context) HTTP \(statusCode): \(String(raw.prefix(300)))")
