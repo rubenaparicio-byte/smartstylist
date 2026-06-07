@@ -58,21 +58,29 @@ final class GeminiService {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            let body = String(data: data, encoding: .utf8) ?? "<non-UTF8 body>"
-            let snippet = String(body.prefix(400))
-            await DebugLogger.shared.log("generate() HTTP \(statusCode): \(snippet)")
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            await DebugLogger.shared.log("generate() network: \(error.localizedDescription)")
             throw GeminiError.serverError
         }
 
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let http = response as? HTTPURLResponse
+        guard http?.statusCode == 200 else {
+            await logAPIError(context: "generate()", statusCode: http?.statusCode ?? -1, data: data)
+            throw GeminiError.serverError
+        }
+
+        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         let candidates = json?["candidates"] as? [[String: Any]]
-        let content    = candidates?.first?["content"] as? [String: Any]
-        let parts      = content?["parts"] as? [[String: Any]]
+        let firstCandidate = candidates?.first
+        let finishReason = firstCandidate?["finishReason"] as? String
+        let content = firstCandidate?["content"] as? [String: Any]
+        let parts   = content?["parts"] as? [[String: Any]]
         guard let text = parts?.first?["text"] as? String else {
-            await DebugLogger.shared.log("generate() emptyResponse — candidates: \(String(describing: candidates?.count)) parts: \(String(describing: parts?.count))")
+            await DebugLogger.shared.log("generate() emptyResponse — finishReason: \(finishReason ?? "nil") candidates: \(candidates?.count ?? 0)")
             throw GeminiError.emptyResponse
         }
         return text
@@ -279,22 +287,47 @@ final class GeminiService {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
-            let body = String(data: data, encoding: .utf8) ?? "<non-UTF8 body>"
-            await DebugLogger.shared.log("generateWithImage() HTTP \(statusCode): \(String(body.prefix(400)))")
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            await DebugLogger.shared.log("generateWithImage() network: \(error.localizedDescription)")
             throw GeminiError.serverError
         }
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+
+        let http = response as? HTTPURLResponse
+        guard http?.statusCode == 200 else {
+            await logAPIError(context: "generateWithImage()", statusCode: http?.statusCode ?? -1, data: data)
+            throw GeminiError.serverError
+        }
+
+        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         let candidates = json?["candidates"] as? [[String: Any]]
-        let content    = candidates?.first?["content"] as? [String: Any]
-        let parts      = content?["parts"] as? [[String: Any]]
+        let firstCandidate = candidates?.first
+        let finishReason = firstCandidate?["finishReason"] as? String
+        let content = firstCandidate?["content"] as? [String: Any]
+        let parts   = content?["parts"] as? [[String: Any]]
         guard let text = parts?.first?["text"] as? String else {
-            await DebugLogger.shared.log("generateWithImage() emptyResponse — candidates: \(String(describing: candidates?.count))")
+            await DebugLogger.shared.log("generateWithImage() emptyResponse — finishReason: \(finishReason ?? "nil") candidates: \(candidates?.count ?? 0)")
             throw GeminiError.emptyResponse
         }
         return text
+    }
+
+    // ── Error logging helper ──────────────────────────────────────────────────
+
+    private func logAPIError(context: String, statusCode: Int, data: Data) async {
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let err  = json["error"] as? [String: Any] {
+            let code = err["code"] as? Int ?? statusCode
+            let msg  = err["message"] as? String ?? "?"
+            let stat = err["status"] as? String ?? "?"
+            await DebugLogger.shared.log("\(context) \(code) \(stat): \(msg)")
+        } else {
+            let raw = String(data: data, encoding: .utf8) ?? "<binary>"
+            await DebugLogger.shared.log("\(context) HTTP \(statusCode): \(String(raw.prefix(300)))")
+        }
     }
 }
 
