@@ -39,22 +39,32 @@ struct ColorimetryAnalysis: Codable {
 // ── Service ───────────────────────────────────────────────────────────────────
 
 final class GeminiService {
-    private let apiKey      = APIKeys.openRouter
-    private let endpoint    = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
-    private let textModel   = "deepseek/deepseek-chat:free"
-    private let visionModel = "google/gemma-3-27b-it:free"
+    private let apiKey   = APIKeys.openRouter
+    private let endpoint = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+
+    // Tried in order; skips to next on 404 / 429 / 503 (retriable).
+    private let textModels: [String] = [
+        "google/gemma-3-27b-it:free",
+        "meta-llama/llama-4-maverick:free",
+        "meta-llama/llama-4-scout:free",
+        "qwen/qwen-2.5-72b-instruct:free"
+    ]
+    private let visionModels: [String] = [
+        "google/gemma-3-27b-it:free",
+        "meta-llama/llama-4-scout:free",
+        "meta-llama/llama-4-maverick:free"
+    ]
 
     // ── Text generation ───────────────────────────────────────────────────────
 
     func generate(prompt: String) async throws -> String {
         let body: [String: Any] = [
-            "model": textModel,
             "messages": [["role": "user", "content": prompt]],
             "temperature": 0.7,
             "max_tokens": 2048,
             "response_format": ["type": "json_object"]
         ]
-        return try await post(body: body, context: "generate()")
+        return try await postWithFallback(body: body, models: textModels, context: "generate()")
     }
 
     // ── Colorimetry analysis ──────────────────────────────────────────────────
@@ -94,12 +104,12 @@ final class GeminiService {
         """
         let raw = try await generate(prompt: prompt)
         let cleaned = stripMarkdownFences(raw)
-        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        guard let data = cleaned.data(using: .utf8) else { throw LLMError.parseError }
         do {
             return try JSONDecoder().decode(ColorimetryAnalysis.self, from: data)
         } catch {
             await DebugLogger.shared.log("analyseProfile() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
-            throw GeminiError.parseError
+            throw LLMError.parseError
         }
     }
 
@@ -157,11 +167,11 @@ final class GeminiService {
         """
         let raw = try await generate(prompt: prompt)
         let cleaned = stripMarkdownFences(raw)
-        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        guard let data = cleaned.data(using: .utf8) else { throw LLMError.parseError }
         do { return try JSONDecoder().decode(StyleResponse.self, from: data) }
         catch {
             await DebugLogger.shared.log("suggestOutfit() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
-            throw GeminiError.parseError
+            throw LLMError.parseError
         }
     }
 
@@ -183,14 +193,14 @@ final class GeminiService {
           "tags": ["occasion1", "occasion2", "occasion3"]
         }
         """
-        let raw = try await postWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt,
-                                          context: "analyseClothingItem()")
+        let raw = try await postWithImage(imageData: imageData, mimeType: mimeType,
+                                          prompt: prompt, context: "analyseClothingItem()")
         let cleaned = stripMarkdownFences(raw)
-        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        guard let data = cleaned.data(using: .utf8) else { throw LLMError.parseError }
         do { return try JSONDecoder().decode(GarmentPrediction.self, from: data) }
         catch {
             await DebugLogger.shared.log("analyseClothingItem() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
-            throw GeminiError.parseError
+            throw LLMError.parseError
         }
     }
 
@@ -218,58 +228,23 @@ final class GeminiService {
 
         Return 1–12 items. Include only clearly distinct garments.
         """
-        let raw = try await postWithImage(imageData: imageData, mimeType: mimeType, prompt: prompt,
-                                          context: "scanBulkWardrobe()")
+        let raw = try await postWithImage(imageData: imageData, mimeType: mimeType,
+                                          prompt: prompt, context: "scanBulkWardrobe()")
         let cleaned = stripMarkdownFences(raw)
-        guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
+        guard let data = cleaned.data(using: .utf8) else { throw LLMError.parseError }
         do { return try JSONDecoder().decode(BulkScanResult.self, from: data).items }
         catch {
             await DebugLogger.shared.log("scanBulkWardrobe() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
-            throw GeminiError.parseError
+            throw LLMError.parseError
         }
     }
 
-    // ── OpenRouter request helpers ────────────────────────────────────────────
-
-    private func post(body: [String: Any], context: String) async throws -> String {
-        var request = URLRequest(url: endpoint)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("SmartStylist", forHTTPHeaderField: "X-Title")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let data: Data
-        let response: URLResponse
-        do {
-            (data, response) = try await URLSession.shared.data(for: request)
-        } catch {
-            await DebugLogger.shared.log("\(context) network: \(error.localizedDescription)")
-            throw GeminiError.serverError
-        }
-
-        let http = response as? HTTPURLResponse
-        guard http?.statusCode == 200 else {
-            await logAPIError(context: context, statusCode: http?.statusCode ?? -1, data: data)
-            throw GeminiError.serverError
-        }
-
-        let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let choices = json?["choices"] as? [[String: Any]]
-        let message = choices?.first?["message"] as? [String: Any]
-        guard let text = message?["content"] as? String else {
-            let finishReason = choices?.first?["finish_reason"] as? String
-            await DebugLogger.shared.log("\(context) emptyResponse — finish_reason: \(finishReason ?? "nil")")
-            throw GeminiError.emptyResponse
-        }
-        return text
-    }
+    // ── Request helpers ───────────────────────────────────────────────────────
 
     private func postWithImage(imageData: Data, mimeType: String,
                                prompt: String, context: String) async throws -> String {
         let dataURL = "data:\(mimeType);base64,\(imageData.base64EncodedString())"
         let body: [String: Any] = [
-            "model": visionModel,
             "messages": [[
                 "role": "user",
                 "content": [
@@ -280,7 +255,59 @@ final class GeminiService {
             "temperature": 0.3,
             "max_tokens": 1024
         ]
-        return try await post(body: body, context: context)
+        return try await postWithFallback(body: body, models: visionModels, context: context)
+    }
+
+    private func postWithFallback(body: [String: Any], models: [String], context: String) async throws -> String {
+        var lastStatus = 0
+        var lastData   = Data()
+
+        for model in models {
+            var b = body
+            b["model"] = model
+            do {
+                let (data, status) = try await send(body: b)
+                if status == 200 {
+                    return try extractText(from: data, context: "\(context)[\(model)]")
+                }
+                lastStatus = status
+                lastData   = data
+                await logAPIError(context: "\(context)[\(model)]", statusCode: status, data: data)
+                let retriable = status == 404 || status == 429 || status == 503
+                if !retriable { throw LLMError.serverError }
+            } catch let e as LLMError {
+                throw e
+            } catch {
+                await DebugLogger.shared.log("\(context)[\(model)] network: \(error.localizedDescription)")
+            }
+        }
+
+        await logAPIError(context: "\(context)[exhausted]", statusCode: lastStatus, data: lastData)
+        throw LLMError.serverError
+    }
+
+    private func send(body: [String: Any]) async throws -> (Data, Int) {
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("SmartStylist", forHTTPHeaderField: "X-Title")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? -1
+        return (data, status)
+    }
+
+    private func extractText(from data: Data, context: String) throws -> String {
+        let json    = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let choices = json?["choices"] as? [[String: Any]]
+        let message = choices?.first?["message"] as? [String: Any]
+        guard let text = message?["content"] as? String else {
+            let reason = choices?.first?["finish_reason"] as? String
+            Task { await DebugLogger.shared.log("\(context) emptyResponse — finish_reason: \(reason ?? "nil")") }
+            throw LLMError.emptyResponse
+        }
+        return text
     }
 
     private func stripMarkdownFences(_ raw: String) -> String {
@@ -299,10 +326,9 @@ final class GeminiService {
             let type     = err["type"] as? String ?? err["status"] as? String ?? ""
             let metadata = err["metadata"] as? [String: Any]
             let provider = metadata?["provider_name"] as? String ?? ""
-            let rawErr   = metadata?["raw"] as? String ?? ""
-            let detail   = [type, provider.isEmpty ? nil : "via \(provider)", rawErr.isEmpty ? nil : rawErr]
-                .compactMap { $0 }.joined(separator: " ")
-            await DebugLogger.shared.log("\(context) \(statusCode) \(detail.isEmpty ? "" : "[\(detail)]"): \(msg)")
+            let parts    = [type, provider.isEmpty ? nil : "via \(provider)"].compactMap { $0 }
+            let detail   = parts.isEmpty ? "" : " [\(parts.joined(separator: " "))]"
+            await DebugLogger.shared.log("\(context) \(statusCode)\(detail): \(msg)")
         } else {
             let raw = String(data: data, encoding: .utf8) ?? "<binary>"
             await DebugLogger.shared.log("\(context) HTTP \(statusCode): \(String(raw.prefix(300)))")
@@ -310,13 +336,18 @@ final class GeminiService {
     }
 }
 
-enum GeminiError: LocalizedError {
+// ── Errors ────────────────────────────────────────────────────────────────────
+
+enum LLMError: LocalizedError {
     case serverError, emptyResponse, parseError
     var errorDescription: String? {
         switch self {
-        case .serverError:    return "Gemini API server error."
-        case .emptyResponse:  return "Gemini returned an empty response."
-        case .parseError:     return "Could not parse Gemini response."
+        case .serverError:   return "AI service error. Please try again."
+        case .emptyResponse: return "The AI returned an empty response."
+        case .parseError:    return "Could not parse the AI response."
         }
     }
 }
+
+// Kept for source compatibility with ViewModels that catch GeminiError.
+typealias GeminiError = LLMError
