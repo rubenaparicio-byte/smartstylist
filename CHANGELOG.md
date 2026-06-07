@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.2.4] — 2026-06-07 · CD Pipeline — Build Number Fix
+
+### Fixed
+
+- **TestFlight upload error -19241** (bundle version already used) — causa raíz definitiva: XcodeGen evalúa `$(CURRENT_PROJECT_VERSION)` en tiempo de generación del proyecto y escribe el valor literal (`1`) en `SmartStylist/Info.plist`; el override de `CURRENT_PROJECT_VERSION` en la línea de `xcodebuild` no tiene efecto porque la referencia ya no existe en el plist generado
+- Fix: `PlistBuddy` parcheea `CFBundleVersion` con el timestamp Unix directamente en `Info.plist` justo antes de `xcodebuild archive`, garantizando que el IPA contiene siempre el build number correcto
+
+### Changed
+
+- `ios-cd.yml` — paso "Compilar y archivar": añadido `/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER"` antes del archive; eliminado `CURRENT_PROJECT_VERSION` del comando xcodebuild (ya no necesario)
+
+---
+
 ## [v0.2.3] — 2026-06-07 · Developer Tooling
 
 ### Added
