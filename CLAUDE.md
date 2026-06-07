@@ -17,8 +17,10 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
 - `Services/` — async service layer
   - `AuthService` — Sign In with Apple + Keychain session management
   - `GeminiService` — OpenRouter LLM + vision calls with model fallback
+  - `GarmentSegmentationService` — on-device Vision segmentation (Swift `actor`)
   - `WeatherService` / `LocationService` — weather context
 - `Models/` — `@Model` SwiftData entities (ClothingItem, OutfitHistory, UserProfile)
+  - `ThermalLayer` enum — layering system (base / inner / mid / outer) on `ClothingItem`
 - `DesignSystem/` — design tokens (colors, typography, shapes, animations)
 
 ### App navigation flow
@@ -150,7 +152,58 @@ NavigationLink(destination: ...) { ClothingItemCard(...) }
 
 `CameraPicker` — `UIViewControllerRepresentable` wrapping `UIImagePickerController(.camera)`. Returns JPEG at 85% quality via `@Binding<Data?>`. Check `UIImagePickerController.isSourceTypeAvailable(.camera)` before enabling (simulators lack a camera).
 
-`NSCameraUsageDescription` is already declared in `project.yml`.
+`NSCameraUsageDescription` is declared in `project.yml`. Current copy: _"SmartStylist uses the camera to photograph clothing items and automatically segment them from the background using on-device Vision analysis."_
+
+### Garment segmentation (`Services/GarmentSegmentationService.swift`)
+
+Swift `actor` that isolates the Vision + CoreImage pipeline on a background thread. Called from `AddItemView.processCapture()` and the gallery picker handler.
+
+**Pipeline:**
+1. `VNGenerateForegroundInstanceMaskRequest` — on-device foreground subject detection (iOS 17+, no network)
+2. `VNInstanceMaskObservation.generateScaledMaskForImage(forInstances:from:)` — pixel-accurate mask matching the CGImage dimensions
+3. `CIFilter.blendWithMask()` — composites the garment over DS neutral background (`#2C2C2E` / `dsCardSlate`)
+4. Output as `Data` (PNG) via `pngData()`
+
+**Image persistence:**
+```swift
+segService.saveToDocuments(data, for: id)
+// → Documents/garments/<UUID>.png
+// Returns the absolute path stored in ClothingItem.imagePath
+```
+
+Both `AddItemView.saveManual()` and `ValidationWorkspaceSheet.confirm()` call `saveToDocuments` before inserting the SwiftData model, ensuring `ClothingItem.imagePath` is never `nil` after save.
+
+**EXIF orientation:**
+Camera photos often have non-Up orientation. The service works in native CGImage space and passes `cgImagePropertyOrientation` to `VNImageRequestHandler`, restoring the correct `UIImage` orientation on output. Do not pre-apply orientation transforms before passing images to the service.
+
+**Fallback:** if segmentation fails, `AddItemView.processCapture` assigns the raw capture to `imageData` so the user always sees a thumbnail.
+
+### ThermalLayer system (`Models/ClothingItem.swift`)
+
+`ThermalLayer` is a `String`-raw-value, `Codable`, `CaseIterable` enum added to `ClothingItem`:
+
+| Case | `layerNumber` | Icon | Default for category |
+|------|--------------|------|----------------------|
+| `.base` | 1 | `figure.stand` | `.footwear` |
+| `.inner` | 2 | `tshirt` | `.top`, `.bottom` |
+| `.mid` | 3 | `cloud` | `.accessory` |
+| `.outer` | 4 | `wind` | `.outerwear` |
+
+`ClothingCategory.defaultThermalLayer` maps each category to a sensible default. Both `AddItemView` and `ValidationWorkspaceSheet` update `thermalLayer` automatically via `.onChange(of: category)`.
+
+`StyleEngineViewModel.encodeInventory()` includes `"thermalLayer"` and `"layerNumber"` in each item's JSON so the LLM can reason about thermal coherence.
+
+**SwiftData migration:** adding `thermalLayer` to an existing `@Model` requires a default value in `init`. The default is resolved via `thermalLayer ?? category.defaultThermalLayer`, so existing records that lack the property get a sensible value on first access.
+
+### OutfitSuggestionCard — Layer Composition Stack (`Views/StyleEngine/OutfitSuggestionCard.swift`)
+
+The outfit feed card renders a vertical **Layer Composition Stack** ordered outer → base (HIG physical layering). Architecture:
+
+- `layerGroups: [LayerGroup]` — groups `superior`/`inferior`/`abrigo` items by `ThermalLayer`, sorted by `layerNumber` descending
+- `footwearItem` — rendered separately below all tiers (always at the base)
+- `layerTierView` — gold circle badge + `"LAYER N · NAME"` label + `HStack` of `GarmentTile`s
+- `layerConnector` — gold dots + thin line connecting adjacent tiers
+- `GarmentTile` — shows `imagePath` thumbnail (or `SilhouetteView`), color swatch, category label, style chip, and tags
 
 ### Debug in-app
 
