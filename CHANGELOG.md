@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.2.3] — 2026-06-07 · Developer Tooling
+
+### Added
+
+- **`.claude/figma-design-system.md`** — Comprehensive Figma ↔ SwiftUI reference covering all design tokens (colors, typography, spacing, shapes, animations), component catalog with code snippets, screen patterns, icon conventions, localization rules, and a Figma→Code translation checklist
+- **`.claude/skills/run-smartstylist/`** — Claude Code skill (`smoke.sh` + `SKILL.md`) for building, launching, and screenshotting the app on the iOS Simulator from the command line; invocable as `/run-smartstylist`
+
+### Changed
+
+- `CLAUDE.md` — added pointer to `figma-design-system.md`
+
+---
+
 ## [v0.2.2] — 2026-06-07 · CD Pipeline — TestFlight
 
 ### Fixed

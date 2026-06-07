@@ -196,6 +196,19 @@ To add a locale: create `xx.lproj/Localizable.strings`, mirror all 78 keys, add 
 
 ---
 
+## Developer Tooling (Claude Code)
+
+The `.claude/` directory contains skills and reference docs for working with this repo inside [Claude Code](https://claude.ai/code).
+
+| Skill / File | Invocation | Purpose |
+|---|---|---|
+| `run-smartstylist` | `/run-smartstylist` | Build, launch, and screenshot the app on iOS Simulator |
+| `run-tests` | `/run-tests` | Run the full XCTest suite and report results |
+| `new-test` | `/new-test <Subject>` | Generate an XCTest file following project conventions |
+| `figma-design-system.md` | — | Token reference and Figma↔SwiftUI translation guide |
+
+---
+
 ## Legal
 
 Hosted via GitHub Pages from `docs/` on `main`:
