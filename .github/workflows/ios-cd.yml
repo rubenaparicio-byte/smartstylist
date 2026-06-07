@@ -152,12 +152,19 @@ jobs:
       # creciente, nunca colisiona con subidas anteriores (manuales o de CI)
       # y cabe en 32 bits hasta 2038. github.run_number NO es fiable porque
       # empieza en 1 por workflow y falla si hay subidas fuera de CI.
+      #
+      # IMPORTANTE: XcodeGen evalúa $(CURRENT_PROJECT_VERSION) en tiempo de
+      # generación del proyecto y escribe el valor literal en Info.plist, por
+      # lo que el override de xcodebuild no tiene efecto. Se parchea el plist
+      # directamente con PlistBuddy antes del archive.
       - name: Compilar y archivar (xcodebuild archive)
         env:
           TEAM_ID: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           BUILD_NUMBER=$(date +%s)
           echo "Build number: $BUILD_NUMBER"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" SmartStylist/Info.plist
+          echo "CFBundleVersion en Info.plist: $(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' SmartStylist/Info.plist)"
           xcodebuild archive \
             -project SmartStylist.xcodeproj \
             -scheme "$SCHEME" \
@@ -167,8 +174,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+            DEVELOPMENT_TEAM="$TEAM_ID"
 
       # ── 10. Export IPA ────────────────────────────────────────────────────
       - name: Exportar IPA
