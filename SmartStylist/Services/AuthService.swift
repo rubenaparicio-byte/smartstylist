@@ -2,6 +2,7 @@ import AuthenticationServices
 import Foundation
 import Observation
 import Security
+import SwiftUI
 
 // ── Keychain ──────────────────────────────────────────────────────────────────
 // Wraps Security.framework for safe, non-exportable storage on this device only.
