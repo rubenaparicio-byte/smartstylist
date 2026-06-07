@@ -13,6 +13,7 @@ struct AddItemView: View {
 
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var imageData: Data?
+    @State private var showCamera = false
     @State private var isAnalysing = false
     @State private var aiError: String?
     @State private var pendingPrediction: GarmentPrediction?
@@ -60,6 +61,10 @@ struct AddItemView: View {
                     Button("Cancel") { dismiss() }
                 }
             }
+            .sheet(isPresented: $showCamera) {
+                CameraPicker(imageData: $imageData)
+                    .ignoresSafeArea()
+            }
             .sheet(isPresented: $showValidation) {
                 if let prediction = pendingPrediction {
                     ValidationWorkspaceSheet(
@@ -76,23 +81,33 @@ struct AddItemView: View {
 
     @ViewBuilder
     private var photoScanSection: some View {
-        PhotosPicker(selection: $selectedPhoto, matching: .images) {
-            HStack(spacing: 14) {
-                photoThumbnail
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(imageData == nil ? "Select a Photo" : "Photo Selected")
-                        .font(.dsBodyMedium)
-                        .foregroundStyle(Color.dsTextPrimary)
-                    Text("From your library")
-                        .font(.dsCaption)
-                        .foregroundStyle(Color.dsTextTertiary)
-                }
-                Spacer()
+        // Thumbnail preview
+        HStack {
+            Spacer()
+            photoThumbnail
+            Spacer()
+        }
+        .listRowBackground(Color.clear)
+        .padding(.vertical, 4)
+
+        // Camera + Gallery buttons
+        HStack(spacing: 12) {
+            Button {
+                showCamera = true
+            } label: {
+                sourceButtonLabel(icon: "camera.fill", title: "Camera")
+            }
+            .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
+
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                sourceButtonLabel(icon: "photo.on.rectangle", title: "Gallery")
+            }
+            .onChange(of: selectedPhoto) { _, item in
+                Task { imageData = try? await item?.loadTransferable(type: Data.self) }
             }
         }
-        .onChange(of: selectedPhoto) { _, item in
-            Task { imageData = try? await item?.loadTransferable(type: Data.self) }
-        }
+        .listRowBackground(Color.clear)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
 
         if imageData != nil {
             Button {
@@ -129,17 +144,36 @@ struct AddItemView: View {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 56, height: 56)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .frame(width: 96, height: 96)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.dsAccentGold.opacity(0.3), lineWidth: 0.5)
+                )
         } else {
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.dsSurface)
-                .frame(width: 56, height: 56)
+                .frame(width: 96, height: 96)
                 .overlay(
                     Image(systemName: "camera.fill")
+                        .font(.system(size: 28, weight: .thin))
                         .foregroundStyle(Color.dsTextTertiary)
                 )
         }
+    }
+
+    private func sourceButtonLabel(icon: String, title: String) -> some View {
+        Label(title, systemImage: icon)
+            .font(.dsBodyMedium)
+            .foregroundStyle(Color.dsTextPrimary)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 13)
+            .background(Color.dsSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.dsAccentGold.opacity(0.25), lineWidth: 0.5)
+            )
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────
