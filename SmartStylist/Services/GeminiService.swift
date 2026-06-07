@@ -40,7 +40,7 @@ struct ColorimetryAnalysis: Codable {
 
 final class GeminiService {
     private let apiKey = APIKeys.gemini
-    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent"
+    private let baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
     func listAvailableModels() async {
         guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models?key=\(apiKey)&pageSize=50") else { return }
