@@ -82,10 +82,11 @@ GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` 
 5. **Install provisioning profile** — decodes `APP_STORE_PROVISIONING_PROFILE` (base64), extracts UUID via `security cms -D | plutil -extract UUID raw`, copies to `~/Library/MobileDevice/Provisioning Profiles/`
 6. Write App Store Connect `.p8` key from `APP_STORE_CONNECT_KEY_CONTENT`
 7. Generate `ExportOptions.plist` with `signingStyle: manual`
-8. `xcodebuild archive` with `CODE_SIGN_STYLE=Manual`, `CODE_SIGN_IDENTITY="Apple Distribution"`, `PROVISIONING_PROFILE_SPECIFIER=<uuid>`
-9. `xcodebuild -exportArchive`
-10. `xcrun altool --upload-app` with ASC API key
-11. Upload IPA as GitHub artifact (30-day retention, runs even on failure)
+8. **Patch `CFBundleVersion`** with `PlistBuddy` using a Unix timestamp (`date +%s`) — XcodeGen expands `$(CURRENT_PROJECT_VERSION)` to its literal default at generation time, so the xcodebuild CLI override has no effect (see [Critical: XcodeGen expands build setting variables](#critical-xcodegen-expands-build-setting-variables-in-infoplist))
+9. `xcodebuild archive` with `CODE_SIGN_STYLE=Manual`, `CODE_SIGN_IDENTITY="Apple Distribution"`, `PROVISIONING_PROFILE_SPECIFIER=<uuid>`
+10. `xcodebuild -exportArchive`
+11. `xcrun altool --upload-app` with ASC API key
+12. Upload IPA as GitHub artifact (30-day retention, runs even on failure)
 
 ### Required GitHub Secrets
 
@@ -145,6 +146,21 @@ info:
       - UIInterfaceOrientationLandscapeLeft
       - UIInterfaceOrientationLandscapeRight
 ```
+
+### Critical: XcodeGen expands build setting variables in Info.plist
+
+XcodeGen **evaluates** `$(VARIABLE)` references in `info.properties` at generation time using the values from `settings.base`. For example, `CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"` with `CURRENT_PROJECT_VERSION: 1` produces `<string>1</string>` in the generated `Info.plist` — not the variable reference.
+
+**Consequence:** passing `CURRENT_PROJECT_VERSION="<value>"` on the `xcodebuild` command line has no effect on `CFBundleVersion`, because the reference no longer exists in the plist.
+
+**Rule:** to set any Info.plist value dynamically in CI, use `PlistBuddy` or `plutil` to patch the generated file *after* `xcodegen generate` and *before* `xcodebuild archive`:
+
+```bash
+BUILD_NUMBER=$(date +%s)
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" SmartStylist/Info.plist
+```
+
+Never rely on a xcodebuild CLI build-setting override reaching a plist key.
 
 ### App icon
 
