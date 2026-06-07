@@ -25,7 +25,7 @@ env:
 jobs:
   deploy:
     name: Archive & Upload to TestFlight
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 45
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # opt into Node.js 24 ahead of the June 2026 deadline
