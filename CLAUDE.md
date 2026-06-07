@@ -2,6 +2,8 @@
 
 Native SwiftUI app (iOS 17+) that suggests outfits using Gemini AI and OpenWeather data.
 
+> **Figma integration:** Design system tokens, component specs, and Figma↔code translation rules are in [`.claude/figma-design-system.md`](.claude/figma-design-system.md).
+
 ## Architecture
 
 **MVVM** with strict layer separation:
