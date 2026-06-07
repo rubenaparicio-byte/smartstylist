@@ -2,13 +2,12 @@ import SwiftUI
 
 struct MainTabView: View {
     init() {
-        // Style the tab bar to match the luxury slate palette
         let appearance = UITabBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(Color.dsCardSlate)
+        appearance.configureWithTransparentBackground()
+        appearance.backgroundEffect = UIBlurEffect(style: .systemThinMaterialDark)
+        appearance.shadowColor = UIColor(Color.dsAccentGold.opacity(0.12))
 
-        // Unselected item colour
-        appearance.stackedLayoutAppearance.normal.iconColor    = UIColor(Color.dsTextTertiary)
+        appearance.stackedLayoutAppearance.normal.iconColor = UIColor(Color.dsTextTertiary)
         appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
             .foregroundColor: UIColor(Color.dsTextTertiary),
             .font: UIFont.systemFont(ofSize: 10, weight: .regular)

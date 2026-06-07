@@ -112,6 +112,7 @@ struct VirtualClosetView: View {
                         .font(.title3)
                         .foregroundStyle(showFilters || vm.hasActiveFilters
                                          ? Color.dsAccentGold : Color.dsTextSecondary)
+                        .contentTransition(.symbolEffect(.replace.offUp))
                     if vm.hasActiveFilters {
                         Circle()
                             .fill(Color.dsAccentGold)
@@ -276,7 +277,7 @@ struct VirtualClosetView: View {
                             onRestore: { vm.restoreItem(item, context: ctx) }
                         )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(CardPressStyle())
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }
@@ -290,6 +291,7 @@ struct VirtualClosetView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 40, weight: .thin))
                 .foregroundStyle(Color.dsTextTertiary)
+                .symbolRenderingMode(.hierarchical)
 
             VStack(spacing: 8) {
                 Text(Strings.filterNoResultsTitle)

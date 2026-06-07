@@ -114,7 +114,7 @@ struct StyleEngineView: View {
                                     )
                             )
                         }
-                        .animation(.dsDefault, value: vm.occasion)
+                        .animation(.dsSpring, value: vm.occasion)
                     }
                 }
                 .padding(.horizontal, 2)
@@ -225,6 +225,8 @@ struct StyleEngineView: View {
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 44))
                 .foregroundStyle(Color.dsAccentGold.opacity(0.45))
+                .symbolRenderingMode(.hierarchical)
+                .symbolEffect(.pulse, options: .repeating)
 
             VStack(spacing: 6) {
                 Text(Strings.styleEmptyTitle)

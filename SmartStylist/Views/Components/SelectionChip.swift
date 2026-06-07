@@ -27,7 +27,8 @@ struct SelectionChip: View {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .stroke(Color.dsAccentGold.opacity(isSelected ? 0 : 0.3), lineWidth: 0.5)
             )
+            .scaleEffect(isSelected ? 1.04 : 1.0)
         }
-        .animation(.dsDefault, value: isSelected)
+        .animation(.dsSpring, value: isSelected)
     }
 }

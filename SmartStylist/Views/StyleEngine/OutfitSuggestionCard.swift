@@ -24,6 +24,7 @@ struct OutfitSuggestionCard: View {
 
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "sparkles")
+                        .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(Color.dsAccentGold)
                     Text(response.consejoEstilo)
                         .font(.dsCaption)
@@ -53,7 +54,7 @@ struct OutfitSuggestionCard: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(12)
-                    .background(Color.dsSurface)
+                    .background(Material.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
             }
