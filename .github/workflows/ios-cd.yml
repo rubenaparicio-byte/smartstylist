@@ -40,18 +40,18 @@ jobs:
         run: brew install xcodegen
 
       # ── 3. Secrets de API internas ────────────────────────────────────────
+      # 'EOF' entre comillas: evita que el shell expanda nada dentro del heredoc.
+      # El runner de Actions sustituye ${{ }} ANTES de ejecutar el script,
+      # así que la clave llega literal al archivo .swift sin pasos intermedios.
       - name: Inyectar API Keys (Gemini + OpenWeather)
-        env:
-          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
-          WEATHER_KEY: ${{ secrets.WEATHER_API_KEY }}
         run: |
           mkdir -p SmartStylist/Config
-          cat > SmartStylist/Config/APIKeys.swift << EOF
+          cat << 'EOF' > SmartStylist/Config/APIKeys.swift
           import Foundation
 
           enum APIKeys {
-              static let gemini = "${GEMINI_KEY}"
-              static let openWeather = "${WEATHER_KEY}"
+              static let gemini = "${{ secrets.GEMINI_API_KEY }}"
+              static let openWeather = "${{ secrets.WEATHER_API_KEY }}"
           }
           EOF
 
