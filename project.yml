@@ -27,6 +27,8 @@ targets:
         NSLocationAlwaysAndWhenInUseUsageDescription: "Background location enables automatic morning outfit suggestions."
         NSPhotoLibraryUsageDescription: "Access your photo library to add clothing items."
         NSCameraUsageDescription: "Take photos of new clothing items."
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleIconName: AppIcon
         UILaunchScreen: {}
         UIRequiresFullScreen: true
@@ -42,6 +44,8 @@ targets:
         DEVELOPMENT_TEAM: "CY3J5RM5UX"
         CODE_SIGN_STYLE: "Automatic"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: 1
     dependencies: []
 
   SmartStylistTests:
