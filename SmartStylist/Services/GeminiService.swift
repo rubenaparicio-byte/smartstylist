@@ -41,8 +41,8 @@ struct ColorimetryAnalysis: Codable {
 final class GeminiService {
     private let apiKey      = APIKeys.openRouter
     private let endpoint    = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
-    private let textModel   = "meta-llama/llama-3.3-70b-instruct:free"
-    private let visionModel = "meta-llama/llama-4-scout:free"
+    private let textModel   = "deepseek/deepseek-chat:free"
+    private let visionModel = "google/gemma-3-27b-it:free"
 
     // ── Text generation ───────────────────────────────────────────────────────
 
@@ -295,9 +295,14 @@ final class GeminiService {
     private func logAPIError(context: String, statusCode: Int, data: Data) async {
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let err  = json["error"] as? [String: Any] {
-            let msg  = err["message"] as? String ?? "?"
-            let type = err["type"] as? String ?? err["status"] as? String ?? "?"
-            await DebugLogger.shared.log("\(context) \(statusCode) \(type): \(msg)")
+            let msg      = err["message"] as? String ?? "?"
+            let type     = err["type"] as? String ?? err["status"] as? String ?? ""
+            let metadata = err["metadata"] as? [String: Any]
+            let provider = metadata?["provider_name"] as? String ?? ""
+            let rawErr   = metadata?["raw"] as? String ?? ""
+            let detail   = [type, provider.isEmpty ? nil : "via \(provider)", rawErr.isEmpty ? nil : rawErr]
+                .compactMap { $0 }.joined(separator: " ")
+            await DebugLogger.shared.log("\(context) \(statusCode) \(detail.isEmpty ? "" : "[\(detail)]"): \(msg)")
         } else {
             let raw = String(data: data, encoding: .utf8) ?? "<binary>"
             await DebugLogger.shared.log("\(context) HTTP \(statusCode): \(String(raw.prefix(300)))")
