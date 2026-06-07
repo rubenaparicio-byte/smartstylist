@@ -52,7 +52,6 @@ final class OnboardingViewModel {
             analysisResult = result
             currentStep = .result
         } catch {
-            await gemini.logFreeModels()
             let detail = DebugLogger.shared.entries.first ?? ""
             errorMessage = detail.isEmpty
                 ? error.localizedDescription
