@@ -64,3 +64,86 @@ GitHub Actions (`.github/workflows/ios-ci.yml`) runs on push/PR to `main`:
 4. Builds for iPhone simulator (Debug)
 
 > Tests are **not** currently run in CI — only compilation is verified.
+
+## CD — TestFlight
+
+GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` or a `v*` tag.
+
+**Runner:** `macos-26` (Xcode 26, iOS 26 SDK). Apple requires the iOS 26 SDK for all new TestFlight uploads — `macos-15` (Xcode 16.4, iOS 18.5 SDK) is rejected at upload time.
+
+### Pipeline steps
+
+1. Checkout + install XcodeGen
+2. Inject `APIKeys.swift` from `GEMINI_API_KEY` / `WEATHER_API_KEY`
+3. `xcodegen generate`
+4. **Install distribution certificate** — decodes `DISTRIBUTION_CERTIFICATE_P12` (base64), imports into a temporary keychain via `security create-keychain` + `security import` + `security set-key-partition-list`
+5. **Install provisioning profile** — decodes `APP_STORE_PROVISIONING_PROFILE` (base64), extracts UUID via `security cms -D | plutil -extract UUID raw`, copies to `~/Library/MobileDevice/Provisioning Profiles/`
+6. Write App Store Connect `.p8` key from `APP_STORE_CONNECT_KEY_CONTENT`
+7. Generate `ExportOptions.plist` with `signingStyle: manual`
+8. `xcodebuild archive` with `CODE_SIGN_STYLE=Manual`, `CODE_SIGN_IDENTITY="Apple Distribution"`, `PROVISIONING_PROFILE_SPECIFIER=<uuid>`
+9. `xcodebuild -exportArchive`
+10. `xcrun altool --upload-app` with ASC API key
+11. Upload IPA as GitHub artifact (30-day retention, runs even on failure)
+
+### Required GitHub Secrets
+
+| Secret | Contents |
+|--------|----------|
+| `GEMINI_API_KEY` | Gemini 1.5 Flash API key |
+| `WEATHER_API_KEY` | OpenWeather API key |
+| `DISTRIBUTION_CERTIFICATE_P12` | base64-encoded `.p12` (Apple Distribution cert + private key) |
+| `DISTRIBUTION_CERTIFICATE_PASSWORD` | Password for the `.p12` |
+| `APP_STORE_PROVISIONING_PROFILE` | base64-encoded App Store distribution `.mobileprovision` |
+| `APP_STORE_CONNECT_KEY_CONTENT` | Contents of the `.p8` ASC API key file |
+| `APP_STORE_CONNECT_KEY_ID` | Key ID from App Store Connect |
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID from App Store Connect |
+| `DEVELOPMENT_TEAM` | Apple Team ID (e.g. `CY3J5RM5UX`) |
+
+### Generating the certificate and provisioning profile (Linux / no Keychain Access)
+
+```bash
+# 1. Generate private key + CSR
+openssl genrsa -out private.key 2048
+openssl req -new -key private.key -out request.certSigningRequest \
+  -subj "/emailAddress=you@example.com/CN=Apple Distribution/C=ES"
+
+# 2. Upload CSR at developer.apple.com → Certificates → + → Apple Distribution
+#    Download the resulting distribution.cer
+
+# 3. Convert .cer → PEM
+openssl x509 -in distribution.cer -inform DER -out distribution.pem -outform PEM
+
+# 4. Bundle into .p12 (choose a password)
+openssl pkcs12 -export \
+  -inkey private.key -in distribution.pem \
+  -out distribution.p12 -passout pass:YOUR_PASSWORD
+
+# 5. Encode for GitHub Secret
+base64 -w 0 distribution.p12   # → paste as DISTRIBUTION_CERTIFICATE_P12
+base64 -w 0 profile.mobileprovision   # → paste as APP_STORE_PROVISIONING_PROFILE
+```
+
+All certificate files (`*.p12`, `*.cer`, `*.pem`, `*.mobileprovision`, `private.key`, `*.certSigningRequest`) are **gitignored** — never commit them.
+
+### Critical: Info.plist is owned by XcodeGen
+
+`xcodegen generate` **regenerates `SmartStylist/Info.plist` from scratch** on every run, using the `info.properties` block in `project.yml`. Any key edited directly in `Info.plist` is silently discarded.
+
+All app-level Info.plist keys must be declared in `project.yml` under `targets.SmartStylist.info.properties`:
+
+```yaml
+info:
+  path: SmartStylist/Info.plist
+  properties:
+    CFBundleIconName: AppIcon
+    UILaunchScreen: {}
+    UIRequiresFullScreen: true
+    UISupportedInterfaceOrientations:
+      - UIInterfaceOrientationPortrait
+      - UIInterfaceOrientationLandscapeLeft
+      - UIInterfaceOrientationLandscapeRight
+```
+
+### App icon
+
+`SmartStylist/Assets.xcassets/AppIcon.appiconset/` contains a single 1024×1024 universal PNG (`AppIcon.png`). This is the modern Xcode format — no per-size variants needed. The current file is a placeholder solid-color PNG; replace it with the real icon before public App Store release.

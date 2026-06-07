@@ -133,12 +133,25 @@ For CI, keys are injected from GitHub Secrets: `GEMINI_API_KEY` and `WEATHER_API
 
 ## CI / CD
 
-| Workflow | Trigger | Action |
-|----------|---------|--------|
-| `ios-ci.yml` | Push / PR to `main` | XcodeGen → build for iPhone simulator (Debug) |
-| `ios-cd.yml` | `workflow_dispatch` or `v*` tag | Archive → export IPA → upload to TestFlight |
+| Workflow | Trigger | Runner | Action |
+|----------|---------|--------|--------|
+| `ios-ci.yml` | Push / PR to `main` | `macos-15` | XcodeGen → build for iPhone simulator (Debug) |
+| `ios-cd.yml` | `workflow_dispatch` or `v*` tag | `macos-26` | Archive → export IPA → upload to TestFlight |
 
-CD secrets required: `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, `APP_STORE_CONNECT_KEY_CONTENT`, `DEVELOPMENT_TEAM`.
+The CD workflow uses **manual code signing** (certificate + provisioning profile as GitHub Secrets) and the `macos-26` runner (Xcode 26, iOS 26 SDK — required by Apple for all TestFlight uploads).
+
+**CD secrets required:**
+
+| Secret | Description |
+|--------|-------------|
+| `GEMINI_API_KEY` / `WEATHER_API_KEY` | App API keys |
+| `DISTRIBUTION_CERTIFICATE_P12` | base64-encoded Apple Distribution `.p12` |
+| `DISTRIBUTION_CERTIFICATE_PASSWORD` | `.p12` password |
+| `APP_STORE_PROVISIONING_PROFILE` | base64-encoded App Store `.mobileprovision` |
+| `APP_STORE_CONNECT_KEY_CONTENT` | `.p8` ASC API key file contents |
+| `APP_STORE_CONNECT_KEY_ID` | ASC key ID |
+| `APP_STORE_CONNECT_ISSUER_ID` | ASC issuer ID |
+| `DEVELOPMENT_TEAM` | Apple Team ID |
 
 Both workflows opt into Node.js 24 via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 

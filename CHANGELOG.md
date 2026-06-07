@@ -5,6 +5,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [v0.2.2] — 2026-06-07 · CD Pipeline — TestFlight
+
+### Fixed
+
+#### CD Pipeline (manual signing + iOS 26 SDK)
+- Switched from automatic to **manual code signing** in `ios-cd.yml` — CI environments have no registered devices, so automatic signing always fails with `No profiles for 'com.rubenaparicio.SmartStylist' were found`
+- Runner upgraded from `macos-15` (Xcode 16.4, iOS 18.5 SDK) to **`macos-26`** (Xcode 26, iOS 26 SDK) — Apple rejects uploads built with older SDKs since 2026
+- Fixed App Store upload error 1190: created app record in **App Store Connect** (separate from Apple Developer Portal where the App ID lives)
+- Fixed validation errors 90474/90475 (missing orientations + iPad launch screen): moved `UIRequiresFullScreen`, `UISupportedInterfaceOrientations`, `CFBundleIconName`, and `UILaunchScreen` from `Info.plist` into `project.yml`'s `info.properties` — XcodeGen regenerates `Info.plist` on every `xcodegen generate`, so keys edited directly in the file are silently discarded
+- Added placeholder 1024×1024 universal `AppIcon.png` to `Assets.xcassets/AppIcon.appiconset/` — resolves missing icon validation errors; replace with real icon before public App Store release
+
+### Changed
+- `ios-cd.yml` — full rewrite: temporary keychain for `.p12`, provisioning profile installed by UUID, `ExportOptions.plist` with `signingStyle: manual`, `xcodebuild archive` with `CODE_SIGN_STYLE=Manual`
+- `project.yml` — added `CFBundleIconName`, `UILaunchScreen`, `UIRequiresFullScreen`, `UISupportedInterfaceOrientations` to `info.properties`; added `ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon` to target build settings
+
+### Added
+- `SmartStylist/Assets.xcassets/AppIcon.appiconset/` — universal icon asset catalog entry
+- `.gitignore` — added `*.p12`, `*.cer`, `*.pem`, `*.mobileprovision`, `private.key`, `*.certSigningRequest`
+
+> **Required new GitHub Secrets:** `DISTRIBUTION_CERTIFICATE_P12`, `DISTRIBUTION_CERTIFICATE_PASSWORD`, `APP_STORE_PROVISIONING_PROFILE`
+
+---
+
 ## [v0.2.1] — 2026-06-06 · Legal Docs Live
 
 ### Changed
