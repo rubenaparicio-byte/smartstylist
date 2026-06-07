@@ -31,7 +31,7 @@ targets:
       base:
         ENABLE_PREVIEWS: YES
         PRODUCT_BUNDLE_IDENTIFIER: "com.rubenaparicio.SmartStylist"
-        DEVELOPMENT_TEAM: "AQUÍ_TU_TEAM_ID_DE_10_CARACTERES"
+        DEVELOPMENT_TEAM: "CY3J5RM5UX"
         CODE_SIGN_STYLE: "Automatic"
     dependencies: []
 
