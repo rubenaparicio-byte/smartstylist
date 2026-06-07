@@ -239,6 +239,28 @@ final class GeminiService {
         }
     }
 
+    // ── Diagnostics ───────────────────────────────────────────────────────────
+
+    func logFreeModels() async {
+        guard let url = URL(string: "https://openrouter.ai/api/v1/models") else { return }
+        var req = URLRequest(url: url)
+        req.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let models = json["data"] as? [[String: Any]] else {
+            await DebugLogger.shared.log("logFreeModels: failed to fetch catalog")
+            return
+        }
+        let free = models.compactMap { m -> String? in
+            guard let id = m["id"] as? String,
+                  let pricing = m["pricing"] as? [String: Any],
+                  let prompt = pricing["prompt"] as? String,
+                  prompt == "0" else { return nil }
+            return id
+        }
+        await DebugLogger.shared.log("FREE models (\(free.count)): \(free.joined(separator: ", "))")
+    }
+
     // ── Request helpers ───────────────────────────────────────────────────────
 
     private func postWithImage(imageData: Data, mimeType: String,
