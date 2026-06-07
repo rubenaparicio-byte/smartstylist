@@ -27,6 +27,13 @@ targets:
         NSLocationAlwaysAndWhenInUseUsageDescription: "Background location enables automatic morning outfit suggestions."
         NSPhotoLibraryUsageDescription: "Access your photo library to add clothing items."
         NSCameraUsageDescription: "Take photos of new clothing items."
+        CFBundleIconName: AppIcon
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     settings:
       base:
         ENABLE_PREVIEWS: YES
