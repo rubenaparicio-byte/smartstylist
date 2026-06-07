@@ -5,6 +5,9 @@ struct ProfileSettingsView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var ctx
     @State private var vm = ProfileViewModel()
+    @State private var devTapCount = 0
+    @State private var showDevLogs = false
+    @ObservedObject private var logger = DebugLogger.shared
 
     private var profile: UserProfile? { profiles.first }
 
@@ -22,6 +25,9 @@ struct ProfileSettingsView: View {
                             traitsSection(profile)
                             GoldDivider().padding(.horizontal, 4)
                             actionSection(profile)
+                            if showDevLogs {
+                                devLogsSection
+                            }
                         }
                         .padding(16)
                     }
@@ -73,6 +79,13 @@ struct ProfileSettingsView: View {
                 Image(systemName: "person.crop.circle")
                     .font(.system(size: 36, weight: .thin))
                     .foregroundStyle(Color.dsAccentGold)
+            }
+            .onTapGesture {
+                devTapCount += 1
+                if devTapCount >= 5 {
+                    showDevLogs.toggle()
+                    devTapCount = 0
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -251,5 +264,53 @@ struct ProfileSettingsView: View {
         Text("—")
             .font(.dsCaption)
             .foregroundStyle(Color.dsTextTertiary)
+    }
+
+    // ── Developer Logs (hidden — 5 taps on profile icon) ─────────────────────
+
+    private var devLogsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("DEVELOPER LOGS")
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+                    .tracking(2)
+                Spacer()
+                Button {
+                    logger.clear()
+                } label: {
+                    Text("Clear")
+                        .font(.dsCaption)
+                        .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                }
+            }
+
+            if logger.entries.isEmpty {
+                Text("No logs yet.")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(Color.dsTextTertiary)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(logger.entries, id: \.self) { entry in
+                            Text(entry)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(Color.dsTextSecondary)
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                }
+                .frame(maxHeight: 320)
+            }
+        }
+        .padding(18)
+        .background(Color.black.opacity(0.35))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.dsAccentGold.opacity(0.2), lineWidth: 0.5)
+        )
+        .padding(.bottom, 16)
     }
 }

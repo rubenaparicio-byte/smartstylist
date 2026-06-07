@@ -60,6 +60,10 @@ final class GeminiService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            let body = String(data: data, encoding: .utf8) ?? "<non-UTF8 body>"
+            let snippet = String(body.prefix(400))
+            await DebugLogger.shared.log("generate() HTTP \(statusCode): \(snippet)")
             throw GeminiError.serverError
         }
 
@@ -68,6 +72,7 @@ final class GeminiService {
         let content    = candidates?.first?["content"] as? [String: Any]
         let parts      = content?["parts"] as? [[String: Any]]
         guard let text = parts?.first?["text"] as? String else {
+            await DebugLogger.shared.log("generate() emptyResponse — candidates: \(String(describing: candidates?.count)) parts: \(String(describing: parts?.count))")
             throw GeminiError.emptyResponse
         }
         return text
@@ -112,6 +117,7 @@ final class GeminiService {
         do {
             return try JSONDecoder().decode(ColorimetryAnalysis.self, from: data)
         } catch {
+            await DebugLogger.shared.log("analyseProfile() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
             throw GeminiError.parseError
         }
     }
@@ -180,7 +186,10 @@ final class GeminiService {
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
         do { return try JSONDecoder().decode(StyleResponse.self, from: data) }
-        catch { throw GeminiError.parseError }
+        catch {
+            await DebugLogger.shared.log("suggestOutfit() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
+            throw GeminiError.parseError
+        }
     }
 
     // ── Vision: single item ───────────────────────────────────────────────────
@@ -205,7 +214,10 @@ final class GeminiService {
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
         do { return try JSONDecoder().decode(GarmentPrediction.self, from: data) }
-        catch { throw GeminiError.parseError }
+        catch {
+            await DebugLogger.shared.log("analyseClothingItem() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
+            throw GeminiError.parseError
+        }
     }
 
     // ── Vision: bulk wardrobe scan ────────────────────────────────────────────
@@ -236,7 +248,10 @@ final class GeminiService {
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw GeminiError.parseError }
         do { return try JSONDecoder().decode(BulkScanResult.self, from: data).items }
-        catch { throw GeminiError.parseError }
+        catch {
+            await DebugLogger.shared.log("scanBulkWardrobe() parseError: \(error.localizedDescription) — raw: \(String(cleaned.prefix(300)))")
+            throw GeminiError.parseError
+        }
     }
 
     // ── Multimodal request helper ─────────────────────────────────────────────
@@ -266,13 +281,19 @@ final class GeminiService {
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+            let body = String(data: data, encoding: .utf8) ?? "<non-UTF8 body>"
+            await DebugLogger.shared.log("generateWithImage() HTTP \(statusCode): \(String(body.prefix(400)))")
             throw GeminiError.serverError
         }
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let candidates = json?["candidates"] as? [[String: Any]]
         let content    = candidates?.first?["content"] as? [String: Any]
         let parts      = content?["parts"] as? [[String: Any]]
-        guard let text = parts?.first?["text"] as? String else { throw GeminiError.emptyResponse }
+        guard let text = parts?.first?["text"] as? String else {
+            await DebugLogger.shared.log("generateWithImage() emptyResponse — candidates: \(String(describing: candidates?.count))")
+            throw GeminiError.emptyResponse
+        }
         return text
     }
 }
