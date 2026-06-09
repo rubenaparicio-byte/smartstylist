@@ -218,8 +218,9 @@ final class StyleEngineViewModel {
     private func encodeInventory(_ items: [ClothingItem]) -> String {
         let entries = items.map { item in
             let tagsJSON = item.tags.map { "\"\($0)\"" }.joined(separator: ",")
+            let subcatField = item.subcategory.map { ",\"subcategory\":\"\($0.rawValue)\"" } ?? ""
             return """
-            {"id":"\(item.id.uuidString)","category":"\(item.category.rawValue)",\
+            {"id":"\(item.id.uuidString)","category":"\(item.category.rawValue)"\(subcatField),\
             "thermalLayer":"\(item.resolvedThermalLayer.rawValue)","layerNumber":\(item.resolvedThermalLayer.layerNumber),\
             "primaryColor":"\(item.primaryColor)","pattern":"\(item.pattern)",\
             "style":"\(item.style)","tags":[\(tagsJSON)]}

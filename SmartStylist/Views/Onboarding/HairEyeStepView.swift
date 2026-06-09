@@ -7,16 +7,16 @@ struct HairEyeStepView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("HAIR &\nEYES")
+                    Text(Strings.onboardingHairTitle)
                         .editorialStyle()
-                    Text("These details complete your chromatic profile.")
+                    Text(Strings.onboardingHairSubtitle)
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
                 GoldDivider()
 
                 VStack(alignment: .leading, spacing: 20) {
-                    Text("Hair Colour").font(.dsLabel).foregroundStyle(Color.dsTextSecondary)
+                    Text(Strings.onboardingHairColour).font(.dsLabel).foregroundStyle(Color.dsTextSecondary)
                     FlowLayout(spacing: 10) {
                         ForEach(vm.hairColorOptions, id: \.self) { option in
                             SelectionChip(label: option,
@@ -26,7 +26,7 @@ struct HairEyeStepView: View {
                         }
                     }
 
-                    Text("Eye Colour").font(.dsLabel).foregroundStyle(Color.dsTextSecondary)
+                    Text(Strings.onboardingEyeColour).font(.dsLabel).foregroundStyle(Color.dsTextSecondary)
                     FlowLayout(spacing: 10) {
                         ForEach(vm.eyeColorOptions, id: \.self) { option in
                             SelectionChip(label: option,

@@ -58,7 +58,7 @@ Sign In with Apple is the primary auth method. Google Sign-In UI is prepared but
 |--------|---------|
 | `handleAuthorization(_:)` | Called from `SignInWithAppleButton.onCompletion`; persists Apple user ID to Keychain |
 | `handleError(_:)` | Silently drops `.canceled`; sets `loginError` for other failures |
-| `validateAppleCredential()` | Async; calls Apple servers on cold launch; calls `signOut()` on `.revoked`/`.notFound` |
+| `validateAppleCredential()` | Async; calls Apple servers on cold launch; calls `signOut()` **only on `.revoked`** (`.notFound` is a false positive in simulator/dev — ignored) |
 | `signOut()` | Deletes Keychain entry; resets `isAuthenticated` |
 
 ### Keychain storage
@@ -168,10 +168,24 @@ Swift `actor` that isolates the Vision + CoreImage pipeline on a background thre
 ```swift
 segService.saveToDocuments(data, for: id)
 // → Documents/garments/<UUID>.png
-// Returns the absolute path stored in ClothingItem.imagePath
+// Returns the RELATIVE path "garments/<UUID>.png" stored in ClothingItem.imagePath
 ```
 
-Both `AddItemView.saveManual()` and `ValidationWorkspaceSheet.confirm()` call `saveToDocuments` before inserting the SwiftData model, ensuring `ClothingItem.imagePath` is never `nil` after save.
+`saveToDocuments` returns a **relative** path (e.g. `"garments/abc.png"`), not an absolute one. The app container path changes between reinstalls; storing a relative path avoids stale absolute paths. Resolution happens via `ClothingItem.resolvedImageURL`:
+
+```swift
+var resolvedImageURL: URL? {
+    guard let path = imagePath else { return nil }
+    if path.hasPrefix("/") {        // legacy absolute path — honour as-is
+        return URL(fileURLWithPath: path)
+    }
+    return FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent(path)
+}
+```
+
+Both `AddItemView.saveManual()` and `ValidationWorkspaceSheet.confirm()` call `saveToDocuments` before inserting the SwiftData model, ensuring `ClothingItem.imagePath` is never `nil` after save. Views must use `resolvedImageURL` — never read `imagePath` directly.
 
 **EXIF orientation:**
 Camera photos often have non-Up orientation. The service works in native CGImage space and passes `cgImagePropertyOrientation` to `VNImageRequestHandler`, restoring the correct `UIImage` orientation on output. Do not pre-apply orientation transforms before passing images to the service.
@@ -193,7 +207,7 @@ Camera photos often have non-Up orientation. The service works in native CGImage
 
 `StyleEngineViewModel.encodeInventory()` includes `"thermalLayer"` and `"layerNumber"` in each item's JSON so the LLM can reason about thermal coherence.
 
-**SwiftData migration:** adding `thermalLayer` to an existing `@Model` requires a default value in `init`. The default is resolved via `thermalLayer ?? category.defaultThermalLayer`, so existing records that lack the property get a sensible value on first access.
+**SwiftData migration:** `thermalLayer` is stored as `ThermalLayer?` (optional) to survive schema migration without a `VersionedSchema`. Access it via `item.resolvedThermalLayer` (computed non-optional property) — never force-unwrap `thermalLayer` directly. The same pattern applies to `subcategory: ClothingSubcategory?`.
 
 ### OutfitSuggestionCard — Layer Composition Stack (`Views/StyleEngine/OutfitSuggestionCard.swift`)
 
@@ -203,7 +217,46 @@ The outfit feed card renders a vertical **Layer Composition Stack** ordered oute
 - `footwearItem` — rendered separately below all tiers (always at the base)
 - `layerTierView` — gold circle badge + `"LAYER N · NAME"` label + `HStack` of `GarmentTile`s
 - `layerConnector` — gold dots + thin line connecting adjacent tiers
-- `GarmentTile` — shows `imagePath` thumbnail (or `SilhouetteView`), color swatch, category label, style chip, and tags
+- `GarmentTile` — shows `resolvedImageURL` thumbnail (or `SilhouetteView`), color swatch, category label, style chip, and tags
+
+### Clothing taxonomy — two-level classification (`Models/ClothingSubcategory.swift`)
+
+`ClothingSubcategory` is a `String`-raw-value, `Codable`, `CaseIterable` enum with 39 cases across 5 parent categories. It is stored as `ClothingSubcategory?` on `ClothingItem` (optional — safe SwiftData migration).
+
+| Parent category | Subcategory count | Example cases |
+|----------------|------------------|---------------|
+| `.top` | 9 | `tshirt`, `shirt`, `sweater`, `hoodie`, `blouse`, `cardigan`… |
+| `.bottom` | 6 | `jeans`, `trousers`, `shorts`, `skirt`, `leggings`, `joggers` |
+| `.footwear` | 7 | `sneakers`, `boots`, `heels`, `sandals`, `loafers`… |
+| `.outerwear` | 7 | `coat`, `jacket`, `blazer`, `bomber`, `raincoat`, `puffer`, `trench` |
+| `.accessory` | 10 | `belt`, `scarf`, `hat`, `sunglasses`, `jewelry`, `bag`… |
+
+`ClothingCategory.subcategories` returns the filtered list for the picker. `GeminiService` sends `subcategory` raw value to the LLM for finer outfit reasoning. `StyleEngineViewModel.encodeInventory()` includes it when non-nil.
+
+Subcategory names are localized via `subcategory.<rawValue>` keys in `Localizable.strings`.
+
+### Localization & language selector
+
+All user-facing strings go through `SmartStylist/Localization/Strings.swift`. **Never use bare `String(localized:)` calls** — always route through `Strings.*` static properties or format functions.
+
+**How the system works:**
+
+- `Strings.activeLocale: Locale` reads `UserDefaults.standard.string(forKey: "preferredLanguage")` at call time. Returns `Locale(identifier: "es"|"en")` or `.autoupdatingCurrent` for `"system"`.
+- All `Strings.*` values use `String(localized:locale:Strings.activeLocale)` so ViewModel-generated strings honour the user's choice.
+- `SmartStylistApp` injects `.environment(\.locale, activeLocale)` so SwiftUI `Text(verbatim:)` / `Text(LocalizedStringKey:)` views also update.
+- `@AppStorage("preferredLanguage")` in `SmartStylistApp` triggers a re-render of the full view tree on change.
+
+**User-facing selector:** `ProfileSettingsView.languageSection` — a `.menu`-style `Picker` with three options:
+
+| Value | Label |
+|-------|-------|
+| `"system"` | System (follows device locale) |
+| `"en"` | English |
+| `"es"` | Español |
+
+**Adding new strings:**
+1. Add a `static var`/`func` to `Strings.swift` using `String(localized:locale:Strings.activeLocale)`
+2. Add the key to both `en.lproj/Localizable.strings` and `es.lproj/Localizable.strings`
 
 ### Debug in-app
 

@@ -18,12 +18,12 @@ enum ThermalLayer: String, Codable, CaseIterable {
         }
     }
 
-    var displayName: String {
+    var localizedName: String {
         switch self {
-        case .base:  return "Base"
-        case .inner: return "Inner"
-        case .mid:   return "Mid"
-        case .outer: return "Outer"
+        case .base:  return String(localized: "layer.base",  locale: Strings.activeLocale)
+        case .inner: return String(localized: "layer.inner", locale: Strings.activeLocale)
+        case .mid:   return String(localized: "layer.mid",   locale: Strings.activeLocale)
+        case .outer: return String(localized: "layer.outer", locale: Strings.activeLocale)
         }
     }
 
@@ -76,6 +76,7 @@ final class ClothingItem {
     var category: ClothingCategory
     // Optional so SwiftData can migrate existing stores that predate this field.
     var thermalLayer: ThermalLayer?
+    var subcategory: ClothingSubcategory?
     var primaryColor: String
     var pattern: String
     var style: String
@@ -87,9 +88,21 @@ final class ClothingItem {
     // Non-optional accessor; falls back to the category default for migrated records.
     var resolvedThermalLayer: ThermalLayer { thermalLayer ?? category.defaultThermalLayer }
 
+    // Resolves the stored path (relative or legacy absolute) to a live URL.
+    var resolvedImageURL: URL? {
+        guard let path = imagePath else { return nil }
+        if path.hasPrefix("/") {
+            return URL(fileURLWithPath: path)
+        }
+        return FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(path)
+    }
+
     init(id: UUID = UUID(),
          imagePath: String? = nil,
          category: ClothingCategory,
+         subcategory: ClothingSubcategory? = nil,
          thermalLayer: ThermalLayer? = nil,
          primaryColor: String = "#000000",
          pattern: String = "Solid",
@@ -101,6 +114,7 @@ final class ClothingItem {
         self.id           = id
         self.imagePath    = imagePath
         self.category     = category
+        self.subcategory  = subcategory
         self.thermalLayer = thermalLayer ?? category.defaultThermalLayer
         self.primaryColor = primaryColor
         self.pattern      = pattern

@@ -22,7 +22,7 @@ struct ClothingItemCard: View {
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let path = item.imagePath, let uiImage = UIImage(contentsOfFile: path) {
+        if let url = item.resolvedImageURL, let uiImage = UIImage(contentsOfFile: url.path) {
             Image(uiImage: uiImage)
                 .resizable()
                 .scaledToFill()
@@ -37,7 +37,7 @@ struct ClothingItemCard: View {
         VStack {
             Spacer()
             HStack {
-                Text(item.category.rawValue.capitalized)
+                Text(item.subcategory?.localizedName ?? item.category.localizedName)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextSecondary)
                     .padding(.horizontal, 8)
@@ -54,7 +54,7 @@ struct ClothingItemCard: View {
         VStack {
             HStack {
                 Spacer()
-                Text("ARCHIVED")
+                Text(Strings.cardArchived)
                     .font(.system(size: 8, weight: .semibold))
                     .foregroundStyle(Color.dsTextTertiary)
                     .padding(.horizontal, 6)
@@ -71,17 +71,17 @@ struct ClothingItemCard: View {
     private var contextMenuItems: some View {
         if item.status == .active, let onArchive {
             Button { onArchive() } label: {
-                Label("Archive", systemImage: "archivebox")
+                Label(Strings.cardActionArchive, systemImage: "archivebox")
             }
         }
         if item.status == .archived, let onRestore {
             Button { onRestore() } label: {
-                Label("Restore to Active", systemImage: "arrow.uturn.up")
+                Label(Strings.cardActionRestore, systemImage: "arrow.uturn.up")
             }
         }
         if let onDispose {
             Button(role: .destructive) { onDispose() } label: {
-                Label("Retire this piece", systemImage: "trash")
+                Label(Strings.cardActionRetire, systemImage: "trash")
             }
         }
     }

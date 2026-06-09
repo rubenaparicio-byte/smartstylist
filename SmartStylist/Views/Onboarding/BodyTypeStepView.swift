@@ -7,9 +7,9 @@ struct BodyTypeStepView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("BODY\nARCHITECTURE")
+                    Text(Strings.onboardingBodyTitle)
                         .editorialStyle()
-                    Text("Select the silhouette that best describes your proportions.")
+                    Text(Strings.onboardingBodySubtitle)
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }

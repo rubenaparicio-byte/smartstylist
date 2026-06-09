@@ -60,14 +60,15 @@ actor GarmentSegmentationService {
         return png
     }
 
+    // Returns a relative path ("garments/<UUID>.png") so it survives app reinstalls.
+    // ClothingItem.resolvedImageURL reconstructs the absolute path at load time.
     func saveToDocuments(_ data: Data, for id: UUID) throws -> String {
-        let garments = FileManager.default
-            .urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("garments", isDirectory: true)
+        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let garments = docs.appendingPathComponent("garments", isDirectory: true)
         try FileManager.default.createDirectory(at: garments, withIntermediateDirectories: true)
-        let url = garments.appendingPathComponent("\(id.uuidString).png")
-        try data.write(to: url)
-        return url.path
+        let relativePath = "garments/\(id.uuidString).png"
+        try data.write(to: docs.appendingPathComponent(relativePath))
+        return relativePath
     }
 
     enum SegmentationError: LocalizedError {

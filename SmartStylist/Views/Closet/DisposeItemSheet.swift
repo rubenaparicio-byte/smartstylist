@@ -15,11 +15,11 @@ struct DisposeItemSheet: View {
                 VStack(spacing: 0) {
                     VStack(spacing: 12) {
                         SilhouetteView(category: item.category, size: 80)
-                        Text("RETIRE THIS PIECE")
+                        Text(Strings.disposeTitle)
                             .font(.dsTitle2)
                             .foregroundStyle(Color.dsTextPrimary)
                             .tracking(2)
-                        Text("Select a reason to complete the retirement.")
+                        Text(Strings.disposeSubtitle)
                             .font(.dsBody)
                             .foregroundStyle(Color.dsTextSecondary)
                             .multilineTextAlignment(.center)
@@ -45,7 +45,7 @@ struct DisposeItemSheet: View {
                         vm.disposeItem(item, reason: reason, context: ctx)
                         dismiss()
                     } label: {
-                        Text("Confirm Retirement")
+                        Text(Strings.disposeConfirm)
                             .font(.dsBodyMedium)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -59,7 +59,7 @@ struct DisposeItemSheet: View {
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(Strings.commonCancel) { dismiss() }
                         .foregroundStyle(Color.dsTextSecondary)
                 }
             }

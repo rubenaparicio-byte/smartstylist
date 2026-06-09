@@ -4,6 +4,7 @@ import Foundation
 
 struct GarmentPrediction: Codable {
     let category: String
+    let subcategory: String?
     let primaryColor: String
     let pattern: String
     let style: String
@@ -187,11 +188,14 @@ final class GeminiService {
         Required JSON schema:
         {
           "category": "superior|inferior|calzado|abrigo|accesorio",
+          "subcategory": "tshirt|shirt|sweater|hoodie|polo|blouse|cardigan|vest|bodysuit|jeans|trousers|shorts|skirt|leggings|joggers|sneakers|boots|heels|sandals|loafers|sport_shoes|slippers|coat|jacket|blazer|bomber|raincoat|puffer|trench|belt|scarf|hat|sunglasses|jewelry|tie|gloves|bag|backpack",
           "primaryColor": "#RRGGBB",
           "pattern": "Solid|Stripes|Checks|Floral|Abstract|Animal Print",
           "style": "Casual|Formal|Smart Casual|Athletic|Evening",
           "tags": ["occasion1", "occasion2", "occasion3"]
         }
+
+        subcategory must match the category: tops→(tshirt/shirt/sweater/hoodie/polo/blouse/cardigan/vest/bodysuit), bottoms→(jeans/trousers/shorts/skirt/leggings/joggers), footwear→(sneakers/boots/heels/sandals/loafers/sport_shoes/slippers), outerwear→(coat/jacket/blazer/bomber/raincoat/puffer/trench), accessories→(belt/scarf/hat/sunglasses/jewelry/tie/gloves/bag/backpack).
         """
         let raw = try await postWithImage(imageData: imageData, mimeType: mimeType,
                                           prompt: prompt, context: "analyseClothingItem()")
@@ -218,6 +222,7 @@ final class GeminiService {
           "items": [
             {
               "category": "superior|inferior|calzado|abrigo|accesorio",
+              "subcategory": "tshirt|shirt|sweater|hoodie|polo|blouse|cardigan|vest|bodysuit|jeans|trousers|shorts|skirt|leggings|joggers|sneakers|boots|heels|sandals|loafers|sport_shoes|slippers|coat|jacket|blazer|bomber|raincoat|puffer|trench|belt|scarf|hat|sunglasses|jewelry|tie|gloves|bag|backpack",
               "primaryColor": "#RRGGBB",
               "pattern": "Solid|Stripes|Checks|Floral|Abstract|Animal Print",
               "style": "Casual|Formal|Smart Casual|Athletic|Evening",
