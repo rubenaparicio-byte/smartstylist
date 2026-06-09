@@ -70,7 +70,7 @@ final class GeminiService {
 
     // ── Colorimetry analysis ──────────────────────────────────────────────────
 
-    func analyseProfile(bodyType: String, skinTone: String,
+    func analyseProfile(gender: String, bodyType: String, skinTone: String,
                         eyeColor: String, hairColor: String) async throws -> ColorimetryAnalysis {
         let prompt = """
         You are a luxury fashion consultant and certified colour analyst.
@@ -80,7 +80,7 @@ final class GeminiService {
         Required JSON schema:
         {
           "season": "Spring|Summer|Autumn|Winter",
-          "guidelines": "2-3 sentences of personalised seasonal colour harmony guidance",
+          "guidelines": "2-3 sentences of personalised seasonal colour harmony guidance tailored to the person's gender",
           "recommended_colors": [
             {"name": "Color Name", "hex": "#RRGGBB"},
             {"name": "Color Name", "hex": "#RRGGBB"},
@@ -98,6 +98,7 @@ final class GeminiService {
         }
 
         Profile:
+        - Gender: \(gender)
         - Body type: \(bodyType)
         - Skin tone: \(skinTone)
         - Eye colour: \(eyeColor)

@@ -7,6 +7,9 @@ struct ProfileSettingsView: View {
     @State private var vm = ProfileViewModel()
     @State private var devTapCount = 0
     @State private var showDevLogs = false
+    @State private var showStoreSheet = false
+    @State private var showAgeSheet = false
+    @State private var ageInput = 25
     @ObservedObject private var logger = DebugLogger.shared
     @AppStorage("preferredLanguage") private var preferredLanguage = "system"
 
@@ -21,9 +24,11 @@ struct ProfileSettingsView: View {
                     ScrollView {
                         VStack(spacing: 20) {
                             profileHeader(profile)
+                            identitySection(profile)
                             colorimetrySection(profile)
                             avoidSection(profile)
                             traitsSection(profile)
+                            shoppingSection(profile)
                             GoldDivider().padding(.horizontal, 4)
                             languageSection
                             GoldDivider().padding(.horizontal, 4)
@@ -67,6 +72,12 @@ struct ProfileSettingsView: View {
             } message: {
                 Text(Strings.profileDeleteMessage)
             }
+            .sheet(isPresented: $showStoreSheet) {
+                if let profile { StoreSelectionView(profile: profile) }
+            }
+            .sheet(isPresented: $showAgeSheet) {
+                agePickerSheet
+            }
         }
     }
 
@@ -79,7 +90,7 @@ struct ProfileSettingsView: View {
                     .fill(Color.dsSurface)
                     .frame(width: 72, height: 72)
                     .overlay(Circle().stroke(Color.dsAccentGold.opacity(0.35), lineWidth: 0.5))
-                Image(systemName: "person.crop.circle")
+                Image(systemName: genderIcon(for: profile.gender))
                     .font(.system(size: 36, weight: .thin))
                     .foregroundStyle(Color.dsAccentGold)
             }
@@ -105,6 +116,66 @@ struct ProfileSettingsView: View {
                 }
             }
             Spacer()
+        }
+        .padding(18)
+        .luxuryCard()
+    }
+
+    // ── Identity section ──────────────────────────────────────────────────────
+
+    private func identitySection(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader(Strings.profileSectionIdentity)
+
+            if let gender = profile.gender {
+                traitRow(label: Strings.profileTraitGender, value: localizedGender(gender))
+                GoldDivider()
+            }
+
+            HStack {
+                Text(Strings.profileTraitAge)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+                Spacer()
+                Button {
+                    ageInput = profile.age ?? 25
+                    showAgeSheet = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(profile.age.map { "\($0)" } ?? "—")
+                            .font(.dsBodyMedium)
+                            .foregroundStyle(Color.dsTextPrimary)
+                        Image(systemName: "pencil")
+                            .font(.caption)
+                            .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                    }
+                }
+            }
+
+            if !profile.accessoryStyle.isEmpty {
+                GoldDivider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(Strings.profileTraitAccessoryStyle)
+                        .font(.dsCaption)
+                        .foregroundStyle(Color.dsTextTertiary)
+                    FlowLayout(spacing: 8) {
+                        ForEach(profile.accessoryStyle, id: \.self) { style in
+                            let localized = String(
+                                localized: String.LocalizationValue("accessory.\(style.lowercased())"),
+                                locale: Strings.activeLocale
+                            )
+                            Text(localized)
+                                .font(.dsCaption)
+                                .foregroundStyle(Color.dsAccentGold)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.dsAccentGold.opacity(0.12))
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(Color.dsAccentGold.opacity(0.35), lineWidth: 0.5))
+                        }
+                    }
+                }
+            }
         }
         .padding(18)
         .luxuryCard()
@@ -166,7 +237,7 @@ struct ProfileSettingsView: View {
     private func traitsSection(_ profile: UserProfile) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader(Strings.profileSectionTraits)
-            traitRow(label: Strings.profileTraitBody,  value: profile.bodyType)
+            traitRow(label: Strings.profileTraitBody,  value: localizedBodyType(profile.bodyType))
             GoldDivider()
             traitRow(label: Strings.profileTraitSkin,  value: profile.skinTone)
             GoldDivider()
@@ -175,6 +246,51 @@ struct ProfileSettingsView: View {
             traitRow(label: Strings.profileTraitHair,  value: profile.hairColor)
             GoldDivider()
             traitRow(label: Strings.profileTraitMetal, value: profile.metalPreference)
+        }
+        .padding(18)
+        .luxuryCard()
+    }
+
+    // ── Shopping profile ──────────────────────────────────────────────────────
+
+    private func shoppingSection(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                sectionHeader(Strings.profileSectionShopping)
+                Spacer()
+                Button(Strings.profileStoresEdit) {
+                    showStoreSheet = true
+                }
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsAccentGold.opacity(0.8))
+            }
+
+            if profile.preferredStores.isEmpty {
+                Button {
+                    showStoreSheet = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bag")
+                            .foregroundStyle(Color.dsAccentGold.opacity(0.6))
+                        Text(Strings.profileStoresEmpty)
+                            .font(.dsCaption)
+                            .foregroundStyle(Color.dsTextTertiary)
+                    }
+                }
+            } else {
+                FlowLayout(spacing: 8) {
+                    ForEach(profile.preferredStores, id: \.self) { store in
+                        Text(store)
+                            .font(.dsCaption)
+                            .foregroundStyle(Color.dsTextSecondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.dsSurface.opacity(0.6))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Color.dsAccentGold.opacity(0.2), lineWidth: 0.5))
+                    }
+                }
+            }
         }
         .padding(18)
         .luxuryCard()
@@ -249,6 +365,46 @@ struct ProfileSettingsView: View {
         .padding(.bottom, 24)
     }
 
+    // ── Age picker sheet ──────────────────────────────────────────────────────
+
+    private var agePickerSheet: some View {
+        NavigationStack {
+            ZStack {
+                Color.dsDeepSlate.ignoresSafeArea()
+                VStack(spacing: 24) {
+                    Text(Strings.profileTraitAge)
+                        .font(.dsLabel)
+                        .foregroundStyle(Color.dsTextTertiary)
+                        .tracking(2)
+
+                    Picker("", selection: $ageInput) {
+                        ForEach(13...99, id: \.self) { age in
+                            Text("\(age)").tag(age)
+                        }
+                    }
+                    .pickerStyle(.wheel)
+                    .frame(height: 180)
+
+                    Button {
+                        profile?.age = ageInput
+                        showAgeSheet = false
+                    } label: {
+                        Text(Strings.commonSave)
+                            .font(.dsBodyMedium)
+                            .foregroundStyle(Color.dsDeepSlate)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                            .background(Color.dsAccentGold)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+                    .padding(.horizontal, 24)
+                }
+            }
+            .presentationDetents([.height(340)])
+            .presentationDragIndicator(.visible)
+        }
+    }
+
     // ── Shared helpers ────────────────────────────────────────────────────────
 
     private func sectionHeader(_ title: String) -> some View {
@@ -290,6 +446,28 @@ struct ProfileSettingsView: View {
         Text("—")
             .font(.dsCaption)
             .foregroundStyle(Color.dsTextTertiary)
+    }
+
+    private func genderIcon(for gender: String?) -> String {
+        switch gender {
+        case "Male":   return "figure.stand"
+        case "Female": return "figure.stand.dress"
+        default:       return "person.crop.circle"
+        }
+    }
+
+    private func localizedGender(_ gender: String) -> String {
+        switch gender {
+        case "Male":   return Strings.onboardingGenderMale
+        case "Female": return Strings.onboardingGenderFemale
+        default:       return gender
+        }
+    }
+
+    private func localizedBodyType(_ rawValue: String) -> String {
+        let key = "bodytype.\(rawValue.lowercased().replacingOccurrences(of: " ", with: "_"))"
+        let localized = String(localized: String.LocalizationValue(key), locale: Strings.activeLocale)
+        return localized == key ? rawValue : localized
     }
 
     // ── Developer Logs (hidden — 5 taps on profile icon) ─────────────────────

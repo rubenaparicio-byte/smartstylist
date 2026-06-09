@@ -200,11 +200,14 @@ final class StyleEngineViewModel {
     }
 
     private func encodeProfile(_ p: UserProfile) -> String {
-        """
+        let genderField   = p.gender.map { ",\"gender\":\"\($0)\"" } ?? ""
+        let storesField   = p.preferredStores.isEmpty ? "" : ",\"preferredStores\":[\(p.preferredStores.map { "\"\($0)\"" }.joined(separator: ","))]"
+        let accField      = p.accessoryStyle.isEmpty  ? "" : ",\"accessoryStyle\":[\(p.accessoryStyle.map  { "\"\($0)\"" }.joined(separator: ","))]"
+        return """
         {"bodyType":"\(p.bodyType)","skinTone":"\(p.skinTone)",\
         "eyeColor":"\(p.eyeColor)","hairColor":"\(p.hairColor)",\
         "season":"\(p.seasonalColorimetry)","guidelines":"\(p.styleGuidelines)",\
-        "metalPreference":"\(p.metalPreference)"}
+        "metalPreference":"\(p.metalPreference)"\(genderField)\(storesField)\(accField)}
         """
     }
 

@@ -12,7 +12,13 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
   - `Closet/` — wardrobe CRUD, `AddItemView`, `ClothingItemCard`
   - `Components/` — reusable primitives (`CameraPicker`, `SelectionChip`, …)
   - `StyleEngine/` — AI outfit generation UI
-  - `Onboarding/` — colorimetry onboarding flow
+  - `Onboarding/` — 6-step user funnel (language → gender → body → skin → hair+eyes → result)
+    - `LanguageStepView` — language selector (ES/EN/System); applies locale immediately via `@AppStorage`
+    - `GenderStepView` — Male/Female cards; resets `selectedBodyType` on change
+    - `BodyTypeStepView` — descriptive cards with definition text; options differ by gender
+    - `SkinToneStepView` — 2-column grid with radial-gradient skin swatches + undertone description
+    - `ColorimetryResultView` — season result + Accessory Style multi-select chips
+  - `Profile/` — `ProfileSettingsView` + `StoreSelectionView` (brand multi-select sheet)
 - `ViewModels/` — `@Observable` classes, own state and coordinate services
 - `Services/` — async service layer
   - `AuthService` — Sign In with Apple + Keychain session management
@@ -114,8 +120,9 @@ Sign In with Apple is the primary auth method. Google Sign-In UI is prepared but
 **Reglas de prompt** (enforced in `GeminiService.swift`):
 1. Only reference `ClothingItem` UUIDs from the current inventory
 2. No outfit repeated within the last 14 days (`OutfitHistory`)
-3. Colorimetry harmony based on `UserProfile` skin/hair/eye tones
+3. Colorimetry harmony based on `UserProfile` skin/hair/eye tones and season
 4. Match weather conditions and occasion from context
+5. Gender-specific guidance — `analyseProfile` and `encodeProfile` include `gender` so the LLM adapts language and style advice accordingly
 
 ## Design System
 
@@ -207,7 +214,58 @@ Camera photos often have non-Up orientation. The service works in native CGImage
 
 `StyleEngineViewModel.encodeInventory()` includes `"thermalLayer"` and `"layerNumber"` in each item's JSON so the LLM can reason about thermal coherence.
 
-**SwiftData migration:** `thermalLayer` is stored as `ThermalLayer?` (optional) to survive schema migration without a `VersionedSchema`. Access it via `item.resolvedThermalLayer` (computed non-optional property) — never force-unwrap `thermalLayer` directly. The same pattern applies to `subcategory: ClothingSubcategory?`.
+**SwiftData migration:** `thermalLayer` is stored as `ThermalLayer?` (optional) to survive schema migration without a `VersionedSchema`. Access it via `item.resolvedThermalLayer` (computed non-optional property) — never force-unwrap `thermalLayer` directly. The same pattern applies to `subcategory: ClothingSubcategory?` and all new `UserProfile` optional fields.
+
+### UserProfile — extended fields (`Models/UserProfile.swift`)
+
+New optional fields added for safe SwiftData migration (no `VersionedSchema` required):
+
+| Field | Type | Set during | Purpose |
+|-------|------|------------|---------|
+| `gender` | `String?` | Onboarding step 1 | `"Male"` \| `"Female"` — adapts body-type options and LLM guidance |
+| `age` | `Int?` | Profile → Identity | Editable via wheel picker; nil = not set |
+| `accessoryStyle` | `[String]` | Onboarding result | Multi-select: `"Minimal"`, `"Statement"`, `"Layered"`, `"Vintage"` |
+| `preferredStores` | `[String]` | Profile → Shopping | Brand names; sent to LLM via `encodeProfile()` for relevant suggestions |
+
+All four fields are included in `StyleEngineViewModel.encodeProfile()` so the outfit LLM receives full user context.
+
+### Onboarding funnel — 6-step flow (`OnboardingViewModel`)
+
+`OnboardingViewModel.OnboardingStep` enum (rawValue order):
+
+| Step | View | `canAdvance` condition |
+|------|------|----------------------|
+| `.language` | `LanguageStepView` | Always true (System is default) |
+| `.gender` | `GenderStepView` | `selectedGender` non-empty |
+| `.bodyType` | `BodyTypeStepView` | `selectedBodyType` non-empty |
+| `.skinTone` | `SkinToneStepView` | `selectedSkinTone` non-empty |
+| `.hairEye` | `HairEyeStepView` | Both eye and hair selected |
+| `.result` | `ColorimetryResultView` | Always false (Enter button used instead) |
+
+`.hairEye → .result` transition triggers `analyseProfile()` which calls `GeminiService.analyseProfile(gender:bodyType:skinTone:eyeColor:hairColor:)`.
+
+**Body type options are gender-specific:**
+- Female: Hourglass, Rectangle, Triangle, Inverted Triangle, Oval
+- Male: Athletic, Rectangle, Oval, Trapezoid, Triangle
+
+Selecting a new gender in `GenderStepView` resets `selectedBodyType = ""` to prevent stale cross-gender values.
+
+**Accessory style** is selected in `ColorimetryResultView` after the AI result arrives. It is stored as `[String]` in `vm.selectedAccessoryStyles` and persisted by `save(to:)`.
+
+### ProfileSettingsView — section layout (`Views/Profile/ProfileSettingsView.swift`)
+
+| Section | Content |
+|---------|---------|
+| Header | Season + metal badge; tap 5× for dev logs |
+| Identity | Gender (read-only), Age (wheel picker sheet), Accessory Style chips |
+| Colour Palette | Horizontal scroll of recommended swatches |
+| Avoid | Muted swatches with ✕ overlay |
+| Physical Profile | Body type (localised), skin tone, eye/hair colour, metal |
+| Shopping Profile | Multi-select store chips → opens `StoreSelectionView` sheet |
+| Language | `"system"` / `"en"` / `"es"` menu picker |
+| Actions | Retake Analysis, Danger Zone (Delete All Data) |
+
+`StoreSelectionView` (`Views/Profile/StoreSelectionView.swift`) shows ~25 brands segmented as Budget / Mid-range / Premium / Sports. Selections are written directly to `profile.preferredStores` (SwiftData `@Model` class — auto-persisted).
 
 ### OutfitSuggestionCard — Layer Composition Stack (`Views/StyleEngine/OutfitSuggestionCard.swift`)
 
@@ -246,7 +304,7 @@ All user-facing strings go through `SmartStylist/Localization/Strings.swift`. **
 - `SmartStylistApp` injects `.environment(\.locale, activeLocale)` so SwiftUI `Text(verbatim:)` / `Text(LocalizedStringKey:)` views also update.
 - `@AppStorage("preferredLanguage")` in `SmartStylistApp` triggers a re-render of the full view tree on change.
 
-**User-facing selector:** `ProfileSettingsView.languageSection` — a `.menu`-style `Picker` with three options:
+**User-facing selector:** Available in both `LanguageStepView` (onboarding step 0) and `ProfileSettingsView.languageSection`. Three options:
 
 | Value | Label |
 |-------|-------|
@@ -254,9 +312,24 @@ All user-facing strings go through `SmartStylist/Localization/Strings.swift`. **
 | `"en"` | English |
 | `"es"` | Español |
 
+`LanguageStepView` applies the choice immediately via `@AppStorage("preferredLanguage")`, so subsequent onboarding steps render in the chosen language.
+
+**String key namespaces:**
+
+| Prefix | Purpose |
+|--------|---------|
+| `onboarding.*` | Funnel step titles, subtitles, CTAs |
+| `bodytype.*` / `bodytype.*.desc` | Body type names + one-line definitions |
+| `skintone.*` / `skintone.*.desc` | Skin tone names + undertone descriptions |
+| `accessory.*` | Accessory style labels (Minimal, Statement, Layered, Vintage) |
+| `profile.*` | Profile section headers and trait labels |
+| `stores.*` | Store sheet navigation and section headers |
+
 **Adding new strings:**
 1. Add a `static var`/`func` to `Strings.swift` using `String(localized:locale:Strings.activeLocale)`
 2. Add the key to both `en.lproj/Localizable.strings` and `es.lproj/Localizable.strings`
+
+For dynamic key lookups (e.g. body type descriptions keyed by `rawValue`), use `String(localized: String.LocalizationValue(key), locale: Strings.activeLocale)` directly in the view — do not add a `Strings.*` property for every permutation.
 
 ### Debug in-app
 

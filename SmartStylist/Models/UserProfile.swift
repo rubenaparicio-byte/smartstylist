@@ -4,6 +4,7 @@ import SwiftData
 @Model
 final class UserProfile {
     @Attribute(.unique) var id: UUID
+    var gender: String?           // "Male" | "Female" — optional for safe migration
     var bodyType: String
     var skinTone: String
     var eyeColor: String
@@ -16,8 +17,12 @@ final class UserProfile {
     var avoidColorNames: [String]
     var avoidColorHexes: [String]
     var metalPreference: String
+    var accessoryStyle: [String]  // ["Minimal", "Statement", "Layered", "Vintage"]
+    var preferredStores: [String] // brand names the user shops at
+    var age: Int?                 // nil = not set
 
     init(id: UUID = UUID(),
+         gender: String? = nil,
          bodyType: String = "",
          skinTone: String = "",
          eyeColor: String = "",
@@ -29,8 +34,12 @@ final class UserProfile {
          recommendedColorHexes: [String] = [],
          avoidColorNames: [String] = [],
          avoidColorHexes: [String] = [],
-         metalPreference: String = "Gold") {
+         metalPreference: String = "Gold",
+         accessoryStyle: [String] = [],
+         preferredStores: [String] = [],
+         age: Int? = nil) {
         self.id = id
+        self.gender = gender
         self.bodyType = bodyType
         self.skinTone = skinTone
         self.eyeColor = eyeColor
@@ -43,5 +52,8 @@ final class UserProfile {
         self.avoidColorNames = avoidColorNames
         self.avoidColorHexes = avoidColorHexes
         self.metalPreference = metalPreference
+        self.accessoryStyle = accessoryStyle
+        self.preferredStores = preferredStores
+        self.age = age
     }
 }

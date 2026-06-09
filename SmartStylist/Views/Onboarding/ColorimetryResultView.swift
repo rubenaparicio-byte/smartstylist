@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ColorimetryResultView: View {
-    let vm: OnboardingViewModel
+    @Bindable var vm: OnboardingViewModel
     let onComplete: () -> Void
 
     private var analysis: ColorimetryAnalysis? { vm.analysisResult }
@@ -81,6 +81,37 @@ struct ColorimetryResultView: View {
                         HStack(spacing: 14) {
                             ForEach(avoid, id: \.hex) { swatch in
                                 SwatchCell(swatch: swatch, muted: true)
+                            }
+                        }
+                    }
+                }
+
+                // ── Accessory style ───────────────────────────────────────
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(Strings.onboardingResultAccessoryTitle)
+                        .font(.dsLabel)
+                        .foregroundStyle(Color.dsTextSecondary)
+                        .tracking(2)
+
+                    Text(Strings.onboardingResultAccessorySubtitle)
+                        .font(.dsCaption)
+                        .foregroundStyle(Color.dsTextTertiary)
+
+                    FlowLayout(spacing: 10) {
+                        ForEach(vm.accessoryStyleOptions, id: \.self) { style in
+                            let localized = String(
+                                localized: String.LocalizationValue("accessory.\(style.lowercased())"),
+                                locale: Strings.activeLocale
+                            )
+                            SelectionChip(
+                                label: localized,
+                                isSelected: vm.selectedAccessoryStyles.contains(style)
+                            ) {
+                                if vm.selectedAccessoryStyles.contains(style) {
+                                    vm.selectedAccessoryStyles.removeAll { $0 == style }
+                                } else {
+                                    vm.selectedAccessoryStyles.append(style)
+                                }
                             }
                         }
                     }

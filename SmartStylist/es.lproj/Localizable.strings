@@ -17,6 +17,11 @@
 "onboarding.cta.continue"      = "Continuar";
 "onboarding.loading.analysing" = "Analizando tu perfil…";
 
+"onboarding.gender.title"      = "TU\nPERFIL";
+"onboarding.gender.subtitle"   = "Personalizaremos tus recomendaciones en base a tus preferencias de estilo.";
+"onboarding.gender.male"       = "Hombre";
+"onboarding.gender.female"     = "Mujer";
+
 "onboarding.body.title"        = "ARQUITECTURA\nCORPORAL";
 "onboarding.body.subtitle"     = "Selecciona la silueta que mejor describe tus proporciones.";
 "onboarding.skin.title"        = "TONO\nDE PIEL";
@@ -25,11 +30,51 @@
 "onboarding.hair.subtitle"     = "Estos detalles completan tu perfil cromático.";
 "onboarding.hair.colour"       = "Color de Cabello";
 "onboarding.eye.colour"        = "Color de Ojos";
-"onboarding.result.title"      = "TU\nESTACIÓN";
-"onboarding.result.subtitle"   = "Tu identidad cromática ha sido analizada.";
-"onboarding.result.palette"    = "TU PALETA";
-"onboarding.result.minimise"   = "MINIMIZAR";
-"onboarding.result.enter"      = "Entrar a mi Armario";
+"onboarding.result.title"              = "TU\nESTACIÓN";
+"onboarding.result.subtitle"           = "Tu identidad cromática ha sido analizada.";
+"onboarding.result.palette"            = "TU PALETA";
+"onboarding.result.minimise"           = "MINIMIZAR";
+"onboarding.result.enter"              = "Entrar a mi Armario";
+"onboarding.result.accessory.title"    = "ESTILO DE ACCESORIOS";
+"onboarding.result.accessory.subtitle" = "¿Cómo prefieres llevar tus accesorios?";
+
+/* Tipos de cuerpo */
+"bodytype.hourglass"              = "Reloj de Arena";
+"bodytype.hourglass.desc"         = "Hombros y caderas equilibrados con cintura naturalmente definida";
+"bodytype.rectangle"              = "Rectángulo";
+"bodytype.rectangle.desc"         = "Anchura similar en hombros, cintura y caderas — silueta atlética";
+"bodytype.triangle"               = "Triángulo";
+"bodytype.triangle.desc"          = "Caderas más anchas que los hombros — clásica silueta en pera";
+"bodytype.inverted_triangle"      = "Triángulo Invertido";
+"bodytype.inverted_triangle.desc" = "Hombros más anchos que las caderas — estructura superior fuerte";
+"bodytype.oval"                   = "Óvalo";
+"bodytype.oval.desc"              = "Silueta redondeada con mayor volumen en la zona media";
+"bodytype.athletic"               = "Atlético";
+"bodytype.athletic.desc"          = "Hombros anchos, cintura estrecha — silueta en V";
+"bodytype.trapezoid"              = "Trapecio";
+"bodytype.trapezoid.desc"         = "Hombros ligeramente más anchos que las caderas — constitución equilibrada";
+
+/* Tonos de piel */
+"skintone.warm_light"       = "Cálido Claro";
+"skintone.warm_light.desc"  = "Piel clara con subtonos dorados o melocotón";
+"skintone.warm_medium"      = "Cálido Medio";
+"skintone.warm_medium.desc" = "Piel media con subtonos dorados u oliva";
+"skintone.warm_deep"        = "Cálido Profundo";
+"skintone.warm_deep.desc"   = "Piel profunda con subtonos dorados o bronce";
+"skintone.cool_light"       = "Frío Claro";
+"skintone.cool_light.desc"  = "Piel clara con subtonos rosas o rosados";
+"skintone.cool_medium"      = "Frío Medio";
+"skintone.cool_medium.desc" = "Piel media con subtonos rosas o azulados";
+"skintone.cool_deep"        = "Frío Profundo";
+"skintone.cool_deep.desc"   = "Piel profunda con subtonos azules o violetas";
+"skintone.neutral"          = "Neutro";
+"skintone.neutral.desc"     = "Mezcla equilibrada de subtonos cálidos y fríos";
+
+/* Estilos de accesorios */
+"accessory.minimal"    = "Minimal";
+"accessory.statement"  = "Statement";
+"accessory.layered"    = "Capas";
+"accessory.vintage"    = "Vintage";
 
 /* Motor de Estilo */
 "style.nav.title"             = "LOOK DE HOY";
@@ -159,22 +204,38 @@
 "insights.most.disposed"     = "Más baja: %@";
 
 /* Perfil y ajustes */
-"profile.nav.title"              = "MI PERFIL";
-"profile.section.colorimetry"    = "PALETA DE COLORES";
-"profile.section.avoid"          = "EVITAR";
-"profile.section.traits"         = "PERFIL FÍSICO";
-"profile.trait.body"             = "Tipo de Cuerpo";
-"profile.trait.skin"             = "Tono de Piel";
-"profile.trait.eye"              = "Color de Ojos";
-"profile.trait.hair"             = "Color de Cabello";
-"profile.trait.metal"            = "Metal Preferido";
-"profile.retake.button"          = "Repetir Análisis";
-"profile.retake.title"           = "¿Repetir el Análisis?";
-"profile.retake.message"         = "Tu armario se conservará, pero tu perfil de color se borrará. La IA analizará tu estilo desde cero.";
-"profile.danger.zone"            = "ZONA PELIGROSA";
-"profile.delete.button"          = "Borrar Todos mis Datos";
-"profile.delete.title"           = "¿Borrar Todos los Datos?";
-"profile.delete.message"         = "Se borrarán permanentemente tu perfil, armario e historial de outfits. Esta acción no se puede deshacer.";
+"profile.nav.title"                = "MI PERFIL";
+"profile.section.identity"         = "IDENTIDAD";
+"profile.section.colorimetry"      = "PALETA DE COLORES";
+"profile.section.avoid"            = "EVITAR";
+"profile.section.traits"           = "PERFIL FÍSICO";
+"profile.section.shopping"         = "PERFIL DE COMPRAS";
+"profile.trait.gender"             = "Género";
+"profile.trait.age"                = "Edad";
+"profile.trait.body"               = "Tipo de Cuerpo";
+"profile.trait.skin"               = "Tono de Piel";
+"profile.trait.eye"                = "Color de Ojos";
+"profile.trait.hair"               = "Color de Cabello";
+"profile.trait.metal"              = "Metal Preferido";
+"profile.trait.accessory_style"    = "Estilo de Accesorios";
+"profile.stores.edit"              = "Editar";
+"profile.stores.empty"             = "Toca Editar para añadir tus marcas favoritas";
+"profile.retake.button"            = "Repetir Análisis";
+"profile.retake.title"             = "¿Repetir el Análisis?";
+"profile.retake.message"           = "Tu armario se conservará, pero tu perfil de color se borrará. La IA analizará tu estilo desde cero.";
+"profile.danger.zone"              = "ZONA PELIGROSA";
+"profile.delete.button"            = "Borrar Todos mis Datos";
+"profile.delete.title"             = "¿Borrar Todos los Datos?";
+"profile.delete.message"           = "Se borrarán permanentemente tu perfil, armario e historial de outfits. Esta acción no se puede deshacer.";
+
+/* Tiendas */
+"stores.nav.title"         = "TIENDAS FAVORITAS";
+"stores.subtitle"          = "Selecciona las marcas donde compras habitualmente — las usaremos para personalizar tus sugerencias.";
+"stores.done"              = "Hecho";
+"stores.section.budget"    = "ECONÓMICO";
+"stores.section.mid"       = "PRECIO MEDIO";
+"stores.section.premium"   = "PREMIUM";
+"stores.section.sports"    = "DEPORTES";
 
 /* Filtros del armario */
 "filter.section.status"        = "ESTADO";
