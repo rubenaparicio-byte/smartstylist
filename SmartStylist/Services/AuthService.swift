@@ -81,8 +81,9 @@ final class AuthService {
         withAnimation(.dsDefault) { isAuthenticated = false }
     }
 
-    // Validates the stored Apple credential against Apple's servers on each
-    // cold launch. Revoked or missing credentials trigger sign-out.
+    // Validates the stored Apple credential on each cold launch.
+    // Only signs out on .revoked — .notFound is a false positive in the simulator
+    // and in development builds where Apple's servers may not recognise the user ID.
     func validateAppleCredential() async {
         guard let userID = KeychainHelper.load(account: kAppleUserID) else {
             isAuthenticated = false
@@ -94,7 +95,7 @@ final class AuthService {
                     continuation.resume(returning: state)
                 }
         }
-        if state == .revoked || state == .notFound {
+        if state == .revoked {
             signOut()
         }
     }

@@ -74,7 +74,8 @@ final class ClothingItem {
     @Attribute(.unique) var id: UUID
     var imagePath: String?
     var category: ClothingCategory
-    var thermalLayer: ThermalLayer
+    // Optional so SwiftData can migrate existing stores that predate this field.
+    var thermalLayer: ThermalLayer?
     var primaryColor: String
     var pattern: String
     var style: String
@@ -82,6 +83,9 @@ final class ClothingItem {
     var status: ItemStatus
     var createdAt: Date
     var disposeReason: String
+
+    // Non-optional accessor; falls back to the category default for migrated records.
+    var resolvedThermalLayer: ThermalLayer { thermalLayer ?? category.defaultThermalLayer }
 
     init(id: UUID = UUID(),
          imagePath: String? = nil,

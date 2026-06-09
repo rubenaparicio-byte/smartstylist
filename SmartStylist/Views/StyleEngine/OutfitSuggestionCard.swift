@@ -23,7 +23,7 @@ struct OutfitSuggestionCard: View {
             guard let id else { return nil }
             return items.first { $0.id == id }
         }
-        let grouped = Dictionary(grouping: clothingItems, by: \.thermalLayer)
+        let grouped = Dictionary(grouping: clothingItems, by: \.resolvedThermalLayer)
         return grouped
             .map { LayerGroup(layer: $0.key, outfitItems: $0.value) }
             .sorted { $0.layer.layerNumber > $1.layer.layerNumber }
