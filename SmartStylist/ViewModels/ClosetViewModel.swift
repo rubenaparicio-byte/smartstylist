@@ -12,10 +12,10 @@ enum DisposeReason: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .wornOut:  return "Worn Out"
-        case .damaged:  return "Damaged"
-        case .donated:  return "Donated"
-        case .unused:   return "No Longer Used"
+        case .wornOut:  return Strings.disposeReasonWorn
+        case .damaged:  return Strings.disposeReasonDamaged
+        case .donated:  return Strings.disposeReasonDonated
+        case .unused:   return Strings.disposeReasonUnused
         }
     }
 

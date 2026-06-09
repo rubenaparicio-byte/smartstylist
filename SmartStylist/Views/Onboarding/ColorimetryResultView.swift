@@ -11,9 +11,9 @@ struct ColorimetryResultView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("YOUR\nSEASON")
+                    Text(Strings.onboardingResultTitle)
                         .editorialStyle()
-                    Text("Your chromatic identity has been analysed.")
+                    Text(Strings.onboardingResultSubtitle)
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
@@ -54,7 +54,7 @@ struct ColorimetryResultView: View {
                 // ── Recommended palette ───────────────────────────────────
                 if let colors = analysis?.recommendedColors, !colors.isEmpty {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("YOUR PALETTE")
+                        Text(Strings.onboardingResultPalette)
                             .font(.dsLabel)
                             .foregroundStyle(Color.dsTextSecondary)
                             .tracking(2)
@@ -73,7 +73,7 @@ struct ColorimetryResultView: View {
                 // ── Colours to minimise ───────────────────────────────────
                 if let avoid = analysis?.avoidColors, !avoid.isEmpty {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("MINIMISE")
+                        Text(Strings.onboardingResultMinimise)
                             .font(.dsLabel)
                             .foregroundStyle(Color.dsTextSecondary)
                             .tracking(2)
@@ -87,7 +87,7 @@ struct ColorimetryResultView: View {
                 }
 
                 Button(action: onComplete) {
-                    Text("Enter My Wardrobe")
+                    Text(Strings.onboardingResultEnter)
                         .font(.dsBodyMedium)
                         .foregroundStyle(Color.dsDeepSlate)
                         .frame(maxWidth: .infinity)

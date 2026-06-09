@@ -17,6 +17,20 @@
 "onboarding.cta.continue"      = "Continuar";
 "onboarding.loading.analysing" = "Analizando tu perfil…";
 
+"onboarding.body.title"        = "ARQUITECTURA\nCORPORAL";
+"onboarding.body.subtitle"     = "Selecciona la silueta que mejor describe tus proporciones.";
+"onboarding.skin.title"        = "TONO\nDE PIEL";
+"onboarding.skin.subtitle"     = "El subtono de tu piel define toda tu paleta de colores.";
+"onboarding.hair.title"        = "CABELLO\nY OJOS";
+"onboarding.hair.subtitle"     = "Estos detalles completan tu perfil cromático.";
+"onboarding.hair.colour"       = "Color de Cabello";
+"onboarding.eye.colour"        = "Color de Ojos";
+"onboarding.result.title"      = "TU\nESTACIÓN";
+"onboarding.result.subtitle"   = "Tu identidad cromática ha sido analizada.";
+"onboarding.result.palette"    = "TU PALETA";
+"onboarding.result.minimise"   = "MINIMIZAR";
+"onboarding.result.enter"      = "Entrar a mi Armario";
+
 /* Motor de Estilo */
 "style.nav.title"             = "LOOK DE HOY";
 "style.section.event_context" = "CONTEXTO DE EVENTO";
@@ -48,6 +62,75 @@
 "category.outerwear" = "Abrigos";
 "category.accessory" = "Accesorios";
 
+/* Añadir prenda */
+"add.nav.title"             = "Nueva Prenda";
+"add.section.photo"         = "ESCANEO DE FOTO";
+"add.section.details"       = "DETALLES MANUALES";
+"add.picker.category"       = "Categoría";
+"add.picker.subcategory"    = "Tipo";
+"add.picker.layer"          = "Capa Térmica";
+"add.field.style"           = "Estilo (Casual, Formal…)";
+"add.field.colour"          = "Hex de color (#000000)";
+"add.field.pattern"         = "Estampado (Liso, Rayas…)";
+"add.field.tags"            = "Etiquetas (separadas por coma)";
+"add.button.save"           = "Guardar";
+"add.button.camera"         = "Cámara";
+"add.button.gallery"        = "Galería";
+"add.button.analyse"        = "Analizar con IA";
+"add.button.analysing"      = "Analizando…";
+"add.label.segmenting"      = "Segmentando…";
+
+/* Validar prenda */
+"validate.nav.title"              = "VALIDAR PRENDA";
+"validate.header"                 = "ANÁLISIS IA — REVISA Y CONFIRMA";
+"validate.subheader"              = "Ajusta cualquier detalle antes de añadir al armario.";
+"validate.picker.category"        = "Categoría";
+"validate.picker.subcategory"     = "Tipo";
+"validate.picker.layer"           = "Capa";
+"validate.picker.pattern"         = "Estampado";
+"validate.picker.style"           = "Estilo";
+"validate.field.colour"           = "Color";
+"validate.field.tags"             = "Etiquetas / Ocasiones";
+"validate.field.tags.placeholder" = "trabajo, fin de semana, cita…";
+"validate.button.confirm"         = "Confirmar y Añadir al Armario";
+
+/* Acciones de tarjeta */
+"card.archived"         = "ARCHIVADO";
+"card.action.archive"   = "Archivar";
+"card.action.restore"   = "Restaurar";
+"card.action.retire"    = "Dar de baja";
+
+/* Tarjeta de outfit */
+"outfit.layer.composition" = "COMPOSICIÓN DE CAPAS";
+"outfit.no.items"          = "Sin prendas coincidentes";
+"outfit.footwear"          = "CALZADO";
+
+/* Dar de baja */
+"dispose.title"          = "DAR DE BAJA ESTA PRENDA";
+"dispose.subtitle"       = "Selecciona un motivo para completar la baja.";
+"dispose.confirm"        = "Confirmar Baja";
+"dispose.reason.worn"    = "Desgastada";
+"dispose.reason.damaged" = "Dañada";
+"dispose.reason.donated" = "Donada";
+"dispose.reason.unused"  = "Sin uso";
+
+/* Capas térmicas */
+"layer.base"  = "Base";
+"layer.inner" = "Intermedia";
+"layer.mid"   = "Media";
+"layer.outer" = "Exterior";
+
+/* Ajustes de idioma */
+"settings.section.language" = "IDIOMA";
+"settings.language.label"   = "Idioma";
+"settings.language.system"  = "Sistema";
+"settings.language.en"      = "English";
+"settings.language.es"      = "Español";
+
+/* Tiempo meteorológico */
+"weather.feels.like" = "Sensación %d°C";
+"weather.umbrella"   = "Paraguas";
+
 /* Estados de error */
 "error.wardrobe.title"    = "ARMARIO VACÍO";
 "error.wardrobe.subtitle" = "Añade al menos 2 prendas activas en el Armario para generar un outfit.";
@@ -63,16 +146,17 @@
 "tabs.profile"  = "Perfil";
 
 /* Estadísticas */
-"insights.nav.title"        = "ESTADÍSTICAS";
-"insights.style.title"      = "DISTRIBUCIÓN DE ESTILOS";
-"insights.top.title"        = "MÁS USADAS";
-"insights.health.title"     = "SALUD DEL ARMARIO";
-"insights.health.active"    = "Activo";
-"insights.health.archived"  = "Archivado";
-"insights.health.disposed"  = "Dado de baja";
-"insights.empty.title"      = "SIN DATOS AÚN";
-"insights.empty.subtitle"   = "Añade prendas y genera outfits para ver tus estadísticas.";
-"insights.worn"             = "veces";
+"insights.nav.title"         = "ESTADÍSTICAS";
+"insights.style.title"       = "DISTRIBUCIÓN DE ESTILOS";
+"insights.top.title"         = "MÁS USADAS";
+"insights.health.title"      = "SALUD DEL ARMARIO";
+"insights.health.active"     = "Activo";
+"insights.health.archived"   = "Archivado";
+"insights.health.disposed"   = "Dado de baja";
+"insights.empty.title"       = "SIN DATOS AÚN";
+"insights.empty.subtitle"    = "Añade prendas y genera outfits para ver tus estadísticas.";
+"insights.worn"              = "veces";
+"insights.most.disposed"     = "Más baja: %@";
 
 /* Perfil y ajustes */
 "profile.nav.title"              = "MI PERFIL";
@@ -86,7 +170,7 @@
 "profile.trait.metal"            = "Metal Preferido";
 "profile.retake.button"          = "Repetir Análisis";
 "profile.retake.title"           = "¿Repetir el Análisis?";
-"profile.retake.message"         = "Tu armario se conservará, pero tu perfil de color se borrará. Gemini analizará tu estilo desde cero.";
+"profile.retake.message"         = "Tu armario se conservará, pero tu perfil de color se borrará. La IA analizará tu estilo desde cero.";
 "profile.danger.zone"            = "ZONA PELIGROSA";
 "profile.delete.button"          = "Borrar Todos mis Datos";
 "profile.delete.title"           = "¿Borrar Todos los Datos?";
@@ -101,3 +185,58 @@
 "filter.clear_all"             = "Borrar Filtros";
 "filter.no_results.title"      = "SIN PRENDAS";
 "filter.no_results.subtitle"   = "Ninguna prenda coincide con los filtros actuales.";
+
+/* Subcategorías */
+"subcategory.tshirt"       = "Camiseta";
+"subcategory.shirt"        = "Camisa";
+"subcategory.sweater"      = "Jersey";
+"subcategory.hoodie"       = "Sudadera";
+"subcategory.polo"         = "Polo";
+"subcategory.blouse"       = "Blusa";
+"subcategory.cardigan"     = "Cárdigan";
+"subcategory.vest"         = "Chaleco";
+"subcategory.bodysuit"     = "Body";
+"subcategory.jeans"        = "Vaqueros";
+"subcategory.trousers"     = "Pantalón";
+"subcategory.shorts"       = "Shorts";
+"subcategory.skirt"        = "Falda";
+"subcategory.leggings"     = "Leggings";
+"subcategory.joggers"      = "Chándal";
+"subcategory.sneakers"     = "Zapatillas";
+"subcategory.boots"        = "Botas";
+"subcategory.heels"        = "Tacones";
+"subcategory.sandals"      = "Sandalias";
+"subcategory.loafers"      = "Mocasines";
+"subcategory.sport_shoes"  = "Zapatillas Deportivas";
+"subcategory.slippers"     = "Zapatillas de Casa";
+"subcategory.coat"         = "Abrigo";
+"subcategory.jacket"       = "Chaqueta";
+"subcategory.blazer"       = "Blazer";
+"subcategory.bomber"       = "Cazadora";
+"subcategory.raincoat"     = "Chubasquero";
+"subcategory.puffer"       = "Plumas";
+"subcategory.trench"       = "Trench";
+"subcategory.belt"         = "Cinturón";
+"subcategory.scarf"        = "Bufanda";
+"subcategory.hat"          = "Gorro";
+"subcategory.sunglasses"   = "Gafas de Sol";
+"subcategory.jewelry"      = "Joyería";
+"subcategory.tie"          = "Corbata";
+"subcategory.gloves"       = "Guantes";
+"subcategory.bag"          = "Bolso";
+"subcategory.backpack"     = "Mochila";
+
+/* Estampados */
+"pattern.solid"        = "Liso";
+"pattern.stripes"      = "Rayas";
+"pattern.checks"       = "Cuadros";
+"pattern.floral"       = "Floral";
+"pattern.abstract"     = "Abstracto";
+"pattern.animal_print" = "Estampado Animal";
+
+/* Estilos */
+"style.casual"       = "Casual";
+"style.formal"       = "Formal";
+"style.smart_casual" = "Smart Casual";
+"style.athletic"     = "Deportivo";
+"style.evening"      = "Noche";

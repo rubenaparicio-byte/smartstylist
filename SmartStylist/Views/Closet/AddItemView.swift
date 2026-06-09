@@ -6,6 +6,7 @@ struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var category: ClothingCategory = .top
+    @State private var subcategory: ClothingSubcategory? = nil
     @State private var thermalLayer: ThermalLayer = .inner
     @State private var style = ""
     @State private var primaryColor = "#000000"
@@ -13,8 +14,8 @@ struct AddItemView: View {
     @State private var tags = ""
 
     @State private var selectedPhoto: PhotosPickerItem?
-    @State private var rawCameraData: Data?       // direct from CameraPicker
-    @State private var imageData: Data?            // segmented/processed result
+    @State private var rawCameraData: Data?
+    @State private var imageData: Data?
     @State private var isSegmenting = false
     @State private var segmentError: String?
     @State private var showCamera = false
@@ -26,6 +27,9 @@ struct AddItemView: View {
     private let gemini = GeminiService()
     private let segService = GarmentSegmentationService()
 
+    private let patternOptions = ["Solid", "Stripes", "Checks", "Floral", "Abstract", "Animal Print"]
+    private let styleOptions   = ["Casual", "Formal", "Smart Casual", "Athletic", "Evening"]
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -34,47 +38,69 @@ struct AddItemView: View {
                     Section {
                         photoScanSection
                     } header: {
-                        Text("PHOTO SCAN")
+                        Text(Strings.addSectionPhoto)
                             .font(.dsLabel).foregroundStyle(Color.dsAccentGold).tracking(1.5)
                     }
 
                     Section {
-                        Picker("Category", selection: $category) {
+                        Picker(Strings.addPickerCategory, selection: $category) {
                             ForEach(ClothingCategory.allCases, id: \.self) { c in
-                                Text(c.rawValue.capitalized).tag(c)
+                                Text(c.localizedName).tag(c)
                             }
                         }
                         .onChange(of: category) { _, newCat in
+                            subcategory = nil
                             thermalLayer = newCat.defaultThermalLayer
                         }
-                        Picker("Thermal Layer", selection: $thermalLayer) {
+
+                        Picker(Strings.addPickerSubcategory, selection: $subcategory) {
+                            Text("—").tag(ClothingSubcategory?.none)
+                            ForEach(category.subcategories, id: \.self) { sub in
+                                Text(sub.localizedName).tag(ClothingSubcategory?.some(sub))
+                            }
+                        }
+
+                        Picker(Strings.addPickerLayer, selection: $thermalLayer) {
                             ForEach(ThermalLayer.allCases, id: \.self) { layer in
                                 Label(
-                                    "Layer \(layer.layerNumber) — \(layer.displayName)",
+                                    "Layer \(layer.layerNumber) — \(layer.localizedName)",
                                     systemImage: layer.icon
                                 ).tag(layer)
                             }
                         }
-                        TextField("Style (Casual, Formal…)", text: $style)
-                        TextField("Colour hex (#000000)", text: $primaryColor)
+
+                        Picker(Strings.validatePickerStyle, selection: $style) {
+                            ForEach(styleOptions, id: \.self) { s in
+                                Text(s.localizedStyleName).tag(s)
+                            }
+                        }
+                        .onAppear { if style.isEmpty { style = "Casual" } }
+
+                        Picker(Strings.validatePickerPattern, selection: $pattern) {
+                            ForEach(patternOptions, id: \.self) { p in
+                                Text(p.localizedPatternName).tag(p)
+                            }
+                        }
+
+                        TextField(Strings.addFieldColour, text: $primaryColor)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
-                        TextField("Pattern (Solid, Stripes…)", text: $pattern)
-                        TextField("Tags (comma separated)", text: $tags)
+
+                        TextField(Strings.addFieldTags, text: $tags)
                     } header: {
-                        Text("MANUAL DETAILS")
+                        Text(Strings.addSectionDetails)
                             .font(.dsLabel).foregroundStyle(Color.dsAccentGold).tracking(1.5)
                     }
                 }
                 .scrollContentBackground(.hidden)
             }
-            .navigationTitle("New Piece")
+            .navigationTitle(Strings.addNavTitle)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { Task { await saveManual() } }
+                    Button(Strings.commonSave) { Task { await saveManual() } }
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(Strings.commonCancel) { dismiss() }
                 }
             }
             .sheet(isPresented: $showCamera) {
@@ -113,12 +139,12 @@ struct AddItemView: View {
             Button {
                 showCamera = true
             } label: {
-                sourceButtonLabel(icon: "camera.fill", title: "Camera")
+                sourceButtonLabel(icon: "camera.fill", title: Strings.addButtonCamera)
             }
             .disabled(!UIImagePickerController.isSourceTypeAvailable(.camera))
 
             PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                sourceButtonLabel(icon: "photo.on.rectangle", title: "Gallery")
+                sourceButtonLabel(icon: "photo.on.rectangle", title: Strings.addButtonGallery)
             }
             .onChange(of: selectedPhoto) { _, item in
                 Task {
@@ -147,7 +173,7 @@ struct AddItemView: View {
                     } else {
                         Image(systemName: "wand.and.stars")
                     }
-                    Text(isAnalysing ? "Analysing…" : "Analyse with AI")
+                    Text(isAnalysing ? Strings.addButtonAnalysing : Strings.addButtonAnalyse)
                         .font(.dsBodyMedium)
                 }
                 .foregroundStyle(Color.dsDeepSlate)
@@ -175,7 +201,7 @@ struct AddItemView: View {
                 .overlay(
                     VStack(spacing: 6) {
                         ProgressView().tint(Color.dsAccentGold)
-                        Text("Segmenting…")
+                        Text(Strings.addLabelSegmenting)
                             .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(Color.dsTextTertiary)
                     }
@@ -227,7 +253,7 @@ struct AddItemView: View {
             imageData = try await segService.segment(img)
         } catch {
             segmentError = error.localizedDescription
-            imageData = raw  // fall back to the original capture
+            imageData = raw
         }
         isSegmenting = false
     }
@@ -260,9 +286,10 @@ struct AddItemView: View {
             id: id,
             imagePath: path,
             category: category,
+            subcategory: subcategory,
             thermalLayer: thermalLayer,
             primaryColor: primaryColor.isEmpty ? "#000000" : primaryColor,
-            pattern: pattern.isEmpty ? "Solid" : pattern,
+            pattern: pattern,
             style: style.isEmpty ? "Casual" : style,
             tags: tagList
         )

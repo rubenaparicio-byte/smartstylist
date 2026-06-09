@@ -13,7 +13,7 @@ struct WeatherBadgeView: View {
                 Text(weather.displayString)
                     .font(.dsBodyMedium)
                     .foregroundStyle(Color.dsTextPrimary)
-                Text("Feels like \(Int(weather.feelsLikeCelsius))°C")
+                Text(Strings.weatherFeelsLike(Int(weather.feelsLikeCelsius)))
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextSecondary)
             }
@@ -24,7 +24,7 @@ struct WeatherBadgeView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "umbrella.fill")
                         .foregroundStyle(Color.dsAccentGold)
-                    Text("Umbrella")
+                    Text(Strings.weatherUmbrella)
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextSecondary)
                 }

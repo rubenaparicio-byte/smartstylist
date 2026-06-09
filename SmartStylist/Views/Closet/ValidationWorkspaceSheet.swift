@@ -9,6 +9,7 @@ struct ValidationWorkspaceSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var category: ClothingCategory
+    @State private var subcategory: ClothingSubcategory?
     @State private var thermalLayer: ThermalLayer
     @State private var primaryColor: String
     @State private var pattern: String
@@ -25,7 +26,9 @@ struct ValidationWorkspaceSheet: View {
         self.imageData  = imageData
         self.onSaved    = onSaved
         let detectedCategory = ClothingCategory(rawValue: prediction.category) ?? .top
+        let detectedSubcat   = prediction.subcategory.flatMap { ClothingSubcategory(rawValue: $0) }
         self._category     = State(initialValue: detectedCategory)
+        self._subcategory  = State(initialValue: detectedSubcat)
         self._thermalLayer = State(initialValue: detectedCategory.defaultThermalLayer)
         self._primaryColor = State(initialValue: prediction.primaryColor)
         self._pattern      = State(initialValue: prediction.pattern)
@@ -52,13 +55,13 @@ struct ValidationWorkspaceSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("VALIDATE PIECE")
+                    Text(Strings.validateNavTitle)
                         .font(.dsLabel)
                         .foregroundStyle(Color.dsAccentGold)
                         .tracking(2)
                 }
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(Strings.commonCancel) { dismiss() }
                         .foregroundStyle(Color.dsTextSecondary)
                         .disabled(isSaving)
                 }
@@ -92,11 +95,11 @@ struct ValidationWorkspaceSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("AI ANALYSIS — REVIEW & CONFIRM")
+            Text(Strings.validateHeader)
                 .font(.dsLabel)
                 .foregroundStyle(Color.dsTextSecondary)
                 .tracking(1.5)
-            Text("Adjust any detail before adding to your wardrobe.")
+            Text(Strings.validateSubheader)
                 .font(.dsBody)
                 .foregroundStyle(Color.dsTextTertiary)
         }
@@ -106,43 +109,58 @@ struct ValidationWorkspaceSheet: View {
     private var fieldsCard: some View {
         LuxuryCard {
             VStack(spacing: 0) {
-                pickerRow("Category") {
+                pickerRow(Strings.validatePickerCategory) {
                     Picker("", selection: $category) {
                         ForEach(ClothingCategory.allCases, id: \.self) { c in
-                            Text(c.rawValue.capitalized).tag(c)
+                            Text(c.localizedName).tag(c)
                         }
                     }
                     .tint(Color.dsAccentGold)
                     .onChange(of: category) { _, newCat in
+                        subcategory = nil
                         thermalLayer = newCat.defaultThermalLayer
                     }
                 }
                 cardDivider
-                pickerRow("Layer") {
-                    Picker("", selection: $thermalLayer) {
-                        ForEach(ThermalLayer.allCases, id: \.self) { layer in
-                            Text("L\(layer.layerNumber) \(layer.displayName)").tag(layer)
+                pickerRow(Strings.validatePickerSubcat) {
+                    Picker("", selection: $subcategory) {
+                        Text("—").tag(ClothingSubcategory?.none)
+                        ForEach(category.subcategories, id: \.self) { sub in
+                            Text(sub.localizedName).tag(ClothingSubcategory?.some(sub))
                         }
                     }
                     .tint(Color.dsAccentGold)
                 }
                 cardDivider
-                pickerRow("Pattern") {
-                    Picker("", selection: $pattern) {
-                        ForEach(patternOptions, id: \.self) { Text($0).tag($0) }
+                pickerRow(Strings.validatePickerLayer) {
+                    Picker("", selection: $thermalLayer) {
+                        ForEach(ThermalLayer.allCases, id: \.self) { layer in
+                            Text("L\(layer.layerNumber) \(layer.localizedName)").tag(layer)
+                        }
                     }
                     .tint(Color.dsAccentGold)
                 }
                 cardDivider
-                pickerRow("Style") {
+                pickerRow(Strings.validatePickerPattern) {
+                    Picker("", selection: $pattern) {
+                        ForEach(patternOptions, id: \.self) { p in
+                            Text(p.localizedPatternName).tag(p)
+                        }
+                    }
+                    .tint(Color.dsAccentGold)
+                }
+                cardDivider
+                pickerRow(Strings.validatePickerStyle) {
                     Picker("", selection: $style) {
-                        ForEach(styleOptions, id: \.self) { Text($0).tag($0) }
+                        ForEach(styleOptions, id: \.self) { s in
+                            Text(s.localizedStyleName).tag(s)
+                        }
                     }
                     .tint(Color.dsAccentGold)
                 }
                 cardDivider
                 HStack {
-                    Text("Colour")
+                    Text(Strings.validateFieldColour)
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextTertiary)
                     Spacer()
@@ -169,10 +187,10 @@ struct ValidationWorkspaceSheet: View {
     private var tagsCard: some View {
         LuxuryCard {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Tags / Occasions")
+                Text(Strings.validateFieldTags)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextTertiary)
-                TextField("work, weekend, date night…", text: $tagsText, axis: .vertical)
+                TextField(Strings.validateTagsPlaceholder, text: $tagsText, axis: .vertical)
                     .font(.dsBody)
                     .foregroundStyle(Color.dsTextPrimary)
             }
@@ -189,7 +207,7 @@ struct ValidationWorkspaceSheet: View {
                 if isSaving {
                     ProgressView().tint(Color.dsDeepSlate)
                 } else {
-                    Text("Confirm & Add to Wardrobe")
+                    Text(Strings.validateButtonConfirm)
                         .font(.dsBodyMedium)
                 }
             }
@@ -239,6 +257,7 @@ struct ValidationWorkspaceSheet: View {
             id: id,
             imagePath: path,
             category: category,
+            subcategory: subcategory,
             thermalLayer: thermalLayer,
             primaryColor: primaryColor,
             pattern: pattern,

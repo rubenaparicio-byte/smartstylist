@@ -24,6 +24,7 @@ struct OutfitSuggestionCard: View {
             return items.first { $0.id == id }
         }
         let grouped = Dictionary(grouping: clothingItems, by: \.resolvedThermalLayer)
+
         return grouped
             .map { LayerGroup(layer: $0.key, outfitItems: $0.value) }
             .sorted { $0.layer.layerNumber > $1.layer.layerNumber }
@@ -81,7 +82,7 @@ struct OutfitSuggestionCard: View {
                 Image(systemName: "square.3.layers.3d")
                     .font(.caption)
                     .foregroundStyle(Color.dsAccentGold)
-                Text("LAYER COMPOSITION")
+                Text(Strings.outfitLayerComposition)
                     .font(.dsLabel)
                     .foregroundStyle(Color.dsAccentGold)
                     .tracking(2)
@@ -91,7 +92,7 @@ struct OutfitSuggestionCard: View {
             .padding(.bottom, 14)
 
             if layerGroups.isEmpty {
-                Text("No items matched")
+                Text(Strings.outfitNoItems)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextTertiary)
                     .padding(.horizontal, 20)
@@ -121,7 +122,7 @@ struct OutfitSuggestionCard: View {
                     .background(Color.dsAccentGold)
                     .clipShape(Circle())
 
-                Text("LAYER \(group.layer.layerNumber)  ·  \(group.layer.displayName.uppercased())")
+                Text("LAYER \(group.layer.layerNumber)  ·  \(group.layer.localizedName.uppercased())")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Color.dsAccentGold)
                     .tracking(1.5)
@@ -164,7 +165,7 @@ struct OutfitSuggestionCard: View {
                 Image(systemName: "shoeprints.fill")
                     .font(.caption)
                     .foregroundStyle(Color.dsAccentGold.opacity(0.7))
-                Text("FOOTWEAR")
+                Text(Strings.outfitFootwear)
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Color.dsTextTertiary)
                     .tracking(1.5)

@@ -7,9 +7,9 @@ struct SkinToneStepView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("SKIN\nTONE")
+                    Text(Strings.onboardingSkinTitle)
                         .editorialStyle()
-                    Text("Your skin's undertone shapes your entire colour palette.")
+                    Text(Strings.onboardingSkinSubtitle)
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }

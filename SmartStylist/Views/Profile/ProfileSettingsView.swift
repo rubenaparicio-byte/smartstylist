@@ -8,6 +8,7 @@ struct ProfileSettingsView: View {
     @State private var devTapCount = 0
     @State private var showDevLogs = false
     @ObservedObject private var logger = DebugLogger.shared
+    @AppStorage("preferredLanguage") private var preferredLanguage = "system"
 
     private var profile: UserProfile? { profiles.first }
 
@@ -23,6 +24,8 @@ struct ProfileSettingsView: View {
                             colorimetrySection(profile)
                             avoidSection(profile)
                             traitsSection(profile)
+                            GoldDivider().padding(.horizontal, 4)
+                            languageSection
                             GoldDivider().padding(.horizontal, 4)
                             actionSection(profile)
                             if showDevLogs {
@@ -172,6 +175,29 @@ struct ProfileSettingsView: View {
             traitRow(label: Strings.profileTraitHair,  value: profile.hairColor)
             GoldDivider()
             traitRow(label: Strings.profileTraitMetal, value: profile.metalPreference)
+        }
+        .padding(18)
+        .luxuryCard()
+    }
+
+    // ── Language section ──────────────────────────────────────────────────────
+
+    private var languageSection: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader(Strings.settingsSectionLanguage)
+            HStack {
+                Text(Strings.settingsLanguageLabel)
+                    .font(.dsBody)
+                    .foregroundStyle(Color.dsTextPrimary)
+                Spacer()
+                Picker("", selection: $preferredLanguage) {
+                    Text(Strings.settingsLanguageSystem).tag("system")
+                    Text(Strings.settingsLanguageEN).tag("en")
+                    Text(Strings.settingsLanguageES).tag("es")
+                }
+                .pickerStyle(.menu)
+                .tint(Color.dsAccentGold)
+            }
         }
         .padding(18)
         .luxuryCard()

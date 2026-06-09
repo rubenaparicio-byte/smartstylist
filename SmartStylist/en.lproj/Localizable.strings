@@ -18,14 +18,28 @@
 "onboarding.cta.continue"       = "Continue";
 "onboarding.loading.analysing"  = "Analysing your profile…";
 
+"onboarding.body.title"         = "BODY\nARCHITECTURE";
+"onboarding.body.subtitle"      = "Select the silhouette that best describes your proportions.";
+"onboarding.skin.title"         = "SKIN\nTONE";
+"onboarding.skin.subtitle"      = "Your skin's undertone shapes your entire colour palette.";
+"onboarding.hair.title"         = "HAIR &\nEYES";
+"onboarding.hair.subtitle"      = "These details complete your chromatic profile.";
+"onboarding.hair.colour"        = "Hair Colour";
+"onboarding.eye.colour"         = "Eye Colour";
+"onboarding.result.title"       = "YOUR\nSEASON";
+"onboarding.result.subtitle"    = "Your chromatic identity has been analysed.";
+"onboarding.result.palette"     = "YOUR PALETTE";
+"onboarding.result.minimise"    = "MINIMISE";
+"onboarding.result.enter"       = "Enter My Wardrobe";
+
 /* Style Engine */
-"style.nav.title"           = "TODAY'S LOOK";
+"style.nav.title"             = "TODAY'S LOOK";
 "style.section.event_context" = "EVENT CONTEXT";
-"style.outfit.registered"   = "Outfit Registered for Today";
-"style.outfit.save"         = "Wear This Outfit Today";
-"style.empty.title"         = "YOUR LOOK AWAITS";
-"style.empty.subtitle"      = "Tap ↻ to curate today's outfit";
-"style.offline.mode"        = "Offline — based on your colour profile";
+"style.outfit.registered"     = "Outfit Registered for Today";
+"style.outfit.save"           = "Wear This Outfit Today";
+"style.empty.title"           = "YOUR LOOK AWAITS";
+"style.empty.subtitle"        = "Tap ↻ to curate today's outfit";
+"style.offline.mode"          = "Offline — based on your colour profile";
 
 /* Event contexts */
 "event.daily"           = "Daily";
@@ -49,6 +63,75 @@
 "category.outerwear" = "Outerwear";
 "category.accessory" = "Accessories";
 
+/* Add item */
+"add.nav.title"             = "New Piece";
+"add.section.photo"         = "PHOTO SCAN";
+"add.section.details"       = "MANUAL DETAILS";
+"add.picker.category"       = "Category";
+"add.picker.subcategory"    = "Type";
+"add.picker.layer"          = "Thermal Layer";
+"add.field.style"           = "Style (Casual, Formal…)";
+"add.field.colour"          = "Colour hex (#000000)";
+"add.field.pattern"         = "Pattern (Solid, Stripes…)";
+"add.field.tags"            = "Tags (comma separated)";
+"add.button.save"           = "Save";
+"add.button.camera"         = "Camera";
+"add.button.gallery"        = "Gallery";
+"add.button.analyse"        = "Analyse with AI";
+"add.button.analysing"      = "Analysing…";
+"add.label.segmenting"      = "Segmenting…";
+
+/* Validate sheet */
+"validate.nav.title"              = "VALIDATE PIECE";
+"validate.header"                 = "AI ANALYSIS — REVIEW & CONFIRM";
+"validate.subheader"              = "Adjust any detail before adding to your wardrobe.";
+"validate.picker.category"        = "Category";
+"validate.picker.subcategory"     = "Type";
+"validate.picker.layer"           = "Layer";
+"validate.picker.pattern"         = "Pattern";
+"validate.picker.style"           = "Style";
+"validate.field.colour"           = "Colour";
+"validate.field.tags"             = "Tags / Occasions";
+"validate.field.tags.placeholder" = "work, weekend, date night…";
+"validate.button.confirm"         = "Confirm & Add to Wardrobe";
+
+/* Card actions */
+"card.archived"         = "ARCHIVED";
+"card.action.archive"   = "Archive";
+"card.action.restore"   = "Restore to Active";
+"card.action.retire"    = "Retire this piece";
+
+/* Outfit card */
+"outfit.layer.composition" = "LAYER COMPOSITION";
+"outfit.no.items"          = "No items matched";
+"outfit.footwear"          = "FOOTWEAR";
+
+/* Dispose sheet */
+"dispose.title"          = "RETIRE THIS PIECE";
+"dispose.subtitle"       = "Select a reason to complete the retirement.";
+"dispose.confirm"        = "Confirm Retirement";
+"dispose.reason.worn"    = "Worn Out";
+"dispose.reason.damaged" = "Damaged";
+"dispose.reason.donated" = "Donated";
+"dispose.reason.unused"  = "No Longer Used";
+
+/* Thermal layers */
+"layer.base"  = "Base";
+"layer.inner" = "Inner";
+"layer.mid"   = "Mid";
+"layer.outer" = "Outer";
+
+/* Language settings */
+"settings.section.language" = "LANGUAGE";
+"settings.language.label"   = "Language";
+"settings.language.system"  = "System";
+"settings.language.en"      = "English";
+"settings.language.es"      = "Español";
+
+/* Weather */
+"weather.feels.like" = "Feels like %d°C";
+"weather.umbrella"   = "Umbrella";
+
 /* Error states */
 "error.wardrobe.title"    = "WARDROBE EMPTY";
 "error.wardrobe.subtitle" = "Add at least 2 active pieces in the Wardrobe tab to generate an outfit.";
@@ -64,16 +147,17 @@
 "tabs.profile"  = "Profile";
 
 /* Insights */
-"insights.nav.title"        = "INSIGHTS";
-"insights.style.title"      = "STYLE DISTRIBUTION";
-"insights.top.title"        = "MOST WORN";
-"insights.health.title"     = "CLOSET HEALTH";
-"insights.health.active"    = "Active";
-"insights.health.archived"  = "Archived";
-"insights.health.disposed"  = "Disposed";
-"insights.empty.title"      = "NO DATA YET";
-"insights.empty.subtitle"   = "Add items and generate outfits to see your wardrobe insights.";
-"insights.worn"             = "times";
+"insights.nav.title"         = "INSIGHTS";
+"insights.style.title"       = "STYLE DISTRIBUTION";
+"insights.top.title"         = "MOST WORN";
+"insights.health.title"      = "CLOSET HEALTH";
+"insights.health.active"     = "Active";
+"insights.health.archived"   = "Archived";
+"insights.health.disposed"   = "Disposed";
+"insights.empty.title"       = "NO DATA YET";
+"insights.empty.subtitle"    = "Add items and generate outfits to see your wardrobe insights.";
+"insights.worn"              = "times";
+"insights.most.disposed"     = "Most disposed: %@";
 
 /* Profile & settings */
 "profile.nav.title"              = "MY PROFILE";
@@ -87,7 +171,7 @@
 "profile.trait.metal"            = "Metal Preference";
 "profile.retake.button"          = "Retake Analysis";
 "profile.retake.title"           = "Retake Style Analysis?";
-"profile.retake.message"         = "Your wardrobe will be kept, but your colour profile will be reset. Gemini will re-analyse your style from scratch.";
+"profile.retake.message"         = "Your wardrobe will be kept, but your colour profile will be reset. The AI will re-analyse your style from scratch.";
 "profile.danger.zone"            = "DANGER ZONE";
 "profile.delete.button"          = "Delete All My Data";
 "profile.delete.title"           = "Delete All Data?";
@@ -102,3 +186,58 @@
 "filter.clear_all"             = "Clear Filters";
 "filter.no_results.title"      = "NO PIECES FOUND";
 "filter.no_results.subtitle"   = "No items match your current filters.";
+
+/* Subcategories */
+"subcategory.tshirt"       = "T-Shirt";
+"subcategory.shirt"        = "Shirt";
+"subcategory.sweater"      = "Sweater";
+"subcategory.hoodie"       = "Hoodie";
+"subcategory.polo"         = "Polo";
+"subcategory.blouse"       = "Blouse";
+"subcategory.cardigan"     = "Cardigan";
+"subcategory.vest"         = "Vest";
+"subcategory.bodysuit"     = "Bodysuit";
+"subcategory.jeans"        = "Jeans";
+"subcategory.trousers"     = "Trousers";
+"subcategory.shorts"       = "Shorts";
+"subcategory.skirt"        = "Skirt";
+"subcategory.leggings"     = "Leggings";
+"subcategory.joggers"      = "Joggers";
+"subcategory.sneakers"     = "Sneakers";
+"subcategory.boots"        = "Boots";
+"subcategory.heels"        = "Heels";
+"subcategory.sandals"      = "Sandals";
+"subcategory.loafers"      = "Loafers";
+"subcategory.sport_shoes"  = "Sports Shoes";
+"subcategory.slippers"     = "Slippers";
+"subcategory.coat"         = "Coat";
+"subcategory.jacket"       = "Jacket";
+"subcategory.blazer"       = "Blazer";
+"subcategory.bomber"       = "Bomber";
+"subcategory.raincoat"     = "Raincoat";
+"subcategory.puffer"       = "Puffer Jacket";
+"subcategory.trench"       = "Trench Coat";
+"subcategory.belt"         = "Belt";
+"subcategory.scarf"        = "Scarf";
+"subcategory.hat"          = "Hat";
+"subcategory.sunglasses"   = "Sunglasses";
+"subcategory.jewelry"      = "Jewellery";
+"subcategory.tie"          = "Tie";
+"subcategory.gloves"       = "Gloves";
+"subcategory.bag"          = "Bag";
+"subcategory.backpack"     = "Backpack";
+
+/* Patterns */
+"pattern.solid"        = "Solid";
+"pattern.stripes"      = "Stripes";
+"pattern.checks"       = "Checks";
+"pattern.floral"       = "Floral";
+"pattern.abstract"     = "Abstract";
+"pattern.animal_print" = "Animal Print";
+
+/* Styles */
+"style.casual"       = "Casual";
+"style.formal"       = "Formal";
+"style.smart_casual" = "Smart Casual";
+"style.athletic"     = "Athletic";
+"style.evening"      = "Evening";

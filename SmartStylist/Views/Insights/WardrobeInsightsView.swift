@@ -182,7 +182,7 @@ struct WardrobeInsightsView: View {
                     Image(systemName: "info.circle")
                         .font(.caption)
                         .foregroundStyle(Color.dsTextTertiary)
-                    Text("Most disposed: \(label)")
+                    Text(Strings.insightsMostDisposed(label))
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextTertiary)
                 }
