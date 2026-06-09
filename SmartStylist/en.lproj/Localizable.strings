@@ -18,6 +18,11 @@
 "onboarding.cta.continue"       = "Continue";
 "onboarding.loading.analysing"  = "Analysing your profile…";
 
+"onboarding.gender.title"       = "YOUR\nPROFILE";
+"onboarding.gender.subtitle"    = "We'll personalise your recommendations based on your style preferences.";
+"onboarding.gender.male"        = "Male";
+"onboarding.gender.female"      = "Female";
+
 "onboarding.body.title"         = "BODY\nARCHITECTURE";
 "onboarding.body.subtitle"      = "Select the silhouette that best describes your proportions.";
 "onboarding.skin.title"         = "SKIN\nTONE";
@@ -26,11 +31,51 @@
 "onboarding.hair.subtitle"      = "These details complete your chromatic profile.";
 "onboarding.hair.colour"        = "Hair Colour";
 "onboarding.eye.colour"         = "Eye Colour";
-"onboarding.result.title"       = "YOUR\nSEASON";
-"onboarding.result.subtitle"    = "Your chromatic identity has been analysed.";
-"onboarding.result.palette"     = "YOUR PALETTE";
-"onboarding.result.minimise"    = "MINIMISE";
-"onboarding.result.enter"       = "Enter My Wardrobe";
+"onboarding.result.title"              = "YOUR\nSEASON";
+"onboarding.result.subtitle"           = "Your chromatic identity has been analysed.";
+"onboarding.result.palette"            = "YOUR PALETTE";
+"onboarding.result.minimise"           = "MINIMISE";
+"onboarding.result.enter"              = "Enter My Wardrobe";
+"onboarding.result.accessory.title"    = "ACCESSORY STYLE";
+"onboarding.result.accessory.subtitle" = "How do you prefer to wear your accessories?";
+
+/* Body types */
+"bodytype.hourglass"          = "Hourglass";
+"bodytype.hourglass.desc"     = "Balanced shoulders and hips with a naturally defined waist";
+"bodytype.rectangle"          = "Rectangle";
+"bodytype.rectangle.desc"     = "Similar width at shoulders, waist and hips — athletic build";
+"bodytype.triangle"           = "Triangle";
+"bodytype.triangle.desc"      = "Hips wider than shoulders — classic pear silhouette";
+"bodytype.inverted_triangle"  = "Inverted Triangle";
+"bodytype.inverted_triangle.desc" = "Shoulders wider than hips — strong upper frame";
+"bodytype.oval"               = "Oval";
+"bodytype.oval.desc"          = "Rounded silhouette with fullness at the midsection";
+"bodytype.athletic"           = "Athletic";
+"bodytype.athletic.desc"      = "Broad shoulders, narrow waist — classic V-shaped frame";
+"bodytype.trapezoid"          = "Trapezoid";
+"bodytype.trapezoid.desc"     = "Shoulders slightly wider than hips — well-proportioned build";
+
+/* Skin tones */
+"skintone.warm_light"       = "Warm Light";
+"skintone.warm_light.desc"  = "Fair skin with golden or peachy undertones";
+"skintone.warm_medium"      = "Warm Medium";
+"skintone.warm_medium.desc" = "Medium skin with golden or olive undertones";
+"skintone.warm_deep"        = "Warm Deep";
+"skintone.warm_deep.desc"   = "Deep skin with golden or bronze undertones";
+"skintone.cool_light"       = "Cool Light";
+"skintone.cool_light.desc"  = "Fair skin with pink or rosy undertones";
+"skintone.cool_medium"      = "Cool Medium";
+"skintone.cool_medium.desc" = "Medium skin with pink or blue undertones";
+"skintone.cool_deep"        = "Cool Deep";
+"skintone.cool_deep.desc"   = "Deep skin with blue or violet undertones";
+"skintone.neutral"          = "Neutral";
+"skintone.neutral.desc"     = "Balanced blend of warm and cool undertones";
+
+/* Accessory styles */
+"accessory.minimal"    = "Minimal";
+"accessory.statement"  = "Statement";
+"accessory.layered"    = "Layered";
+"accessory.vintage"    = "Vintage";
 
 /* Style Engine */
 "style.nav.title"             = "TODAY'S LOOK";
@@ -160,22 +205,38 @@
 "insights.most.disposed"     = "Most disposed: %@";
 
 /* Profile & settings */
-"profile.nav.title"              = "MY PROFILE";
-"profile.section.colorimetry"    = "COLOUR PALETTE";
-"profile.section.avoid"          = "AVOID";
-"profile.section.traits"         = "PHYSICAL PROFILE";
-"profile.trait.body"             = "Body Type";
-"profile.trait.skin"             = "Skin Tone";
-"profile.trait.eye"              = "Eye Colour";
-"profile.trait.hair"             = "Hair Colour";
-"profile.trait.metal"            = "Metal Preference";
-"profile.retake.button"          = "Retake Analysis";
-"profile.retake.title"           = "Retake Style Analysis?";
-"profile.retake.message"         = "Your wardrobe will be kept, but your colour profile will be reset. The AI will re-analyse your style from scratch.";
-"profile.danger.zone"            = "DANGER ZONE";
-"profile.delete.button"          = "Delete All My Data";
-"profile.delete.title"           = "Delete All Data?";
-"profile.delete.message"         = "This will permanently erase your profile, wardrobe and outfit history. This action cannot be undone.";
+"profile.nav.title"                = "MY PROFILE";
+"profile.section.identity"         = "IDENTITY";
+"profile.section.colorimetry"      = "COLOUR PALETTE";
+"profile.section.avoid"            = "AVOID";
+"profile.section.traits"           = "PHYSICAL PROFILE";
+"profile.section.shopping"         = "SHOPPING PROFILE";
+"profile.trait.gender"             = "Gender";
+"profile.trait.age"                = "Age";
+"profile.trait.body"               = "Body Type";
+"profile.trait.skin"               = "Skin Tone";
+"profile.trait.eye"                = "Eye Colour";
+"profile.trait.hair"               = "Hair Colour";
+"profile.trait.metal"              = "Metal Preference";
+"profile.trait.accessory_style"    = "Accessory Style";
+"profile.stores.edit"              = "Edit";
+"profile.stores.empty"             = "Tap Edit to add your favourite brands";
+"profile.retake.button"            = "Retake Analysis";
+"profile.retake.title"             = "Retake Style Analysis?";
+"profile.retake.message"           = "Your wardrobe will be kept, but your colour profile will be reset. The AI will re-analyse your style from scratch.";
+"profile.danger.zone"              = "DANGER ZONE";
+"profile.delete.button"            = "Delete All My Data";
+"profile.delete.title"             = "Delete All Data?";
+"profile.delete.message"           = "This will permanently erase your profile, wardrobe and outfit history. This action cannot be undone.";
+
+/* Stores */
+"stores.nav.title"         = "FAVOURITE STORES";
+"stores.subtitle"          = "Select the brands you shop most often — we'll use this to personalise outfit suggestions.";
+"stores.done"              = "Done";
+"stores.section.budget"    = "BUDGET";
+"stores.section.mid"       = "MID-RANGE";
+"stores.section.premium"   = "PREMIUM";
+"stores.section.sports"    = "SPORTS";
 
 /* Wardrobe filters */
 "filter.section.status"        = "STATUS";

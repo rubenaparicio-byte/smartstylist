@@ -42,6 +42,11 @@ enum Strings {
     static var onboardingContinue:         String { String(localized: "onboarding.cta.continue",       locale: activeLocale) }
     static var onboardingAnalysingProfile: String { String(localized: "onboarding.loading.analysing",  locale: activeLocale) }
 
+    static var onboardingGenderTitle:    String { String(localized: "onboarding.gender.title",    locale: activeLocale) }
+    static var onboardingGenderSubtitle: String { String(localized: "onboarding.gender.subtitle", locale: activeLocale) }
+    static var onboardingGenderMale:     String { String(localized: "onboarding.gender.male",     locale: activeLocale) }
+    static var onboardingGenderFemale:   String { String(localized: "onboarding.gender.female",   locale: activeLocale) }
+
     static var onboardingBodyTitle:    String { String(localized: "onboarding.body.title",    locale: activeLocale) }
     static var onboardingBodySubtitle: String { String(localized: "onboarding.body.subtitle", locale: activeLocale) }
     static var onboardingSkinTitle:    String { String(localized: "onboarding.skin.title",    locale: activeLocale) }
@@ -50,11 +55,13 @@ enum Strings {
     static var onboardingHairSubtitle: String { String(localized: "onboarding.hair.subtitle", locale: activeLocale) }
     static var onboardingHairColour:   String { String(localized: "onboarding.hair.colour",   locale: activeLocale) }
     static var onboardingEyeColour:    String { String(localized: "onboarding.eye.colour",    locale: activeLocale) }
-    static var onboardingResultTitle:    String { String(localized: "onboarding.result.title",    locale: activeLocale) }
-    static var onboardingResultSubtitle: String { String(localized: "onboarding.result.subtitle", locale: activeLocale) }
-    static var onboardingResultPalette:  String { String(localized: "onboarding.result.palette",  locale: activeLocale) }
-    static var onboardingResultMinimise: String { String(localized: "onboarding.result.minimise", locale: activeLocale) }
-    static var onboardingResultEnter:    String { String(localized: "onboarding.result.enter",    locale: activeLocale) }
+    static var onboardingResultTitle:           String { String(localized: "onboarding.result.title",            locale: activeLocale) }
+    static var onboardingResultSubtitle:        String { String(localized: "onboarding.result.subtitle",         locale: activeLocale) }
+    static var onboardingResultPalette:         String { String(localized: "onboarding.result.palette",          locale: activeLocale) }
+    static var onboardingResultMinimise:        String { String(localized: "onboarding.result.minimise",         locale: activeLocale) }
+    static var onboardingResultEnter:           String { String(localized: "onboarding.result.enter",            locale: activeLocale) }
+    static var onboardingResultAccessoryTitle:  String { String(localized: "onboarding.result.accessory.title",  locale: activeLocale) }
+    static var onboardingResultAccessorySubtitle: String { String(localized: "onboarding.result.accessory.subtitle", locale: activeLocale) }
 
     // MARK: — Style Engine
     static var styleNavTitle:         String { String(localized: "style.nav.title",           locale: activeLocale) }
@@ -182,22 +189,34 @@ enum Strings {
     }
 
     // MARK: — Profile & settings
-    static var profileNavTitle:           String { String(localized: "profile.nav.title",           locale: activeLocale) }
-    static var profileSectionColorimetry: String { String(localized: "profile.section.colorimetry", locale: activeLocale) }
-    static var profileSectionAvoid:       String { String(localized: "profile.section.avoid",       locale: activeLocale) }
-    static var profileSectionTraits:      String { String(localized: "profile.section.traits",      locale: activeLocale) }
-    static var profileTraitBody:          String { String(localized: "profile.trait.body",          locale: activeLocale) }
-    static var profileTraitSkin:          String { String(localized: "profile.trait.skin",          locale: activeLocale) }
-    static var profileTraitEye:           String { String(localized: "profile.trait.eye",           locale: activeLocale) }
-    static var profileTraitHair:          String { String(localized: "profile.trait.hair",          locale: activeLocale) }
-    static var profileTraitMetal:         String { String(localized: "profile.trait.metal",         locale: activeLocale) }
-    static var profileRetakeButton:       String { String(localized: "profile.retake.button",       locale: activeLocale) }
-    static var profileRetakeTitle:        String { String(localized: "profile.retake.title",        locale: activeLocale) }
-    static var profileRetakeMessage:      String { String(localized: "profile.retake.message",      locale: activeLocale) }
-    static var profileDangerZone:         String { String(localized: "profile.danger.zone",         locale: activeLocale) }
-    static var profileDeleteButton:       String { String(localized: "profile.delete.button",       locale: activeLocale) }
-    static var profileDeleteTitle:        String { String(localized: "profile.delete.title",        locale: activeLocale) }
-    static var profileDeleteMessage:      String { String(localized: "profile.delete.message",      locale: activeLocale) }
+    static var profileNavTitle:              String { String(localized: "profile.nav.title",              locale: activeLocale) }
+    static var profileSectionIdentity:       String { String(localized: "profile.section.identity",       locale: activeLocale) }
+    static var profileSectionColorimetry:    String { String(localized: "profile.section.colorimetry",    locale: activeLocale) }
+    static var profileSectionAvoid:          String { String(localized: "profile.section.avoid",          locale: activeLocale) }
+    static var profileSectionTraits:         String { String(localized: "profile.section.traits",         locale: activeLocale) }
+    static var profileSectionShopping:       String { String(localized: "profile.section.shopping",       locale: activeLocale) }
+    static var profileTraitGender:           String { String(localized: "profile.trait.gender",           locale: activeLocale) }
+    static var profileTraitAge:              String { String(localized: "profile.trait.age",              locale: activeLocale) }
+    static var profileTraitBody:             String { String(localized: "profile.trait.body",             locale: activeLocale) }
+    static var profileTraitSkin:             String { String(localized: "profile.trait.skin",             locale: activeLocale) }
+    static var profileTraitEye:              String { String(localized: "profile.trait.eye",              locale: activeLocale) }
+    static var profileTraitHair:             String { String(localized: "profile.trait.hair",             locale: activeLocale) }
+    static var profileTraitMetal:            String { String(localized: "profile.trait.metal",            locale: activeLocale) }
+    static var profileTraitAccessoryStyle:   String { String(localized: "profile.trait.accessory_style",  locale: activeLocale) }
+    static var profileStoresEdit:            String { String(localized: "profile.stores.edit",            locale: activeLocale) }
+    static var profileStoresEmpty:           String { String(localized: "profile.stores.empty",           locale: activeLocale) }
+    static var profileRetakeButton:          String { String(localized: "profile.retake.button",          locale: activeLocale) }
+    static var profileRetakeTitle:           String { String(localized: "profile.retake.title",           locale: activeLocale) }
+    static var profileRetakeMessage:         String { String(localized: "profile.retake.message",         locale: activeLocale) }
+    static var profileDangerZone:            String { String(localized: "profile.danger.zone",            locale: activeLocale) }
+    static var profileDeleteButton:          String { String(localized: "profile.delete.button",          locale: activeLocale) }
+    static var profileDeleteTitle:           String { String(localized: "profile.delete.title",           locale: activeLocale) }
+    static var profileDeleteMessage:         String { String(localized: "profile.delete.message",         locale: activeLocale) }
+
+    // MARK: — Stores
+    static var storesNavTitle: String { String(localized: "stores.nav.title", locale: activeLocale) }
+    static var storesSubtitle: String { String(localized: "stores.subtitle",  locale: activeLocale) }
+    static var storesDone:     String { String(localized: "stores.done",      locale: activeLocale) }
 
     // MARK: — Wardrobe filters
     static var filterSectionStatus:     String { String(localized: "filter.section.status",     locale: activeLocale) }

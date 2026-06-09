@@ -16,6 +16,8 @@ struct OnboardingContainerView: View {
                     .padding(.top, 20)
 
                 TabView(selection: $vm.currentStep) {
+                    LanguageStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.language)
+                    GenderStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.gender)
                     BodyTypeStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.bodyType)
                     SkinToneStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.skinTone)
                     HairEyeStepView(vm: vm).tag(OnboardingViewModel.OnboardingStep.hairEye)
