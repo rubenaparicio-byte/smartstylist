@@ -395,6 +395,16 @@ shareImage = renderer.uiImage.map { Image(uiImage: $0) }
 - The share button (`"share.outfit.button"`) is styled in `dsAccentGold` and appears below the save button
 - `renderShareImage(suggestion:)` is called from `.onAppear` on the suggestion VStack — `StyleResponse` is not `Equatable` so `.onChange` cannot be used
 
+### Accessibility in SwiftUI
+
+**Live regions:** `accessibilityLiveRegion(_:)` does **not** exist as a SwiftUI View modifier — it is UIKit-only. The SwiftUI equivalent is:
+
+```swift
+.accessibilityAddTraits(.updatesFrequently)  // signals content updates to VoiceOver
+```
+
+Use this on any `Text` or `View` whose content changes dynamically (e.g. loading status messages, timers).
+
 ### Debug in-app
 
 `DebugLogger` (singleton `@MainActor`) retiene los últimos 30 eventos con timestamp. Se activa en `ProfileSettingsView` pulsando **5 veces el icono de perfil** → sección "DEVELOPER LOGS" con texto seleccionable. Los errores de red y de API se loguean automáticamente desde `GeminiService`.
@@ -440,7 +450,7 @@ AuthService(keychain: MockKeychainBacking(["appleUserID": "abc"]).store)
 
 ### UI tests (`SmartStylistUITests/`)
 
-Separate target (`bundle.ui-test`) declared in `project.yml`. Run:
+Separate target (`bundle.ui-testing`) declared in `project.yml`. Run:
 
 ```bash
 xcodebuild test -project SmartStylist.xcodeproj -scheme SmartStylistUITests \
@@ -504,6 +514,27 @@ GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` 
 10. `xcodebuild -exportArchive`
 11. `xcrun altool --upload-app` with ASC API key
 12. Upload IPA as GitHub artifact (30-day retention, runs even on failure)
+
+### Critical: provisioning profile must include all app capabilities
+
+The `APP_STORE_PROVISIONING_PROFILE` Secret must be regenerated whenever new capabilities are added to the app. If the profile was created before a capability was enabled, the archive step fails with:
+
+> `Provisioning profile "…" doesn't include the WeatherKit capability.`
+> `Provisioning profile "…" doesn't include the iCloud capability.`
+
+**Capabilities currently required in the App ID (`com.rubenaparicio.SmartStylist`):**
+
+| Capability | Notes |
+|------------|-------|
+| Sign In with Apple | entitlement: `com.apple.developer.applesignin` |
+| iCloud (CloudKit) | container: `iCloud.com.rubenaparicio.SmartStylist` |
+| WeatherKit | entitlement: `com.apple.developer.weatherkit` |
+
+**Procedure to update the profile:**
+1. developer.apple.com → **Identifiers** → `com.rubenaparicio.SmartStylist` → enable/verify capabilities → **Save**
+2. **Profiles** → "SmartStylist AppStore Profile" → **Edit** → **Regenerate** → download
+3. Verify capabilities: `grep -a -o 'com\.apple\.[a-z.-]*' profile.mobileprovision | sort -u`
+4. Encode and update Secret: `base64 -w 0 profile.mobileprovision` → paste into `APP_STORE_PROVISIONING_PROFILE`
 
 ### Required GitHub Secrets
 
