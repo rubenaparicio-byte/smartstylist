@@ -86,7 +86,7 @@ targets:
       - target: SmartStylist
 
   SmartStylistUITests:
-    type: bundle.ui-test
+    type: bundle.ui-testing
     platform: iOS
     sources:
       - SmartStylistUITests
