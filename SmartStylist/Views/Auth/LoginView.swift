@@ -96,11 +96,10 @@ struct LoginView: View {
         }
     }
 
-    // TODO: Wire up GoogleSignIn-iOS SDK once OAuth 2.0 credentials are
-    // configured in Google Cloud Console and the reversed client ID is
-    // registered under GIDClientID in project.yml info.properties.
     private var googleSignInButton: some View {
-        Button(action: {}) {
+        Button {
+            Task { await auth.signInWithGoogle() }
+        } label: {
             HStack(spacing: 12) {
                 googleGLogo
 
@@ -116,12 +115,7 @@ struct LoginView: View {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .stroke(Color.dsTextTertiary.opacity(0.22), lineWidth: 0.5)
             )
-            .overlay(alignment: .topTrailing) {
-                comingSoonBadge
-                    .offset(x: -10, y: -8)
-            }
         }
-        .disabled(true)
     }
 
     private var googleGLogo: some View {
@@ -133,16 +127,6 @@ struct LoginView: View {
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundStyle(Color(red: 0.26, green: 0.52, blue: 0.96))
         }
-    }
-
-    private var comingSoonBadge: some View {
-        Text("Coming soon")
-            .font(.system(size: 9, weight: .medium))
-            .foregroundStyle(Color.dsAccentGold.opacity(0.8))
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(Color.dsAccentGold.opacity(0.12))
-            .clipShape(Capsule())
     }
 
     // ── Privacy note ──────────────────────────────────────────────────────────

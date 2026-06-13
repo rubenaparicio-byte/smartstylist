@@ -8,52 +8,54 @@ actor GarmentSegmentationService {
     private let context = CIContext()
 
     // Segments the foreground garment from the background using Vision and
-    // composites it over the DS neutral surface (dsCardSlate #2C2C2E).
+    // composites it over a white background for clean catalog-style images.
     // Returns PNG data preserving clean mask edges.
     func segment(_ image: UIImage) async throws -> Data {
-        guard let cgImage = image.cgImage else {
+        // Normalize orientation first so Vision receives correct pixel layout,
+        // then downscale to keep memory and latency under control.
+        let prepared = image.normalized().downscaled(maxDimension: 1200)
+
+        guard let cgImage = prepared.cgImage else {
             throw SegmentationError.invalidInput
         }
 
         let request = VNGenerateForegroundInstanceMaskRequest()
-        let handler = VNImageRequestHandler(
-            cgImage: cgImage,
-            orientation: image.cgImagePropertyOrientation,
-            options: [:]
-        )
+        // No orientation hint needed — image is already normalized to .up
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         try handler.perform([request])
 
         guard let observation = request.results?.first else {
             throw SegmentationError.noSubjectFound
         }
 
-        // Merge all detected instances into a single mask
         let maskBuffer = try observation.generateScaledMaskForImage(
             forInstances: observation.allInstances,
             from: handler
         )
 
-        // Work in the CGImage's native coordinate space — the mask dimensions
-        // match the CGImage dimensions regardless of EXIF orientation
-        let maskCI = CIImage(cvPixelBuffer: maskBuffer)
         let inputCI = CIImage(cgImage: cgImage)
 
-        // DS neutral background: dsCardSlate #2C2C2E
-        let bgColor = CIColor(red: 0.173, green: 0.173, blue: 0.18, alpha: 1.0)
-        let background = CIImage(color: bgColor).cropped(to: inputCI.extent)
+        // Feather mask edges to avoid harsh cutout artifacts
+        let maskCI = CIImage(cvPixelBuffer: maskBuffer)
+            .clampedToExtent()
+            .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 2.0])
+            .cropped(to: inputCI.extent)
+
+        // White background for clean catalog-style presentation
+        let background = CIImage(color: .white).cropped(to: inputCI.extent)
 
         let blend = CIFilter.blendWithMask()
-        blend.inputImage = inputCI
+        blend.inputImage   = inputCI
         blend.backgroundImage = background
-        blend.maskImage = maskCI
+        blend.maskImage    = maskCI
 
-        guard let output = blend.outputImage,
+        guard let output   = blend.outputImage,
               let cgOutput = context.createCGImage(output, from: output.extent) else {
             throw SegmentationError.renderFailed
         }
 
-        // Restore UIImage orientation metadata so the result displays correctly
-        let result = UIImage(cgImage: cgOutput, scale: image.scale, orientation: image.imageOrientation)
+        // Image is already normalized — no orientation metadata needed
+        let result = UIImage(cgImage: cgOutput)
         guard let png = result.pngData() else {
             throw SegmentationError.renderFailed
         }
@@ -76,26 +78,37 @@ actor GarmentSegmentationService {
 
         var errorDescription: String? {
             switch self {
-            case .invalidInput:    return "Cannot read image."
-            case .noSubjectFound:  return "No garment detected — try with better lighting or a plain background."
-            case .renderFailed:    return "Image processing failed."
+            case .invalidInput:   return "Cannot read image."
+            case .noSubjectFound: return "No garment detected — try with better lighting or a plain background."
+            case .renderFailed:   return "Image processing failed."
             }
         }
     }
 }
 
+// ── UIImage helpers ───────────────────────────────────────────────────────────
+
 private extension UIImage {
-    var cgImagePropertyOrientation: CGImagePropertyOrientation {
-        switch imageOrientation {
-        case .up:            return .up
-        case .down:          return .down
-        case .left:          return .left
-        case .right:         return .right
-        case .upMirrored:    return .upMirrored
-        case .downMirrored:  return .downMirrored
-        case .leftMirrored:  return .leftMirrored
-        case .rightMirrored: return .rightMirrored
-        @unknown default:    return .up
-        }
+
+    // Redraws the image so pixel data matches the visual orientation (.up).
+    // Required before passing to Vision — avoids EXIF orientation ambiguity.
+    func normalized() -> UIImage {
+        guard imageOrientation != .up else { return self }
+        let renderer = UIGraphicsImageRenderer(size: size)
+        return renderer.image { _ in draw(in: CGRect(origin: .zero, size: size)) }
+    }
+
+    // Downscales to maxDimension on the longest edge, preserving aspect ratio.
+    // Processing at 1200px vs 4032px is ~11× less pixels — Vision stays fast and stable.
+    func downscaled(maxDimension: CGFloat) -> UIImage {
+        let longest = max(size.width, size.height)
+        guard longest > maxDimension else { return self }
+        let scale = maxDimension / longest
+        let newSize = CGSize(
+            width:  (size.width  * scale).rounded(),
+            height: (size.height * scale).rounded()
+        )
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { _ in draw(in: CGRect(origin: .zero, size: newSize)) }
     }
 }
