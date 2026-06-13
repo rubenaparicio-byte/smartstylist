@@ -14,19 +14,19 @@ Source: `SmartStylist/DesignSystem/DS+Colors.swift`
 
 | Token | Hex | Role |
 |---|---|---|
-| `Color.dsBackground` | `#1C1C1E` | Full-screen background (every view) |
-| `Color.dsCardBackground` | `#2C2C2E` | Card/surface background (tab bar, cards) |
-| `Color.dsSurface` | `#3A3A3C` | Inner surface, input fields, chips (unselected) |
-| `Color.dsAccentPrimary` | `#D4AF37` | Primary interactive — CTA fills, tints, icons, strokes |
-| `Color.dsAccentSecondary` | `#E9C46A` | Secondary gold (lighter highlights) |
+| `Color.dsBackground` | `#0B1021` | Full-screen background (every view) |
+| `Color.dsCardBackground` | `#151C33` | Card/surface background (tab bar, cards) |
+| `Color.dsSurface` | `#1F2947` | Inner surface, input fields, chips (unselected) |
+| `Color.dsAccentPrimary` | `#E0E5EC` | Primary interactive — CTA fills, tints, icons, strokes |
+| `Color.dsAccentSecondary` | `#B0B7C6` | Secondary platinum (lighter highlights) |
 | `Color.dsErrorRed` | `#E63946` | Destructive actions, danger zone, error states |
 | `Color.dsTextPrimary` | `white` | Headings, values, primary labels |
 | `Color.dsTextSecondary` | `white @ 60%` | Body text, subtitles, descriptions |
 | `Color.dsTextTertiary` | `white @ 35%` | Section labels, captions, placeholder text |
 
-**Hex initialiser is built-in** — `Color(hex: "#D4AF37")` works anywhere.
+**Hex initialiser is built-in** — `Color(hex: "#E0E5EC")` works anywhere.
 
-**In Figma:** create a matching library with these exact fill styles. Gold borders are always the token value at reduced opacity (see Shapes section).
+**In Figma:** create a matching library with these exact fill styles. Accent borders are always the token value at reduced opacity (see Shapes section).
 
 ---
 
@@ -81,7 +81,7 @@ Source: `SmartStylist/DesignSystem/DS+Shapes.swift`
 
 `.continuous` = Apple's super-ellipse (squircle) — always use `style: .continuous` on `RoundedRectangle`.
 
-**Gold border rule** — all cards, inputs, and chips carry a `0.5 pt` gold stroke at reduced opacity:
+**Accent border rule** — all cards, inputs, and chips carry a `0.5 pt` platinum stroke at reduced opacity:
 ```swift
 .overlay(
     RoundedRectangle(cornerRadius: r, style: .continuous)
@@ -150,7 +150,7 @@ LuxuryCard(cornerRadius: 16) {
 
 Renders: `dsCardBackground` background + continuous corner clip + `dsAccentPrimary @ 0.15` stroke at `0.5 pt`.
 
-**In Figma:** dark fill `#2C2C2E`, stroke `#D4AF37` at 15% opacity, 0.5 width, matching radius.
+**In Figma:** dark fill `#151C33`, stroke `#E0E5EC` at 15% opacity, 0.5 width, matching radius.
 
 ---
 
@@ -185,19 +185,19 @@ Horizontal rule. `0.5 pt` height, `dsAccentPrimary @ 25%` fill. Full-width by de
 AccentDivider()
 ```
 
-**In Figma:** line stroke `#D4AF37` at 25%, 0.5 height.
+**In Figma:** line stroke `#E0E5EC` at 25%, 0.5 height.
 
 ---
 
 ### `LuxuryLoadingView`
 
-Full-width loading state for AI generation. Multi-ring gold spinner + cycling localized messages.
+Full-width loading state for AI generation. Multi-ring platinum spinner + cycling localized messages.
 
 ```swift
 LuxuryLoadingView()
 ```
 
-Structure: `72 pt` outer arc (AngularGradient, gold) + `50 pt` static ring + `30 pt` pulsing inner circle + `5 pt` center dot. Vertical padding `80 pt` top/bottom.
+Structure: `72 pt` outer arc (AngularGradient, platinum) + `50 pt` static ring + `30 pt` pulsing inner circle + `5 pt` center dot. Vertical padding `80 pt` top/bottom.
 
 **In Figma:** use as a full-width overlay/section. Center-aligned. Not interactive.
 
@@ -214,7 +214,7 @@ LuxuryErrorView(error: .aiUnavailable("msg")) {
 ```
 
 Icon badge: `80 pt` circle, `dsSurface` fill, `dsAccentPrimary @ 22%` stroke, SF Symbol at `28 pt` light weight.
-Primary button: `dsAccentPrimary` fill, `dsBackground` text, `14 pt` radius, gold shadow.
+Primary button: `dsAccentPrimary` fill, `dsBackground` text, `14 pt` radius, platinum shadow.
 Secondary button: `dsSurface` fill, `dsAccentPrimary` text, `dsAccentPrimary @ 30%` stroke.
 
 ---
@@ -229,7 +229,7 @@ SilhouetteView(category: .top, size: 60)
 
 Stroke: `dsAccentPrimary @ 35%`, `1 pt` line width. Scales proportionally via the `size` parameter.
 
-**In Figma:** can substitute with actual outlined clothing icons at same gold opacity.
+**In Figma:** can substitute with actual outlined clothing icons at same accent opacity.
 
 ---
 
@@ -276,7 +276,7 @@ All `NavigationStack` screens use:
 
 Navigation title display mode: `.inline`. Actual `navigationTitle` string is ignored visually — the principal toolbar item is the visible title.
 
-**In Figma:** nav bar = ultra-thin material blur overlay + gold serif title centered.
+**In Figma:** nav bar = ultra-thin material blur overlay + platinum serif title centered.
 
 ### Primary CTA button
 
@@ -293,7 +293,7 @@ Button { action } label: {
 }
 ```
 
-**In Figma:** full-width, 48 pt tall (16 pt V-padding × 2 + 16 pt body line height). Gold fill. Deep slate text. 14 pt continuous radius. Gold shadow: 0.35 opacity, 12 blur, 6 Y-offset.
+**In Figma:** full-width, 48 pt tall (16 pt V-padding × 2 + 16 pt body line height). Platinum fill. Midnight blue text. 14 pt continuous radius. Platinum shadow: 0.35 opacity, 12 blur, 6 Y-offset.
 
 ### Secondary / outlined button
 
@@ -305,7 +305,7 @@ Button { action } label: {
 )
 ```
 
-**In Figma:** transparent fill, 1 pt gold stroke, 12 pt radius.
+**In Figma:** transparent fill, 1 pt platinum stroke, 12 pt radius.
 
 ### Destructive button
 
@@ -467,7 +467,7 @@ When implementing a screen from Figma:
 - [ ] Shared components from `Views/Components/` are used before writing new ones
 - [ ] All text uses `ds` font tokens (no `.font(.system(...))` inline except for icon sizing)
 - [ ] ALL-CAPS section headers use `.dsCaption + .dsTextTertiary + .tracking(2)`
-- [ ] Primary CTA matches the established button pattern (gold fill, 16 pt V-padding, 14 pt radius, gold shadow)
+- [ ] Primary CTA matches the established button pattern (platinum fill, 16 pt V-padding, 14 pt radius, platinum shadow)
 - [ ] Animations use `dsDefault`/`dsFast`/`dsSpring` tokens (not custom values)
 - [ ] Icons use SF Symbols only
 - [ ] All strings go through the `Strings` enum and `.strings` files

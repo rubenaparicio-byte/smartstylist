@@ -156,7 +156,7 @@ Tokens live in `SmartStylist/DesignSystem/`. Never hardcode colors, fonts, radii
 | `.luxuryCard(cornerRadius:)` | `Color.dsCardBackground` (opaque) | Cards with no image or over a known dark background |
 | `.glassCard(cornerRadius:)` | `Material.ultraThinMaterial` | Cards that float over content or images |
 
-Both share a `0.5pt` gold border at `0.15–0.18` opacity and `.continuous` corner style.
+Both share a `0.5pt` accent border at `0.15–0.18` opacity and `.continuous` corner style.
 
 ### Button styles (`DS+Shapes.swift`)
 
@@ -297,8 +297,8 @@ The outfit feed card renders a vertical **Layer Composition Stack** ordered oute
 
 - `layerGroups: [LayerGroup]` — groups `superior`/`inferior`/`abrigo` items by `ThermalLayer`, sorted by `layerNumber` descending
 - `footwearItem` — rendered separately below all tiers (always at the base)
-- `layerTierView` — gold circle badge + `"LAYER N · NAME"` label + `HStack` of `GarmentTile`s
-- `layerConnector` — gold dots + thin line connecting adjacent tiers
+- `layerTierView` — platinum circle badge + `"LAYER N · NAME"` label + `HStack` of `GarmentTile`s
+- `layerConnector` — platinum dots + thin line connecting adjacent tiers
 - `GarmentTile` — shows `resolvedImageURL` thumbnail (or `SilhouetteView`), color swatch, category label, style chip, and tags
 
 ### Clothing taxonomy — two-level classification (`Models/ClothingSubcategory.swift`)
@@ -628,4 +628,4 @@ Never rely on a xcodebuild CLI build-setting override reaching a plist key.
 
 `SmartStylist/Assets.xcassets/AppIcon.appiconset/` contains a single 1024×1024 universal PNG (`AppIcon.png`). This is the modern Xcode format — no per-size variants needed.
 
-Current design: `dsBackground` (`#1C1C1E`) background with three 4-pointed gold sparkle stars (`dsAccentPrimary` `#C9A84C`) — generated with PyCairo. Replace with the final brand icon before public App Store release.
+Current design: `dsBackground` (`#0B1021`) background with three 4-pointed platinum sparkle stars (`dsAccentPrimary` `#E0E5EC`) — generated with Pillow. Replace with the final brand icon before public App Store release.
