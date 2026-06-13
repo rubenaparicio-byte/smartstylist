@@ -29,7 +29,7 @@ struct LuxuryLoadingView: View {
                     insertion: .opacity.combined(with: .move(edge: .bottom)),
                     removal:   .opacity
                 ))
-                .accessibilityLiveRegion(.polite)
+                .accessibilityAddTraits(.updatesFrequently)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 80)
