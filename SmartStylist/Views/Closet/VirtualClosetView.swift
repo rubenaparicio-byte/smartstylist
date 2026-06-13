@@ -278,6 +278,12 @@ struct VirtualClosetView: View {
                         )
                     }
                     .buttonStyle(CardPressStyle())
+                    .scrollTransition(.animated) { content, phase in
+                        content
+                            .opacity(phase.isIdentity ? 1.0 : 0.0)
+                            .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
+                            .offset(y: phase.isIdentity ? 0.0 : 20.0)
+                    }
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
                 }
             }

@@ -18,8 +18,26 @@ struct WardrobeInsightsView: View {
                     ScrollView {
                         VStack(spacing: 20) {
                             styleDistributionCard
+                                .scrollTransition(.animated) { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1.0 : 0.0)
+                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.92)
+                                        .offset(y: phase.isIdentity ? 0.0 : 20.0)
+                                }
                             topWornCard
+                                .scrollTransition(.animated) { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1.0 : 0.0)
+                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.92)
+                                        .offset(y: phase.isIdentity ? 0.0 : 20.0)
+                                }
                             closetHealthCard
+                                .scrollTransition(.animated) { content, phase in
+                                    content
+                                        .opacity(phase.isIdentity ? 1.0 : 0.0)
+                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.92)
+                                        .offset(y: phase.isIdentity ? 0.0 : 20.0)
+                                }
                         }
                         .padding(16)
                     }
