@@ -7,7 +7,10 @@ struct SelectionChip: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            HapticManager.impact(.light)
+            action()
+        } label: {
             HStack(spacing: 8) {
                 if let color = swatchColor {
                     Circle()

@@ -77,6 +77,8 @@ struct WardrobeInsightsView: View {
                             Text("\(entry.count)")
                                 .font(.dsLabel)
                                 .foregroundStyle(Color.dsAccentPrimary)
+                                .contentTransition(.numericText(value: Double(entry.count)))
+                                .animation(.dsDefault, value: entry.count)
                         }
                     }
                 }
@@ -128,6 +130,8 @@ struct WardrobeInsightsView: View {
                 Text("\(entry.wearCount)")
                     .font(.dsBodyMedium)
                     .foregroundStyle(Color.dsAccentPrimary)
+                    .contentTransition(.numericText(value: Double(entry.wearCount)))
+                    .animation(.dsDefault, value: entry.wearCount)
                 Text(Strings.insightsWorn)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextTertiary)
@@ -197,6 +201,8 @@ struct WardrobeInsightsView: View {
             Text("\(value)")
                 .font(.dsTitle)
                 .foregroundStyle(Color(hex: hex))
+                .contentTransition(.numericText(value: Double(value)))
+                .animation(.dsDefault, value: value)
             Text(label)
                 .font(.dsCaption)
                 .foregroundStyle(Color.dsTextTertiary)

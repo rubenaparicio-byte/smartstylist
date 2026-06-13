@@ -64,9 +64,7 @@ struct StyleEngineView: View {
                     Button {
                         Task {
                             guard let p = profile else { return }
-                            await vm.generateOutfit(profile: p,
-                                                    activeItems: activeItems,
-                                                    history: history)
+                            await generateWithHaptics(profile: p)
                         }
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -85,7 +83,7 @@ struct StyleEngineView: View {
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
             .task {
                 guard let p = profile, vm.suggestion == nil, !vm.isLoading else { return }
-                await vm.generateOutfit(profile: p, activeItems: activeItems, history: history)
+                await generateWithHaptics(profile: p, rigid: false)
             }
         }
     }
@@ -144,9 +142,7 @@ struct StyleEngineView: View {
             LuxuryErrorView(error: err) {
                 Task {
                     guard let p = profile else { return }
-                    await vm.generateOutfit(profile: p,
-                                            activeItems: activeItems,
-                                            history: history)
+                    await generateWithHaptics(profile: p)
                 }
             }
             .transition(.opacity.combined(with: .scale(scale: 0.96)))
@@ -264,6 +260,18 @@ struct StyleEngineView: View {
                         .stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5)
                 )
             }
+        }
+    }
+
+    // ── Haptic-aware generate ─────────────────────────────────────────────────
+
+    private func generateWithHaptics(profile: UserProfile, rigid: Bool = true) async {
+        if rigid { HapticManager.impact(.rigid) }
+        await vm.generateOutfit(profile: profile, activeItems: activeItems, history: history)
+        if vm.currentError != nil {
+            HapticManager.notification(.error)
+        } else {
+            HapticManager.notification(.success)
         }
     }
 
