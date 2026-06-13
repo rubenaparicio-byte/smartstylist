@@ -42,6 +42,11 @@ struct ColorimetryAnalysis: Codable {
 final class GeminiService {
     private let apiKey   = APIKeys.openRouter
     private let endpoint = URL(string: "https://openrouter.ai/api/v1/chat/completions")!
+    private let session: URLSession
+
+    init(session: URLSession = .shared) {
+        self.session = session
+    }
 
     // Tried in order; skips to next on 404 / 429 / 503 (retriable).
     private let textModels: [String] = [
@@ -299,7 +304,7 @@ final class GeminiService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("SmartStylist", forHTTPHeaderField: "X-Title")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? -1
         return (data, status)
     }

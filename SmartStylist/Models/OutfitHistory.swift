@@ -3,11 +3,12 @@ import SwiftData
 
 @Model
 final class OutfitHistory {
-    @Attribute(.unique) var id: UUID
-    var date: Date
-    var clothingItemIds: [UUID]
-    var context: String
-    var weatherContext: String
+    // @Attribute(.unique) is incompatible with CloudKit — uniqueness is managed via CKRecord.ID.
+    var id: UUID = UUID()
+    var date: Date = .now
+    var clothingItemIds: [UUID] = []
+    var context: String = ""
+    var weatherContext: String = ""
 
     init(id: UUID = UUID(),
          date: Date = Date(),

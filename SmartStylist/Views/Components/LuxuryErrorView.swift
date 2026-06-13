@@ -72,6 +72,7 @@ struct LuxuryErrorView: View {
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(Color.dsAccentGold.opacity(0.7))
         }
+        .accessibilityHidden(true)
     }
 
     private var messageBlock: some View {

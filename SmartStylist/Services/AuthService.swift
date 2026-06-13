@@ -49,6 +49,21 @@ private enum KeychainHelper {
     }
 }
 
+// ── KeychainStore ─────────────────────────────────────────────────────────────
+// Closure-based wrapper around Keychain operations; injectable for testing.
+
+struct KeychainStore {
+    var save:   (_ value: String, _ account: String) -> Void
+    var load:   (_ account: String) -> String?
+    var delete: (_ account: String) -> Void
+
+    static let live = KeychainStore(
+        save:   { KeychainHelper.save($0, account: $1) },
+        load:   { KeychainHelper.load(account: $0) },
+        delete: { KeychainHelper.delete(account: $0) }
+    )
+}
+
 // ── AuthService ───────────────────────────────────────────────────────────────
 
 private let kAppleUserID  = "appleUserID"
@@ -59,17 +74,19 @@ private let kGoogleUserID = "googleUserID"
 final class AuthService {
     private(set) var isAuthenticated: Bool
     var loginError: String?
+    private let keychain: KeychainStore
 
-    init() {
-        isAuthenticated = KeychainHelper.load(account: kAppleUserID)  != nil
-                       || KeychainHelper.load(account: kGoogleUserID) != nil
+    init(keychain: KeychainStore = .live) {
+        self.keychain = keychain
+        isAuthenticated = keychain.load(kAppleUserID)  != nil
+                       || keychain.load(kGoogleUserID) != nil
     }
 
     // ── Apple Sign-In ─────────────────────────────────────────────────────────
 
     func handleAuthorization(_ authorization: ASAuthorization) {
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
-        KeychainHelper.save(credential.user, account: kAppleUserID)
+        keychain.save(credential.user, kAppleUserID)
         loginError = nil
         withAnimation(.dsSpring) { isAuthenticated = true }
     }
@@ -84,8 +101,8 @@ final class AuthService {
     // Only signs out on .revoked — .notFound is a false positive in simulator/dev.
     // Skipped when the active session is Google-based.
     func validateAppleCredential() async {
-        guard KeychainHelper.load(account: kGoogleUserID) == nil else { return }
-        guard let userID = KeychainHelper.load(account: kAppleUserID) else {
+        guard keychain.load(kGoogleUserID) == nil else { return }
+        guard let userID = keychain.load(kAppleUserID) else {
             isAuthenticated = false
             return
         }
@@ -111,7 +128,7 @@ final class AuthService {
         do {
             let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: root)
             let userID = result.user.userID ?? result.user.profile?.email ?? ""
-            KeychainHelper.save(userID, account: kGoogleUserID)
+            keychain.save(userID, kGoogleUserID)
             loginError = nil
             withAnimation(.dsSpring) { isAuthenticated = true }
         } catch let error as GIDSignInError where error.code == .canceled {
@@ -124,8 +141,8 @@ final class AuthService {
     // ── Common ────────────────────────────────────────────────────────────────
 
     func signOut() {
-        KeychainHelper.delete(account: kAppleUserID)
-        KeychainHelper.delete(account: kGoogleUserID)
+        keychain.delete(kAppleUserID)
+        keychain.delete(kGoogleUserID)
         GIDSignIn.sharedInstance.signOut()
         withAnimation(.dsDefault) { isAuthenticated = false }
     }

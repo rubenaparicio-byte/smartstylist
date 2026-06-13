@@ -72,6 +72,7 @@ struct LanguageStepView: View {
                     )
             }
         }
+        .accessibilityIdentifier("language.\(opt.value)")
         .animation(.dsDefault, value: selected)
     }
 }

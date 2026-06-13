@@ -24,7 +24,8 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
   - `AuthService` — Sign In with Apple + Keychain session management
   - `GeminiService` — OpenRouter LLM + vision calls with model fallback
   - `GarmentSegmentationService` — on-device Vision segmentation (Swift `actor`)
-  - `WeatherService` / `LocationService` — weather context
+  - `WeatherKitService` — Apple WeatherKit (primary); falls back to `WeatherService`/`LocationService` on error
+  - `NotificationService` — daily 8 AM local push notification ("your look for today")
 - `Models/` — `@Model` SwiftData entities (ClothingItem, OutfitHistory, UserProfile)
   - `ThermalLayer` enum — layering system (base / inner / mid / outer) on `ClothingItem`
 - `DesignSystem/` — design tokens (colors, typography, shapes, animations)
@@ -39,6 +40,8 @@ Cold launch
        ├─ not authenticated           → LoginView
        ├─ authenticated, no profile   → OnboardingContainerView
        └─ authenticated + onboarded   → MainTabView
+
+UI test launch (--uitesting flag)     → OnboardingContainerView (no auth check)
 ```
 
 `AuthService` is injected as `@Environment(AuthService.self)` from `SmartStylistApp`.
@@ -77,6 +80,24 @@ Sign In with Apple is the primary auth method. Google Sign-In UI is prepared but
 ### Entitlement
 
 `com.apple.developer.applesignin: [Default]` is declared in both `project.yml` (under `targets.SmartStylist.entitlements`) and `SmartStylist/SmartStylist.entitlements`. XcodeGen applies the entitlement at project generation time. **Never remove this entitlement** — Sign In with Apple fails silently at runtime without it.
+
+### Keychain injection (`KeychainStore`)
+
+`AuthService` accepts an injectable `KeychainStore` struct for testing:
+
+```swift
+// Production (default)
+AuthService()
+
+// Tests — pass a mock backing dictionary
+AuthService(keychain: KeychainStore(
+    save:   { mockData[$1] = $0 },
+    load:   { mockData[$0] },
+    delete: { mockData.removeValue(forKey: $0) }
+))
+```
+
+`KeychainStore.live` wraps the private `KeychainHelper` enum (Security.framework). Never reference `KeychainHelper` directly outside `AuthService.swift`.
 
 ### Wiring up Google Sign-In (future)
 
@@ -334,13 +355,55 @@ All user-facing strings go through `SmartStylist/Localization/Strings.swift`. **
 
 For dynamic key lookups (e.g. body type descriptions keyed by `rawValue`), use `String(localized: String.LocalizationValue(key), locale: Strings.activeLocale)` directly in the view — do not add a `Strings.*` property for every permutation.
 
+### WeatherKit (`Services/WeatherKitService.swift`)
+
+Apple WeatherKit is the primary weather source. `LocationWeatherService.refresh()` tries it first and falls back to OpenWeather on any error.
+
+- Entitlement: `com.apple.developer.weatherkit: true` in both `project.yml` and `SmartStylist.entitlements`
+- Framework: `WeatherKit.framework` declared under `targets.SmartStylist.dependencies` in `project.yml`
+- Name collision: both the project and the SDK have a `WeatherService` type — always qualify as `WeatherKit.WeatherService.shared` in `WeatherKitService.swift`
+- `WeatherCondition` mapping: Snow/Drizzle/Rain/Thunderstorm/Fog/Clouds/Clear → `CurrentWeatherData`
+
+### NotificationService (`Services/NotificationService.swift`)
+
+Singleton `@MainActor` class managing daily 8 AM local push notifications.
+
+| Method | Purpose |
+|--------|---------|
+| `requestPermission()` | Requests `.alert + .sound + .badge`; returns `Bool` |
+| `scheduleDailyLookNotification()` | Schedules `UNCalendarNotificationTrigger` at 08:00, `repeats: true` |
+| `requestAndSchedule()` | Convenience: request then schedule if granted |
+
+**Wiring:**
+- `ColorimetryResultView` — calls `requestAndSchedule()` when the user taps "Enter my Wardrobe" (first-time permission prompt at the end of onboarding)
+- `MainTabView` — calls `scheduleDailyLookNotification()` on `.task` (reschedules silently on subsequent launches if already authorised)
+
+Notification strings: `notification.daily.title` / `notification.daily.body` in both `Localizable.strings` files.
+
+### Share outfit (`Views/StyleEngine/StyleEngineView.swift`)
+
+`StyleEngineView` renders the visible `OutfitSuggestionCard` to a `SwiftUI.Image` via `ImageRenderer` and exposes it through a `ShareLink`.
+
+```swift
+// Render at 3× scale for crisp sharing
+let renderer = ImageRenderer(content: card)
+renderer.scale = 3
+shareImage = renderer.uiImage.map { Image(uiImage: $0) }
+```
+
+- `ShareLink` uses `SharePreview` with the rendered image and `Strings.shareOutfitMessage`
+- The share button (`"share.outfit.button"`) is styled in `dsAccentGold` and appears below the save button
+- `renderShareImage(suggestion:)` is called from `.onAppear` on the suggestion VStack — `StyleResponse` is not `Equatable` so `.onChange` cannot be used
+
 ### Debug in-app
 
 `DebugLogger` (singleton `@MainActor`) retiene los últimos 30 eventos con timestamp. Se activa en `ProfileSettingsView` pulsando **5 veces el icono de perfil** → sección "DEVELOPER LOGS" con texto seleccionable. Los errores de red y de API se loguean automáticamente desde `GeminiService`.
 
 ## Testing
 
-Tests live in `SmartStylistTests/` mirroring the source structure.
+### Unit tests (`SmartStylistTests/`)
+
+Mirror the source structure. Run:
 
 ```bash
 xcodegen generate
@@ -348,9 +411,68 @@ xcodebuild test -project SmartStylist.xcodeproj -scheme SmartStylist \
   -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
+**Rules:**
 - Always use in-memory `ModelContainer` — never write to disk in tests
-- Never hit real APIs in tests — use local JSON fixtures or protocol stubs
+- Never hit real APIs in tests — use `MockURLProtocol` or `KeychainStore` injection
 - Use `/new-test <SubjectName>` to generate a test file following project conventions
+
+**Network mocking (`GeminiServiceTests`)** — `MockURLProtocol` intercepts `URLSession` requests:
+
+```swift
+MockURLProtocol.requestHandler = { _ in
+    let resp = HTTPURLResponse(url: endpoint, statusCode: 429, ...)!
+    return (resp, Data())
+}
+let svc = GeminiService(session: makeMockSession())  // ephemeral config with MockURLProtocol
+```
+
+`GeminiService.init(session:)` accepts an injected `URLSession` (default `.shared`). Use `URLSessionConfiguration.ephemeral` + `config.protocolClasses = [MockURLProtocol.self]` to create the mock session.
+
+**Keychain mocking (`AuthServiceTests`)** — `KeychainStore` closures backed by a `[String: String]` dictionary:
+
+```swift
+final class MockKeychainBacking {
+    var data: [String: String]
+    var store: KeychainStore { KeychainStore(save: ..., load: ..., delete: ...) }
+}
+AuthService(keychain: MockKeychainBacking(["appleUserID": "abc"]).store)
+```
+
+### UI tests (`SmartStylistUITests/`)
+
+Separate target (`bundle.ui-test`) declared in `project.yml`. Run:
+
+```bash
+xcodebuild test -project SmartStylist.xcodeproj -scheme SmartStylistUITests \
+  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16'
+```
+
+**`--uitesting` launch argument** — when present, `SmartStylistApp` and `RootView` switch to a test-safe mode:
+- `ModelConfiguration(isStoredInMemoryOnly: true)` — no CloudKit, no persisted state between runs
+- `RootView` renders `OnboardingContainerView` directly, skipping `validateAppleCredential()`
+
+```swift
+// In every UI test setUp:
+app.launchArguments = ["--uitesting"]
+app.launch()
+```
+
+**`accessibilityIdentifier` conventions** — used for element lookup in UI tests:
+
+| Identifier | Element | File |
+|------------|---------|------|
+| `language.system` / `language.en` / `language.es` | Language cards | `LanguageStepView` |
+| `gender.male` / `gender.female` | Gender cards | `GenderStepView` |
+| `onboarding.advance` | Continue / Analyse button | `OnboardingContainerView` |
+
+Add new identifiers following the pattern `<screen>.<element>` whenever a UI test needs to target a new button or view. Prefer `accessibilityIdentifier` over text-based queries — text is locale-sensitive, identifiers are not.
+
+**Hittability check after `TabView` page transitions** — off-screen `TabView` pages remain in the accessibility tree but their elements return `isHittable = false`. After tapping the advance button, verify the new step is active with:
+
+```swift
+XCTAssertTrue(app.buttons["gender.male"].waitForExistence(timeout: 5))
+XCTAssertTrue(app.buttons["gender.male"].isHittable)
+```
 
 ## CI
 
@@ -473,4 +595,6 @@ Never rely on a xcodebuild CLI build-setting override reaching a plist key.
 
 ### App icon
 
-`SmartStylist/Assets.xcassets/AppIcon.appiconset/` contains a single 1024×1024 universal PNG (`AppIcon.png`). This is the modern Xcode format — no per-size variants needed. The current file is a placeholder solid-color PNG; replace it with the real icon before public App Store release.
+`SmartStylist/Assets.xcassets/AppIcon.appiconset/` contains a single 1024×1024 universal PNG (`AppIcon.png`). This is the modern Xcode format — no per-size variants needed.
+
+Current design: `dsDeepSlate` (`#1C1C1E`) background with three 4-pointed gold sparkle stars (`dsAccentGold` `#C9A84C`) — generated with PyCairo. Replace with the final brand icon before public App Store release.

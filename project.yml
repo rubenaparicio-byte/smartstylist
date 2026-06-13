@@ -67,14 +67,32 @@ targets:
       properties:
         com.apple.developer.applesignin:
           - Default
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.rubenaparicio.SmartStylist
+        com.apple.developer.weatherkit: true
     dependencies:
       - package: GoogleSignIn
         product: GoogleSignIn
+      - sdk: WeatherKit.framework
 
   SmartStylistTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - SmartStylistTests
+    dependencies:
+      - target: SmartStylist
+
+  SmartStylistUITests:
+    type: bundle.ui-test
+    platform: iOS
+    sources:
+      - SmartStylistUITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: "com.rubenaparicio.SmartStylistUITests"
+        DEVELOPMENT_TEAM: "CY3J5RM5UX"
     dependencies:
       - target: SmartStylist

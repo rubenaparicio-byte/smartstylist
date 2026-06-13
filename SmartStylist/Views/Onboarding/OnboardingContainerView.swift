@@ -84,6 +84,7 @@ struct OnboardingContainerView: View {
                 .background(vm.canAdvance ? Color.dsAccentGold : Color.dsSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
+        .accessibilityIdentifier("onboarding.advance")
         .disabled(!vm.canAdvance)
         .animation(.dsDefault, value: vm.canAdvance)
     }

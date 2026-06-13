@@ -32,5 +32,6 @@ struct MainTabView: View {
                 .tabItem { Label(Strings.tabsProfile, systemImage: "person.crop.circle") }
         }
         .tint(Color.dsAccentGold)
+        .task { await NotificationService.shared.scheduleDailyLookNotification() }
     }
 }

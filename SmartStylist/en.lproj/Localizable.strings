@@ -302,3 +302,11 @@
 "style.smart_casual" = "Smart Casual";
 "style.athletic"     = "Athletic";
 "style.evening"      = "Evening";
+
+/* Notifications */
+"notification.daily.title" = "Your Look for Today";
+"notification.daily.body"  = "Your daily outfit is ready! Tap to see it.";
+
+/* Share */
+"share.outfit.button"  = "Share Look";
+"share.outfit.message" = "My look of the day by SmartStylist";

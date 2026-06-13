@@ -224,7 +224,8 @@ private struct GarmentTile: View {
     private var garmentThumbnail: some View {
         let thumbnailSize = CGSize(width: 52, height: 68)
         Group {
-            if let path = item.imagePath, let uiImage = UIImage(contentsOfFile: path) {
+            if let url = item.resolvedImageURL,
+               let uiImage = UIImage(contentsOfFile: url.path) {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()

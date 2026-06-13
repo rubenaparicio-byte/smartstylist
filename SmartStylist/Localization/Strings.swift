@@ -153,6 +153,14 @@ enum Strings {
     static var settingsLanguageEN:      String { String(localized: "settings.language.en",      locale: activeLocale) }
     static var settingsLanguageES:      String { String(localized: "settings.language.es",      locale: activeLocale) }
 
+    // MARK: — Notifications
+    static var notificationDailyTitle: String { String(localized: "notification.daily.title", locale: activeLocale) }
+    static var notificationDailyBody:  String { String(localized: "notification.daily.body",  locale: activeLocale) }
+
+    // MARK: — Share
+    static var shareOutfitButton:  String { String(localized: "share.outfit.button",  locale: activeLocale) }
+    static var shareOutfitMessage: String { String(localized: "share.outfit.message", locale: activeLocale) }
+
     // MARK: — Weather
     static func weatherFeelsLike(_ celsius: Int) -> String {
         String(format: String(localized: "weather.feels.like", locale: activeLocale), celsius)

@@ -301,3 +301,11 @@
 "style.smart_casual" = "Smart Casual";
 "style.athletic"     = "Deportivo";
 "style.evening"      = "Noche";
+
+/* Notificaciones */
+"notification.daily.title" = "Tu look para hoy";
+"notification.daily.body"  = "¡Tu look para hoy está listo! Toca para verlo.";
+
+/* Compartir */
+"share.outfit.button"  = "Compartir Look";
+"share.outfit.message" = "Mi look del día por SmartStylist";

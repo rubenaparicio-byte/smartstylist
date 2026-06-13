@@ -10,6 +10,7 @@ struct LoadingPulse: View {
             .frame(width: 10, height: 10)
             .scaleEffect(scale)
             .opacity(opacity)
+            .accessibilityHidden(true)
             .onAppear {
                 withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
                     scale = 1.2
