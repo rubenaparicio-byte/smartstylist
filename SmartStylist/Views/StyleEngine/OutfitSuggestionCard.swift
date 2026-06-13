@@ -61,6 +61,7 @@ struct OutfitSuggestionCard: View {
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(Color.dsAccentPrimary)
                     .font(.caption)
+                    .accessibilityHidden(true)
                 Text(response.climaProcesado)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextTertiary)
@@ -71,6 +72,7 @@ struct OutfitSuggestionCard: View {
                 .italic()
         }
         .padding(20)
+        .accessibilityElement(children: .combine)
     }
 
     // ── Layer stack ───────────────────────────────────────────────────────────
@@ -205,6 +207,8 @@ struct OutfitSuggestionCard: View {
 private struct GarmentTile: View {
     let item: ClothingItem
 
+    @State private var loadedImage: UIImage?
+
     var body: some View {
         HStack(spacing: 10) {
             garmentThumbnail
@@ -218,15 +222,19 @@ private struct GarmentTile: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(Color.dsAccentPrimary.opacity(0.12), lineWidth: 0.5)
         )
+        .task(id: item.id) {
+            guard let url = item.resolvedImageURL else { return }
+            loadedImage = await ImageLoader.shared.load(from: url)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.subcategory?.localizedName ?? item.category.localizedName)
     }
 
     @ViewBuilder
     private var garmentThumbnail: some View {
-        let thumbnailSize = CGSize(width: 52, height: 68)
         Group {
-            if let url = item.resolvedImageURL,
-               let uiImage = UIImage(contentsOfFile: url.path) {
-                Image(uiImage: uiImage)
+            if let image = loadedImage {
+                Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
             } else {
@@ -236,7 +244,7 @@ private struct GarmentTile: View {
                     )
             }
         }
-        .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+        .frame(width: DSSize.garmentTileWidth, height: DSSize.garmentTileHeight)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 

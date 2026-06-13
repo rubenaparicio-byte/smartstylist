@@ -34,7 +34,8 @@ enum DisposeReason: String, CaseIterable {
 @Observable
 final class ClosetViewModel {
     var selectedCategory: ClothingCategory? = nil
-    var searchText = ""
+    var searchText = ""          // bound to TextField — updates immediately
+    var debouncedSearchText = "" // used by filter predicates — updated after 300ms
     var isAddingItem = false
 
     // Panel-level filters (drive badge dot on filter button)
@@ -56,6 +57,7 @@ final class ClosetViewModel {
         showOnlyStatus = nil
         selectedCategory = nil
         searchText = ""
+        debouncedSearchText = ""
     }
 
     // Active + archived — disposed items are permanently excluded
@@ -80,17 +82,29 @@ final class ClosetViewModel {
     func disposeItem(_ item: ClothingItem, reason: DisposeReason = .unused, context: ModelContext) {
         item.status = .disposed
         item.disposeReason = reason.rawValue
-        try? context.save()
+        // Evict from image cache so stale image memory is freed immediately.
+        if let url = item.resolvedImageURL {
+            Task { await ImageLoader.shared.evict(url: url) }
+        }
+        save(context: context, operation: "disposeItem")
     }
 
     func archiveItem(_ item: ClothingItem, context: ModelContext) {
         item.status = .archived
-        try? context.save()
+        save(context: context, operation: "archiveItem")
     }
 
     func restoreItem(_ item: ClothingItem, context: ModelContext) {
         item.status = .active
-        try? context.save()
+        save(context: context, operation: "restoreItem")
+    }
+
+    private func save(context: ModelContext, operation: String) {
+        do {
+            try context.save()
+        } catch {
+            Task { await DebugLogger.shared.log("\(operation) save failed: \(error.localizedDescription)") }
+        }
     }
 
     func itemsByCategory(from all: [ClothingItem]) -> [(ClothingCategory, [ClothingItem])] {
@@ -122,12 +136,14 @@ final class ClosetViewModel {
         return item.pattern.localizedCaseInsensitiveContains(pattern)
     }
 
-    // Searches: category raw value (Spanish), primary color hex, style, and individual tags
+    // Searches: category raw value (Spanish), primary color hex, style, and individual tags.
+    // Uses debouncedSearchText to avoid filtering on every keystroke.
     private func textMatches(_ item: ClothingItem) -> Bool {
-        guard !searchText.isEmpty else { return true }
-        return item.category.rawValue.localizedCaseInsensitiveContains(searchText)
-            || item.primaryColor.localizedCaseInsensitiveContains(searchText)
-            || item.style.localizedCaseInsensitiveContains(searchText)
-            || item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+        guard !debouncedSearchText.isEmpty else { return true }
+        let q = debouncedSearchText
+        return item.category.rawValue.localizedCaseInsensitiveContains(q)
+            || item.primaryColor.localizedCaseInsensitiveContains(q)
+            || item.style.localizedCaseInsensitiveContains(q)
+            || item.tags.contains { $0.localizedCaseInsensitiveContains(q) }
     }
 }

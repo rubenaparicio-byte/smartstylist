@@ -186,16 +186,14 @@ struct ProfileSettingsView: View {
     private func colorimetrySection(_ profile: UserProfile) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader(Strings.profileSectionColorimetry)
-            if profile.recommendedColorHexes.isEmpty {
+            let swatches = profile.recommendedColorSwatches
+            if swatches.isEmpty {
                 emptyNote
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(
-                            Array(zip(profile.recommendedColorHexes, profile.recommendedColorNames)),
-                            id: \.0
-                        ) { hex, name in
-                            colorSwatch(hex: hex, name: name)
+                        ForEach(swatches, id: \.hex) { swatch in
+                            colorSwatch(hex: swatch.hex, name: swatch.name)
                         }
                     }
                 }
@@ -207,16 +205,14 @@ struct ProfileSettingsView: View {
 
     @ViewBuilder
     private func avoidSection(_ profile: UserProfile) -> some View {
-        if !profile.avoidColorHexes.isEmpty {
+        let swatches = profile.avoidColorSwatches
+        if !swatches.isEmpty {
             VStack(alignment: .leading, spacing: 14) {
                 sectionHeader(Strings.profileSectionAvoid)
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(
-                            Array(zip(profile.avoidColorHexes, profile.avoidColorNames)),
-                            id: \.0
-                        ) { hex, name in
-                            colorSwatch(hex: hex, name: name)
+                        ForEach(swatches, id: \.hex) { swatch in
+                            colorSwatch(hex: swatch.hex, name: swatch.name)
                                 .opacity(0.6)
                                 .overlay(
                                     Image(systemName: "xmark")

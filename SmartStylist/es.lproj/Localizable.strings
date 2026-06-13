@@ -78,6 +78,8 @@
 
 /* Motor de Estilo */
 "style.nav.title"             = "LOOK DE HOY";
+"style.nav.refresh"           = "Refrescar outfit";
+"style.nav.refresh.hint"      = "Genera una nueva sugerencia de outfit";
 "style.section.event_context" = "CONTEXTO DE EVENTO";
 "style.outfit.registered"     = "Outfit Registrado para Hoy";
 "style.outfit.save"           = "Llevar Este Outfit Hoy";
@@ -99,6 +101,8 @@
 "wardrobe.filter.all"          = "Todo";
 "wardrobe.status.active"       = "activo";
 "wardrobe.status.archived"     = "archivado";
+"wardrobe.add.item"            = "Añadir prenda";
+"wardrobe.add.item.hint"       = "Abre la cámara o galería para añadir una nueva prenda";
 
 /* Categorías de ropa */
 "category.top"       = "Parte Superior";
@@ -124,6 +128,7 @@
 "add.button.analyse"        = "Analizar con IA";
 "add.button.analysing"      = "Analizando…";
 "add.label.segmenting"      = "Segmentando…";
+"add.ai.error"              = "El análisis falló — añade los detalles manualmente.";
 
 /* Validar prenda */
 "validate.nav.title"              = "VALIDAR PRENDA";
@@ -140,10 +145,11 @@
 "validate.button.confirm"         = "Confirmar y Añadir al Armario";
 
 /* Acciones de tarjeta */
-"card.archived"         = "ARCHIVADO";
-"card.action.archive"   = "Archivar";
-"card.action.restore"   = "Restaurar";
-"card.action.retire"    = "Dar de baja";
+"card.archived"             = "ARCHIVADO";
+"card.action.archive"       = "Archivar";
+"card.action.restore"       = "Restaurar";
+"card.action.retire"        = "Dar de baja";
+"card.accessibility.hint"   = "Mantén pulsado para ver opciones";
 
 /* Tarjeta de outfit */
 "outfit.layer.composition" = "COMPOSICIÓN DE CAPAS";

@@ -273,7 +273,14 @@ final class GeminiService {
         var lastStatus = 0
         var lastData   = Data()
 
-        for model in models {
+        for (index, model) in models.enumerated() {
+            if index > 0 {
+                // Exponential backoff: 1s, 2s, 4s between fallbacks
+                let delay = UInt64(pow(2.0, Double(index - 1))) * 1_000_000_000
+                try? await Task.sleep(nanoseconds: delay)
+            }
+            guard !Task.isCancelled else { throw LLMError.serverError }
+
             var b = body
             b["model"] = model
             do {
@@ -300,6 +307,7 @@ final class GeminiService {
     private func send(body: [String: Any]) async throws -> (Data, Int) {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
+        request.timeoutInterval = 30
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("SmartStylist", forHTTPHeaderField: "X-Title")

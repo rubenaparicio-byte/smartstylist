@@ -79,6 +79,8 @@
 
 /* Style Engine */
 "style.nav.title"             = "TODAY'S LOOK";
+"style.nav.refresh"           = "Refresh outfit";
+"style.nav.refresh.hint"      = "Generates a new outfit suggestion";
 "style.section.event_context" = "EVENT CONTEXT";
 "style.outfit.registered"     = "Outfit Registered for Today";
 "style.outfit.save"           = "Wear This Outfit Today";
@@ -100,6 +102,8 @@
 "wardrobe.filter.all"           = "All";
 "wardrobe.status.active"        = "active";
 "wardrobe.status.archived"      = "archived";
+"wardrobe.add.item"             = "Add clothing item";
+"wardrobe.add.item.hint"        = "Opens the camera or gallery to add a new piece";
 
 /* Clothing categories */
 "category.top"       = "Tops";
@@ -125,6 +129,7 @@
 "add.button.analyse"        = "Analyse with AI";
 "add.button.analysing"      = "Analysing…";
 "add.label.segmenting"      = "Segmenting…";
+"add.ai.error"              = "AI analysis failed — add details manually.";
 
 /* Validate sheet */
 "validate.nav.title"              = "VALIDATE PIECE";
@@ -141,10 +146,11 @@
 "validate.button.confirm"         = "Confirm & Add to Wardrobe";
 
 /* Card actions */
-"card.archived"         = "ARCHIVED";
-"card.action.archive"   = "Archive";
-"card.action.restore"   = "Restore to Active";
-"card.action.retire"    = "Retire this piece";
+"card.archived"             = "ARCHIVED";
+"card.action.archive"       = "Archive";
+"card.action.restore"       = "Restore to Active";
+"card.action.retire"        = "Retire this piece";
+"card.accessibility.hint"   = "Long press for actions";
 
 /* Outfit card */
 "outfit.layer.composition" = "LAYER COMPOSITION";

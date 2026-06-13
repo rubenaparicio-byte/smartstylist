@@ -8,6 +8,7 @@ struct StyleEngineView: View {
     @Environment(\.modelContext) private var ctx
     @State private var vm = StyleEngineViewModel()
     @State private var shareImage: Image?
+    @State private var generationTask: Task<Void, Never>?
 
     private var activeItems: [ClothingItem] { allItems.filter { $0.status == .active } }
     private var profile: UserProfile? { profiles.first(where: { $0.onboardingCompleted }) }
@@ -62,10 +63,9 @@ struct StyleEngineView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task {
-                            guard let p = profile else { return }
-                            await generateWithHaptics(profile: p)
-                        }
+                        guard let p = profile else { return }
+                        generationTask?.cancel()
+                        generationTask = Task { await generateWithHaptics(profile: p) }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .foregroundStyle(Color.dsAccentPrimary)
@@ -78,6 +78,8 @@ struct StyleEngineView: View {
                             )
                     }
                     .disabled(vm.isLoading)
+                    .accessibilityLabel(Strings.styleNavRefresh)
+                    .accessibilityHint(Strings.styleNavRefreshHint)
                 }
             }
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
@@ -85,6 +87,7 @@ struct StyleEngineView: View {
                 guard let p = profile, vm.suggestion == nil, !vm.isLoading else { return }
                 await generateWithHaptics(profile: p, rigid: false)
             }
+            .onDisappear { generationTask?.cancel() }
         }
     }
 

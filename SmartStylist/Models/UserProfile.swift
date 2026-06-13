@@ -22,6 +22,16 @@ final class UserProfile {
     var preferredStores: [String] = []  // brand names the user shops at
     var age: Int?                        // nil = not set
 
+    // Safe zip-based accessors — prevents index-out-of-range when LLM returns mismatched arrays.
+    // Returns ColorSwatch structs so callers can use stable KeyPath-based ids in ForEach.
+    var recommendedColorSwatches: [ColorSwatch] {
+        zip(recommendedColorNames, recommendedColorHexes).map { ColorSwatch(name: $0, hex: $1) }
+    }
+
+    var avoidColorSwatches: [ColorSwatch] {
+        zip(avoidColorNames, avoidColorHexes).map { ColorSwatch(name: $0, hex: $1) }
+    }
+
     init(id: UUID = UUID(),
          gender: String? = nil,
          bodyType: String = "",

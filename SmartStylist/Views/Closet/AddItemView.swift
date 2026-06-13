@@ -267,7 +267,7 @@ struct AddItemView: View {
             pendingPrediction = try await gemini.analyseClothingItem(imageData: data)
             showValidation = true
         } catch {
-            aiError = "AI analysis failed — add details manually."
+            aiError = Strings.addAIError
         }
         isAnalysing = false
     }

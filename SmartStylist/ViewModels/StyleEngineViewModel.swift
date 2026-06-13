@@ -80,6 +80,23 @@ final class StyleEngineViewModel {
 
     private let gemini = GeminiService()
     private let wxSvc  = LocationWeatherService()
+    private var generationTask: Task<Void, Never>?
+
+    private static let suggestionCacheKey = "ss_lastSuggestion"
+
+    init() {
+        // Restore last cached suggestion so the tab isn't blank on re-open
+        if let data = UserDefaults.standard.data(forKey: Self.suggestionCacheKey),
+           let cached = try? JSONDecoder().decode(StyleResponse.self, from: data) {
+            suggestion = cached
+        }
+    }
+
+    func cancelGeneration() {
+        generationTask?.cancel()
+        generationTask = nil
+        isLoading = false
+    }
 
     func generateOutfit(profile: UserProfile,
                         activeItems: [ClothingItem],
@@ -88,6 +105,7 @@ final class StyleEngineViewModel {
             currentError = .insufficientWardrobe
             return
         }
+        guard !Task.isCancelled else { return }
 
         isLoading           = true
         outfitSaved         = false
@@ -117,10 +135,12 @@ final class StyleEngineViewModel {
             )
             suggestion          = result
             isOfflineSuggestion = false
+            persistSuggestion(result)
         } catch {
             if let offline = buildOfflineSuggestion(profile: profile, activeItems: activeItems) {
                 suggestion          = offline
                 isOfflineSuggestion = true
+                persistSuggestion(offline)
             } else {
                 currentError = .aiUnavailable(error.localizedDescription)
             }
@@ -139,8 +159,18 @@ final class StyleEngineViewModel {
             weatherContext: currentWeather?.displayString ?? ""
         )
         context.insert(entry)
-        try? context.save()
-        outfitSaved = true
+        do {
+            try context.save()
+            outfitSaved = true
+        } catch {
+            Task { await DebugLogger.shared.log("saveOutfit failed: \(error.localizedDescription)") }
+        }
+    }
+
+    private func persistSuggestion(_ response: StyleResponse) {
+        if let data = try? JSONEncoder().encode(response) {
+            UserDefaults.standard.set(data, forKey: Self.suggestionCacheKey)
+        }
     }
 
     // ── Offline Fallback ──────────────────────────────────────────────────────
@@ -218,27 +248,53 @@ final class StyleEngineViewModel {
         """
     }
 
+    // ── Codable payload structs ───────────────────────────────────────────────
+
+    private struct InventoryItem: Encodable {
+        let id: String
+        let category: String
+        let subcategory: String?
+        let thermalLayer: String
+        let layerNumber: Int
+        let primaryColor: String
+        let pattern: String
+        let style: String
+        let tags: [String]
+    }
+
+    private struct HistoryEntry: Encodable {
+        let date: String
+        let context: String
+        let items: [String]
+    }
+
     private func encodeInventory(_ items: [ClothingItem]) -> String {
-        let entries = items.map { item in
-            let tagsJSON = item.tags.map { "\"\($0)\"" }.joined(separator: ",")
-            let subcatField = item.subcategory.map { ",\"subcategory\":\"\($0.rawValue)\"" } ?? ""
-            return """
-            {"id":"\(item.id.uuidString)","category":"\(item.category.rawValue)"\(subcatField),\
-            "thermalLayer":"\(item.resolvedThermalLayer.rawValue)","layerNumber":\(item.resolvedThermalLayer.layerNumber),\
-            "primaryColor":"\(item.primaryColor)","pattern":"\(item.pattern)",\
-            "style":"\(item.style)","tags":[\(tagsJSON)]}
-            """
+        let payload = items.map { item in
+            InventoryItem(
+                id:           item.id.uuidString,
+                category:     item.category.rawValue,
+                subcategory:  item.subcategory?.rawValue,
+                thermalLayer: item.resolvedThermalLayer.rawValue,
+                layerNumber:  item.resolvedThermalLayer.layerNumber,
+                primaryColor: item.primaryColor,
+                pattern:      item.pattern,
+                style:        item.style,
+                tags:         item.tags
+            )
         }
-        return "[\(entries.joined(separator: ","))]"
+        let encoder = JSONEncoder()
+        return (try? encoder.encode(payload)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
     }
 
     private func encodeHistory(_ history: [OutfitHistory]) -> String {
-        let entries = history.map { h in
-            let ids = h.clothingItemIds.map { "\"\($0.uuidString)\"" }.joined(separator: ",")
-            return """
-            {"date":"\(h.date.ISO8601Format())","context":"\(h.context)","items":[\(ids)]}
-            """
+        let payload = history.map { h in
+            HistoryEntry(
+                date:    h.date.ISO8601Format(),
+                context: h.context,
+                items:   h.clothingItemIds.map(\.uuidString)
+            )
         }
-        return "[\(entries.joined(separator: ","))]"
+        let encoder = JSONEncoder()
+        return (try? encoder.encode(payload)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
     }
 }
