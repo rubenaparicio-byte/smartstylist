@@ -10,7 +10,7 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
 - `Views/` — SwiftUI views, zero business logic
   - `Auth/` — `LoginView` (Sign In with Apple + Google placeholder)
   - `Closet/` — wardrobe CRUD, `AddItemView`, `ClothingItemCard`
-  - `Components/` — reusable primitives (`CameraPicker`, `SelectionChip`, …)
+  - `Components/` — reusable primitives (`CameraPicker`, `SelectionChip`, `FloatingTabBarView`, …)
   - `StyleEngine/` — AI outfit generation UI
   - `Onboarding/` — 6-step user funnel (language → gender → body → skin → hair+eyes → result)
     - `LanguageStepView` — language selector (ES/EN/System); applies locale immediately via `@AppStorage`
@@ -28,7 +28,7 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
   - `NotificationService` — daily 8 AM local push notification ("your look for today")
 - `Models/` — `@Model` SwiftData entities (ClothingItem, OutfitHistory, UserProfile)
   - `ThermalLayer` enum — layering system (base / inner / mid / outer) on `ClothingItem`
-- `DesignSystem/` — design tokens (colors, typography, shapes, animations)
+- `DesignSystem/` — design tokens (colors, typography, shapes, animations, `HapticManager`)
 
 ### App navigation flow
 
@@ -151,12 +151,15 @@ Tokens live in `SmartStylist/DesignSystem/`. Never hardcode colors, fonts, radii
 
 ### Card modifiers (`DS+Shapes.swift`)
 
-| Modifier | Background | Use when |
-|----------|-----------|---------|
-| `.luxuryCard(cornerRadius:)` | `Color.dsCardBackground` (opaque) | Cards with no image or over a known dark background |
-| `.glassCard(cornerRadius:)` | `Material.ultraThinMaterial` | Cards that float over content or images |
+| Modifier | Background | Glow shadow | Use when |
+|----------|-----------|-------------|---------|
+| `.luxuryCard(cornerRadius:)` | `Color.dsCardBackground` (opaque) | No | Cards with no image or over a known dark background |
+| `.luxuryGlowCard(cornerRadius:)` | `Color.dsCardBackground` (opaque) | Yes — `dsGlow`, radius 24, y 12 | Hero cards that benefit from a platinum aura (e.g. `OutfitSuggestionCard`) |
+| `.glassCard(cornerRadius:)` | `Material.ultraThinMaterial` | No | Cards that float over content or images |
 
-Both share a `0.5pt` accent border at `0.15–0.18` opacity and `.continuous` corner style.
+All three share a `0.5pt` accent border at `0.15–0.18` opacity and `.continuous` corner style.
+
+`dsGlow` is a color token (`Color.dsAccentPrimary.opacity(0.15)`) defined in `DS+Colors.swift`. Use it for any shadow that should match the accent glow.
 
 ### Button styles (`DS+Shapes.swift`)
 
@@ -175,6 +178,58 @@ NavigationLink(destination: ...) { ClothingItemCard(...) }
 | `dsFast` | `easeInOut(0.18s)` | Quick state feedback |
 | `dsSpring` | `spring(response: 0.4, damping: 0.75)` | Selection chips, content transitions |
 | `dsSnappy` | `spring(response: 0.28, damping: 0.68)` | Press reactions (`CardPressStyle`) |
+
+### Haptic feedback (`DesignSystem/HapticManager.swift`)
+
+`HapticManager` is a `@MainActor final class` singleton with two static methods. Call it from any `@MainActor` context (views, `@MainActor` view models).
+
+| Method | Generator | Use when |
+|--------|-----------|---------|
+| `HapticManager.impact(.light)` | `UIImpactFeedbackGenerator` | Chip / tab selection, minor confirmations |
+| `HapticManager.impact(.medium)` | `UIImpactFeedbackGenerator` | Swipe actions, mode switches |
+| `HapticManager.impact(.rigid)` | `UIImpactFeedbackGenerator` | Initiating a heavy async operation (e.g. generate outfit) |
+| `HapticManager.notification(.success)` | `UINotificationFeedbackGenerator` | Async operation completed successfully |
+| `HapticManager.notification(.error)` | `UINotificationFeedbackGenerator` | Async operation failed |
+
+**Wired locations:**
+- `SelectionChip` — `.light` on every tap
+- `FloatingTabBarView` — `.light` on tab switch (skipped if already on that tab)
+- `StyleEngineView.generateWithHaptics(profile:rigid:)` — `.rigid` before the LLM call, then `.success` or `.error` after; `rigid: false` for the auto-launch `.task` (no user gesture)
+
+### Floating tab bar (`Views/Components/FloatingTabBarView.swift`)
+
+`FloatingTabBarView` replaces the native `UITabBar` with a glass island that floats above the content.
+
+**Layout:** `HStack` of 4 icon buttons, each a `VStack(icon + 4pt dot)`. Selected tab: `dsAccentPrimary`, `scaleEffect(1.15)`, dot visible. Inactive: `dsTextTertiary`, scale 1.0, dot hidden. All transitions use `.dsSpring`.
+
+**Styling:** `.glassCard(cornerRadius: 32)` + `.shadow(color: .dsGlow, radius: 20, y: 8)` + `.padding(.horizontal, 24)` so it reads as a floating pill.
+
+**Integration in `MainTabView`:**
+```
+ZStack(alignment: .bottom)
+  └─ TabView(selection: $selectedTab)          ← native TabView, no tabItem labels needed
+       ├─ each view gets .tag(n) + .toolbar(.hidden, for: .tabBar)
+       └─ .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }   ← reserves space
+  └─ FloatingTabBarView(selectedTab: $selectedTab)
+       .padding(.bottom, 8)                    ← sits 8pt above the safe-area bottom edge
+```
+
+The `.safeAreaInset` ensures `ScrollView` content in each tab never hides behind the floating bar. Do **not** pass `CODE_SIGN_STYLE` overrides globally — this note is about the tab bar, but the pattern for safe area reservation via `.safeAreaInset` should be used for any floating overlay that could obscure scrollable content.
+
+### Scroll transitions (`Views/`)
+
+Cards in `VirtualClosetView` (grid items) and `WardrobeInsightsView` (section cards) use `.scrollTransition(.animated)` — an iOS 17 API that plays an entrance/exit animation as items cross the scroll viewport boundary.
+
+```swift
+.scrollTransition(.animated) { content, phase in
+    content
+        .opacity(phase.isIdentity ? 1.0 : 0.0)
+        .scaleEffect(phase.isIdentity ? 1.0 : 0.85)   // 0.92 for full-width cards
+        .offset(y: phase.isIdentity ? 0.0 : 20.0)
+}
+```
+
+`phase.isIdentity == true` means the item is fully in the viewport. Scale values: `0.85` for small grid cards, `0.92` for full-width section cards (less aggressive to avoid distortion). Use `.animated` (not `.interactive`) — `.animated` fires a one-shot animation on enter/exit; `.interactive` tracks the finger position, which looks wrong for card grids.
 
 ### Camera & photo picker (`Views/Components/`)
 
