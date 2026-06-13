@@ -66,11 +66,11 @@ struct LuxuryErrorView: View {
                 .frame(width: 80, height: 80)
                 .overlay(
                     Circle()
-                        .stroke(Color.dsAccentGold.opacity(0.22), lineWidth: 0.5)
+                        .stroke(Color.dsAccentPrimary.opacity(0.22), lineWidth: 0.5)
                 )
             Image(systemName: error.icon)
                 .font(.system(size: 28, weight: .light))
-                .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.7))
         }
         .accessibilityHidden(true)
     }
@@ -97,12 +97,12 @@ struct LuxuryErrorView: View {
                 Button(action: onRetry) {
                     Text(String(localized: "common.retry"))
                         .font(.dsBodyMedium)
-                        .foregroundStyle(Color.dsDeepSlate)
+                        .foregroundStyle(Color.dsBackground)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color.dsAccentGold)
+                        .background(Color.dsAccentPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .shadow(color: Color.dsAccentGold.opacity(0.3), radius: 10, y: 5)
+                        .shadow(color: Color.dsAccentPrimary.opacity(0.3), radius: 10, y: 5)
                 }
             }
 
@@ -114,14 +114,14 @@ struct LuxuryErrorView: View {
                 } label: {
                     Text(String(localized: "common.open_settings"))
                         .font(.dsBodyMedium)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(Color.dsSurface)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Color.dsAccentGold.opacity(0.3), lineWidth: 0.5)
+                                .stroke(Color.dsAccentPrimary.opacity(0.3), lineWidth: 0.5)
                         )
                 }
             }

@@ -21,7 +21,7 @@ struct LanguageStepView: View {
                         .foregroundStyle(Color.dsTextSecondary)
                 }
 
-                GoldDivider()
+                AccentDivider()
 
                 VStack(spacing: 14) {
                     ForEach(options, id: \.value) { opt in
@@ -46,7 +46,7 @@ struct LanguageStepView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(opt.label)
                         .font(.dsBodyMedium)
-                        .foregroundStyle(selected ? Color.dsAccentGold : Color.dsTextPrimary)
+                        .foregroundStyle(selected ? Color.dsAccentPrimary : Color.dsTextPrimary)
                     Text(opt.sublabel)
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextTertiary)
@@ -56,18 +56,18 @@ struct LanguageStepView: View {
 
                 if selected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .font(.title3)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
             .padding(18)
-            .background(selected ? Color.dsAccentGold.opacity(0.08) : Color.dsSurface.opacity(0.3))
+            .background(selected ? Color.dsAccentPrimary.opacity(0.08) : Color.dsSurface.opacity(0.3))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(
-                        selected ? Color.dsAccentGold.opacity(0.6) : Color.dsAccentGold.opacity(0.12),
+                        selected ? Color.dsAccentPrimary.opacity(0.6) : Color.dsAccentPrimary.opacity(0.12),
                         lineWidth: selected ? 1.5 : 0.5
                     )
             }

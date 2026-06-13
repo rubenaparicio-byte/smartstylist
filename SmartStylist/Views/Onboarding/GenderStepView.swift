@@ -14,7 +14,7 @@ struct GenderStepView: View {
                         .foregroundStyle(Color.dsTextSecondary)
                 }
 
-                GoldDivider()
+                AccentDivider()
 
                 HStack(spacing: 16) {
                     genderCard("Male",   icon: "figure.stand",       label: Strings.onboardingGenderMale)
@@ -36,27 +36,27 @@ struct GenderStepView: View {
             VStack(spacing: 20) {
                 ZStack {
                     Circle()
-                        .fill(selected ? Color.dsAccentGold : Color.dsSurface)
+                        .fill(selected ? Color.dsAccentPrimary : Color.dsSurface)
                         .frame(width: 80, height: 80)
                     Image(systemName: icon)
                         .font(.system(size: 36, weight: .light))
-                        .foregroundStyle(selected ? Color.dsDeepSlate : Color.dsTextSecondary)
+                        .foregroundStyle(selected ? Color.dsBackground : Color.dsTextSecondary)
                 }
-                .shadow(color: selected ? Color.dsAccentGold.opacity(0.35) : .clear, radius: 12, y: 6)
+                .shadow(color: selected ? Color.dsAccentPrimary.opacity(0.35) : .clear, radius: 12, y: 6)
 
                 Text(label)
                     .font(.dsBodyMedium)
-                    .foregroundStyle(selected ? Color.dsAccentGold : Color.dsTextPrimary)
+                    .foregroundStyle(selected ? Color.dsAccentPrimary : Color.dsTextPrimary)
                     .tracking(1)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 32)
-            .background(selected ? Color.dsAccentGold.opacity(0.08) : Color.dsSurface.opacity(0.3))
+            .background(selected ? Color.dsAccentPrimary.opacity(0.08) : Color.dsSurface.opacity(0.3))
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(
-                        selected ? Color.dsAccentGold.opacity(0.6) : Color.dsAccentGold.opacity(0.12),
+                        selected ? Color.dsAccentPrimary.opacity(0.6) : Color.dsAccentPrimary.opacity(0.12),
                         lineWidth: selected ? 1.5 : 0.5
                     )
             }

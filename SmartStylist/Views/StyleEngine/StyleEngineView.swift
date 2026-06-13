@@ -27,7 +27,16 @@ struct StyleEngineView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
+
+                RadialGradient(
+                    colors: [Color.dsAccentPrimary.opacity(0.12), .clear],
+                    center: .top,
+                    startRadius: 0,
+                    endRadius: 320
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -48,20 +57,18 @@ struct StyleEngineView: View {
                 ToolbarItem(placement: .principal) {
                     Text(Strings.styleNavTitle)
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         Task {
                             guard let p = profile else { return }
-                            await vm.generateOutfit(profile: p,
-                                                    activeItems: activeItems,
-                                                    history: history)
+                            await generateWithHaptics(profile: p)
                         }
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(Color.dsAccentGold)
+                            .foregroundStyle(Color.dsAccentPrimary)
                             .rotationEffect(.degrees(vm.isLoading ? 360 : 0))
                             .animation(
                                 vm.isLoading
@@ -76,7 +83,7 @@ struct StyleEngineView: View {
             .toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)
             .task {
                 guard let p = profile, vm.suggestion == nil, !vm.isLoading else { return }
-                await vm.generateOutfit(profile: p, activeItems: activeItems, history: history)
+                await generateWithHaptics(profile: p, rigid: false)
             }
         }
     }
@@ -101,16 +108,16 @@ struct StyleEngineView: View {
                                 Text(context.localizedName).font(.dsLabel)
                             }
                             .foregroundStyle(
-                                vm.occasion == context ? Color.dsDeepSlate : Color.dsTextSecondary
+                                vm.occasion == context ? Color.dsBackground : Color.dsTextSecondary
                             )
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(vm.occasion == context ? Color.dsAccentGold : Color.dsSurface)
+                            .background(vm.occasion == context ? Color.dsAccentPrimary : Color.dsSurface)
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .stroke(
-                                        Color.dsAccentGold.opacity(vm.occasion == context ? 0 : 0.3),
+                                        Color.dsAccentPrimary.opacity(vm.occasion == context ? 0 : 0.3),
                                         lineWidth: 0.5
                                     )
                             )
@@ -135,9 +142,7 @@ struct StyleEngineView: View {
             LuxuryErrorView(error: err) {
                 Task {
                     guard let p = profile else { return }
-                    await vm.generateOutfit(profile: p,
-                                            activeItems: activeItems,
-                                            history: history)
+                    await generateWithHaptics(profile: p)
                 }
             }
             .transition(.opacity.combined(with: .scale(scale: 0.96)))
@@ -164,7 +169,7 @@ struct StyleEngineView: View {
         HStack(spacing: 8) {
             Image(systemName: "wifi.slash")
                 .font(.caption)
-                .foregroundStyle(Color.dsAccentGold.opacity(0.65))
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.65))
             Text(Strings.styleOfflineMode)
                 .font(.dsCaption)
                 .foregroundStyle(Color.dsTextTertiary)
@@ -176,7 +181,7 @@ struct StyleEngineView: View {
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .stroke(Color.dsAccentGold.opacity(0.18), lineWidth: 0.5)
+                .stroke(Color.dsAccentPrimary.opacity(0.18), lineWidth: 0.5)
         )
     }
 
@@ -187,18 +192,18 @@ struct StyleEngineView: View {
         if vm.outfitSaved {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
                 Text(Strings.styleOutfitRegistered)
                     .font(.dsBodyMedium)
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(Color.dsAccentGold.opacity(0.12))
+            .background(Color.dsAccentPrimary.opacity(0.12))
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.dsAccentGold.opacity(0.3), lineWidth: 0.5)
+                    .stroke(Color.dsAccentPrimary.opacity(0.3), lineWidth: 0.5)
             )
             .transition(.scale.combined(with: .opacity))
         } else {
@@ -210,12 +215,12 @@ struct StyleEngineView: View {
                     Text(Strings.styleOutfitSave)
                 }
                 .font(.dsBodyMedium)
-                .foregroundStyle(Color.dsDeepSlate)
+                .foregroundStyle(Color.dsBackground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color.dsAccentGold)
+                .background(Color.dsAccentPrimary)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .shadow(color: Color.dsAccentGold.opacity(0.35), radius: 12, y: 6)
+                .shadow(color: Color.dsAccentPrimary.opacity(0.35), radius: 12, y: 6)
             }
             .transition(.opacity)
         }
@@ -227,7 +232,7 @@ struct StyleEngineView: View {
         let card = OutfitSuggestionCard(response: suggestion, items: activeItems)
             .frame(width: 360)
             .padding(16)
-            .background(Color.dsDeepSlate)
+            .background(Color.dsBackground)
         let renderer = ImageRenderer(content: card)
         renderer.scale = 3   // 3× for crisp sharing regardless of device density
         shareImage = renderer.uiImage.map { Image(uiImage: $0) }
@@ -245,16 +250,28 @@ struct StyleEngineView: View {
                     Text(Strings.shareOutfitButton)
                 }
                 .font(.dsBodyMedium)
-                .foregroundStyle(Color.dsAccentGold)
+                .foregroundStyle(Color.dsAccentPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(Color.dsAccentGold.opacity(0.10))
+                .background(Color.dsAccentPrimary.opacity(0.10))
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.dsAccentGold.opacity(0.35), lineWidth: 0.5)
+                        .stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5)
                 )
             }
+        }
+    }
+
+    // ── Haptic-aware generate ─────────────────────────────────────────────────
+
+    private func generateWithHaptics(profile: UserProfile, rigid: Bool = true) async {
+        if rigid { HapticManager.impact(.rigid) }
+        await vm.generateOutfit(profile: profile, activeItems: activeItems, history: history)
+        if vm.currentError != nil {
+            HapticManager.notification(.error)
+        } else {
+            HapticManager.notification(.success)
         }
     }
 
@@ -264,7 +281,7 @@ struct StyleEngineView: View {
         VStack(spacing: 20) {
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 44))
-                .foregroundStyle(Color.dsAccentGold.opacity(0.45))
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.45))
                 .symbolRenderingMode(.hierarchical)
                 .symbolEffect(.pulse, options: .repeating)
 

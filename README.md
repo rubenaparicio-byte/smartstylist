@@ -60,11 +60,11 @@ SmartStylist/
 
 | Token | Hex | Use |
 |-------|-----|-----|
-| `dsDeepSlate` | `#1C1C1E` | Page background |
-| `dsCardSlate` | `#2C2C2E` | Card background |
+| `dsBackground` | `#1C1C1E` | Page background |
+| `dsCardBackground` | `#2C2C2E` | Card background |
 | `dsSurface` | `#3A3A3C` | Chip / pill background |
-| `dsAccentGold` | `#D4AF37` | Primary accent, tint |
-| `dsSoftGold` | `#E9C46A` | Secondary accent |
+| `dsAccentPrimary` | `#D4AF37` | Primary accent, tint |
+| `dsAccentSecondary` | `#E9C46A` | Secondary accent |
 | `dsErrorRed` | `#E63946` | Error / danger |
 
 Typography: serif editorial titles (`dsLargeTitle` → `dsTitle2`), lightweight body (`dsBody`, `dsCaption`, `dsLabel`).

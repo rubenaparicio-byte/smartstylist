@@ -39,11 +39,11 @@ struct ValidationWorkspaceSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 24) {
                         imagePreview
-                        GoldDivider()
+                        AccentDivider()
                         header
                         fieldsCard
                         tagsCard
@@ -57,7 +57,7 @@ struct ValidationWorkspaceSheet: View {
                 ToolbarItem(placement: .principal) {
                     Text(Strings.validateNavTitle)
                         .font(.dsLabel)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(2)
                 }
                 ToolbarItem(placement: .cancellationAction) {
@@ -82,13 +82,13 @@ struct ValidationWorkspaceSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.dsAccentGold.opacity(0.2), lineWidth: 0.5)
+                        .stroke(Color.dsAccentPrimary.opacity(0.2), lineWidth: 0.5)
                 )
         } else {
             SilhouetteView(category: category, size: 120)
                 .frame(maxWidth: .infinity)
                 .frame(height: 160)
-                .background(Color.dsCardSlate)
+                .background(Color.dsCardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
@@ -115,7 +115,7 @@ struct ValidationWorkspaceSheet: View {
                             Text(c.localizedName).tag(c)
                         }
                     }
-                    .tint(Color.dsAccentGold)
+                    .tint(Color.dsAccentPrimary)
                     .onChange(of: category) { _, newCat in
                         subcategory = nil
                         thermalLayer = newCat.defaultThermalLayer
@@ -129,7 +129,7 @@ struct ValidationWorkspaceSheet: View {
                             Text(sub.localizedName).tag(ClothingSubcategory?.some(sub))
                         }
                     }
-                    .tint(Color.dsAccentGold)
+                    .tint(Color.dsAccentPrimary)
                 }
                 cardDivider
                 pickerRow(Strings.validatePickerLayer) {
@@ -138,7 +138,7 @@ struct ValidationWorkspaceSheet: View {
                             Text("L\(layer.layerNumber) \(layer.localizedName)").tag(layer)
                         }
                     }
-                    .tint(Color.dsAccentGold)
+                    .tint(Color.dsAccentPrimary)
                 }
                 cardDivider
                 pickerRow(Strings.validatePickerPattern) {
@@ -147,7 +147,7 @@ struct ValidationWorkspaceSheet: View {
                             Text(p.localizedPatternName).tag(p)
                         }
                     }
-                    .tint(Color.dsAccentGold)
+                    .tint(Color.dsAccentPrimary)
                 }
                 cardDivider
                 pickerRow(Strings.validatePickerStyle) {
@@ -156,7 +156,7 @@ struct ValidationWorkspaceSheet: View {
                             Text(s.localizedStyleName).tag(s)
                         }
                     }
-                    .tint(Color.dsAccentGold)
+                    .tint(Color.dsAccentPrimary)
                 }
                 cardDivider
                 HStack {
@@ -205,18 +205,18 @@ struct ValidationWorkspaceSheet: View {
         } label: {
             Group {
                 if isSaving {
-                    ProgressView().tint(Color.dsDeepSlate)
+                    ProgressView().tint(Color.dsBackground)
                 } else {
                     Text(Strings.validateButtonConfirm)
                         .font(.dsBodyMedium)
                 }
             }
-            .foregroundStyle(Color.dsDeepSlate)
+            .foregroundStyle(Color.dsBackground)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
-            .background(Color.dsAccentGold)
+            .background(Color.dsAccentPrimary)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .shadow(color: Color.dsAccentGold.opacity(0.3), radius: 12, y: 6)
+            .shadow(color: Color.dsAccentPrimary.opacity(0.3), radius: 12, y: 6)
         }
         .disabled(isSaving)
     }

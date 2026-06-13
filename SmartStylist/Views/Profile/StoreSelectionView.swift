@@ -15,7 +15,7 @@ struct StoreSelectionView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 28) {
@@ -39,12 +39,12 @@ struct StoreSelectionView: View {
                 ToolbarItem(placement: .principal) {
                     Text(Strings.storesNavTitle)
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(Strings.storesDone) { dismiss() }
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .font(.dsBodyMedium)
                 }
             }
@@ -82,19 +82,19 @@ struct StoreSelectionView: View {
                 if selected {
                     Image(systemName: "checkmark")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(Color.dsDeepSlate)
+                        .foregroundStyle(Color.dsBackground)
                 }
                 Text(store)
                     .font(.dsBodyMedium)
-                    .foregroundStyle(selected ? Color.dsDeepSlate : Color.dsTextPrimary)
+                    .foregroundStyle(selected ? Color.dsBackground : Color.dsTextPrimary)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(selected ? Color.dsAccentGold : Color.dsSurface.opacity(0.6))
+            .background(selected ? Color.dsAccentPrimary : Color.dsSurface.opacity(0.6))
             .clipShape(Capsule())
             .overlay {
                 Capsule()
-                    .stroke(selected ? Color.dsAccentGold : Color.dsAccentGold.opacity(0.2), lineWidth: 0.5)
+                    .stroke(selected ? Color.dsAccentPrimary : Color.dsAccentPrimary.opacity(0.2), lineWidth: 0.5)
             }
         }
         .animation(.dsDefault, value: selected)

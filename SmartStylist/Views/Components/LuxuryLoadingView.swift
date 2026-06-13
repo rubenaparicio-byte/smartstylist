@@ -46,7 +46,7 @@ struct LuxuryLoadingView: View {
                 .trim(from: 0, to: 0.72)
                 .stroke(
                     AngularGradient(
-                        colors: [Color.dsAccentGold.opacity(0), Color.dsAccentGold],
+                        colors: [Color.dsAccentPrimary.opacity(0), Color.dsAccentPrimary],
                         center: .center
                     ),
                     style: StrokeStyle(lineWidth: 1.5, lineCap: .round)
@@ -56,18 +56,18 @@ struct LuxuryLoadingView: View {
 
             // Middle ring — static, low-opacity
             Circle()
-                .stroke(Color.dsAccentGold.opacity(0.15), lineWidth: 0.5)
+                .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)
                 .frame(width: 50, height: 50)
 
             // Inner glow — pulsing
             Circle()
-                .fill(Color.dsAccentGold.opacity(pulseOpacity))
+                .fill(Color.dsAccentPrimary.opacity(pulseOpacity))
                 .frame(width: 30, height: 30)
                 .scaleEffect(innerScale)
 
             // Centre dot
             Circle()
-                .fill(Color.dsAccentGold)
+                .fill(Color.dsAccentPrimary)
                 .frame(width: 5, height: 5)
         }
     }

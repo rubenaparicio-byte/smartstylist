@@ -42,7 +42,7 @@ struct BodyTypeStepView: View {
                         .foregroundStyle(Color.dsTextSecondary)
                 }
 
-                GoldDivider()
+                AccentDivider()
 
                 VStack(spacing: 12) {
                     ForEach(options) { option in
@@ -62,17 +62,17 @@ struct BodyTypeStepView: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(selected ? Color.dsAccentGold : Color.dsSurface)
+                        .fill(selected ? Color.dsAccentPrimary : Color.dsSurface)
                         .frame(width: 48, height: 48)
                     Image(systemName: option.icon)
                         .font(.system(size: 18, weight: .light))
-                        .foregroundStyle(selected ? Color.dsDeepSlate : Color.dsTextSecondary)
+                        .foregroundStyle(selected ? Color.dsBackground : Color.dsTextSecondary)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(String(localized: String.LocalizationValue(option.titleKey), locale: Strings.activeLocale))
                         .font(.dsBodyMedium)
-                        .foregroundStyle(selected ? Color.dsAccentGold : Color.dsTextPrimary)
+                        .foregroundStyle(selected ? Color.dsAccentPrimary : Color.dsTextPrimary)
                     Text(String(localized: String.LocalizationValue(option.descKey), locale: Strings.activeLocale))
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextTertiary)
@@ -83,18 +83,18 @@ struct BodyTypeStepView: View {
 
                 if selected {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .font(.body.weight(.semibold))
                         .transition(.scale.combined(with: .opacity))
                 }
             }
             .padding(16)
-            .background(selected ? Color.dsAccentGold.opacity(0.08) : Color.dsSurface.opacity(0.3))
+            .background(selected ? Color.dsAccentPrimary.opacity(0.08) : Color.dsSurface.opacity(0.3))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(
-                        selected ? Color.dsAccentGold.opacity(0.6) : Color.dsAccentGold.opacity(0.12),
+                        selected ? Color.dsAccentPrimary.opacity(0.6) : Color.dsAccentPrimary.opacity(0.12),
                         lineWidth: selected ? 1.5 : 0.5
                     )
             }

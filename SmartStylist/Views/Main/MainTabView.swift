@@ -1,37 +1,35 @@
 import SwiftUI
 
 struct MainTabView: View {
-    init() {
-        let appearance = UITabBarAppearance()
-        appearance.configureWithTransparentBackground()
-        appearance.backgroundEffect = UIBlurEffect(style: .systemThinMaterialDark)
-        appearance.shadowColor = UIColor(Color.dsAccentGold.opacity(0.12))
-
-        appearance.stackedLayoutAppearance.normal.iconColor = UIColor(Color.dsTextTertiary)
-        appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
-            .foregroundColor: UIColor(Color.dsTextTertiary),
-            .font: UIFont.systemFont(ofSize: 10, weight: .regular)
-        ]
-
-        UITabBar.appearance().standardAppearance   = appearance
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-    }
+    @State private var selectedTab = 0
 
     var body: some View {
-        TabView {
-            StyleEngineView()
-                .tabItem { Label(Strings.tabsToday, systemImage: "sparkles") }
+        ZStack(alignment: .bottom) {
+            TabView(selection: $selectedTab) {
+                StyleEngineView()
+                    .tag(0)
+                    .toolbar(.hidden, for: .tabBar)
 
-            VirtualClosetView()
-                .tabItem { Label(Strings.tabsWardrobe, systemImage: "tshirt") }
+                VirtualClosetView()
+                    .tag(1)
+                    .toolbar(.hidden, for: .tabBar)
 
-            WardrobeInsightsView()
-                .tabItem { Label(Strings.tabsInsights, systemImage: "chart.pie") }
+                WardrobeInsightsView()
+                    .tag(2)
+                    .toolbar(.hidden, for: .tabBar)
 
-            ProfileSettingsView()
-                .tabItem { Label(Strings.tabsProfile, systemImage: "person.crop.circle") }
+                ProfileSettingsView()
+                    .tag(3)
+                    .toolbar(.hidden, for: .tabBar)
+            }
+            .tint(Color.dsAccentPrimary)
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 90)
+            }
+            .task { await NotificationService.shared.scheduleDailyLookNotification() }
+
+            FloatingTabBarView(selectedTab: $selectedTab)
+                .padding(.bottom, 8)
         }
-        .tint(Color.dsAccentGold)
-        .task { await NotificationService.shared.scheduleDailyLookNotification() }
     }
 }

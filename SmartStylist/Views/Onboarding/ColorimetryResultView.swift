@@ -18,7 +18,7 @@ struct ColorimetryResultView: View {
                         .foregroundStyle(Color.dsTextSecondary)
                 }
 
-                GoldDivider()
+                AccentDivider()
 
                 // ── Season card ───────────────────────────────────────────
                 LuxuryCard {
@@ -27,7 +27,7 @@ struct ColorimetryResultView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(season.uppercased())
                                     .font(.dsTitle)
-                                    .foregroundStyle(Color.dsAccentGold)
+                                    .foregroundStyle(Color.dsAccentPrimary)
                                     .tracking(3)
                                 if let metal = analysis?.metalPreference {
                                     Text(metal.uppercased())
@@ -38,7 +38,7 @@ struct ColorimetryResultView: View {
                             }
                             Spacer()
                             Image(systemName: seasonIcon(for: season))
-                                .foregroundStyle(Color.dsAccentGold)
+                                .foregroundStyle(Color.dsAccentPrimary)
                                 .font(.title2)
                         }
 
@@ -125,10 +125,10 @@ struct ColorimetryResultView: View {
                 } label: {
                     Text(Strings.onboardingResultEnter)
                         .font(.dsBodyMedium)
-                        .foregroundStyle(Color.dsDeepSlate)
+                        .foregroundStyle(Color.dsBackground)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.dsAccentGold)
+                        .background(Color.dsAccentPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
             }

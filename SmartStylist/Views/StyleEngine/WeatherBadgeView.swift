@@ -6,7 +6,7 @@ struct WeatherBadgeView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: weather.conditionIcon)
-                .foregroundStyle(Color.dsAccentGold)
+                .foregroundStyle(Color.dsAccentPrimary)
                 .font(.title3)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -23,7 +23,7 @@ struct WeatherBadgeView: View {
             if weather.requiresUmbrella {
                 HStack(spacing: 4) {
                     Image(systemName: "umbrella.fill")
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                     Text(Strings.weatherUmbrella)
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextSecondary)

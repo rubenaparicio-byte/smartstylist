@@ -8,7 +8,7 @@ struct ItemDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.dsDeepSlate.ignoresSafeArea()
+            Color.dsBackground.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 24) {
                 SilhouetteView(category: item.category, size: 160)
                     .frame(maxWidth: .infinity)
@@ -74,8 +74,8 @@ struct ItemDetailView: View {
                     Label("Restore to Active", systemImage: "arrow.uturn.up")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color.dsAccentGold)
-                        .foregroundStyle(Color.dsDeepSlate)
+                        .background(Color.dsAccentPrimary)
+                        .foregroundStyle(Color.dsBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
                 Button(role: .destructive) { showDisposeSheet = true } label: {

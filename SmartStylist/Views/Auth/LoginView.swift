@@ -6,11 +6,11 @@ struct LoginView: View {
 
     var body: some View {
         ZStack {
-            Color.dsDeepSlate.ignoresSafeArea()
+            Color.dsBackground.ignoresSafeArea()
 
             // Ambient glow behind the wordmark
             RadialGradient(
-                colors: [Color.dsAccentGold.opacity(0.13), .clear],
+                colors: [Color.dsAccentPrimary.opacity(0.13), .clear],
                 center: .init(x: 0.5, y: 0.22),
                 startRadius: 10,
                 endRadius: 320
@@ -44,7 +44,7 @@ struct LoginView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: 48, weight: .thin))
                 .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(Color.dsAccentGold)
+                .foregroundStyle(Color.dsAccentPrimary)
                 .symbolEffect(.pulse, options: .repeating)
 
             VStack(spacing: 10) {

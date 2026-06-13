@@ -6,7 +6,7 @@ struct LoadingPulse: View {
 
     var body: some View {
         Circle()
-            .fill(Color.dsAccentGold)
+            .fill(Color.dsAccentPrimary)
             .frame(width: 10, height: 10)
             .scaleEffect(scale)
             .opacity(opacity)

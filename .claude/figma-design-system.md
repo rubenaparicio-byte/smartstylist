@@ -14,19 +14,19 @@ Source: `SmartStylist/DesignSystem/DS+Colors.swift`
 
 | Token | Hex | Role |
 |---|---|---|
-| `Color.dsDeepSlate` | `#1C1C1E` | Full-screen background (every view) |
-| `Color.dsCardSlate` | `#2C2C2E` | Card/surface background (tab bar, cards) |
-| `Color.dsSurface` | `#3A3A3C` | Inner surface, input fields, chips (unselected) |
-| `Color.dsAccentGold` | `#D4AF37` | Primary interactive — CTA fills, tints, icons, strokes |
-| `Color.dsSoftGold` | `#E9C46A` | Secondary gold (lighter highlights) |
+| `Color.dsBackground` | `#0B1021` | Full-screen background (every view) |
+| `Color.dsCardBackground` | `#151C33` | Card/surface background (tab bar, cards) |
+| `Color.dsSurface` | `#1F2947` | Inner surface, input fields, chips (unselected) |
+| `Color.dsAccentPrimary` | `#E0E5EC` | Primary interactive — CTA fills, tints, icons, strokes |
+| `Color.dsAccentSecondary` | `#B0B7C6` | Secondary platinum (lighter highlights) |
 | `Color.dsErrorRed` | `#E63946` | Destructive actions, danger zone, error states |
 | `Color.dsTextPrimary` | `white` | Headings, values, primary labels |
 | `Color.dsTextSecondary` | `white @ 60%` | Body text, subtitles, descriptions |
 | `Color.dsTextTertiary` | `white @ 35%` | Section labels, captions, placeholder text |
 
-**Hex initialiser is built-in** — `Color(hex: "#D4AF37")` works anywhere.
+**Hex initialiser is built-in** — `Color(hex: "#E0E5EC")` works anywhere.
 
-**In Figma:** create a matching library with these exact fill styles. Gold borders are always the token value at reduced opacity (see Shapes section).
+**In Figma:** create a matching library with these exact fill styles. Accent borders are always the token value at reduced opacity (see Shapes section).
 
 ---
 
@@ -81,11 +81,11 @@ Source: `SmartStylist/DesignSystem/DS+Shapes.swift`
 
 `.continuous` = Apple's super-ellipse (squircle) — always use `style: .continuous` on `RoundedRectangle`.
 
-**Gold border rule** — all cards, inputs, and chips carry a `0.5 pt` gold stroke at reduced opacity:
+**Accent border rule** — all cards, inputs, and chips carry a `0.5 pt` platinum stroke at reduced opacity:
 ```swift
 .overlay(
     RoundedRectangle(cornerRadius: r, style: .continuous)
-        .stroke(Color.dsAccentGold.opacity(0.15), lineWidth: 0.5)  // cards
+        .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)  // cards
         // 0.12 inactive, 0.3 hover/focused, 0.55 active input field
 )
 ```
@@ -148,9 +148,9 @@ LuxuryCard(cornerRadius: 16) {
 }
 ```
 
-Renders: `dsCardSlate` background + continuous corner clip + `dsAccentGold @ 0.15` stroke at `0.5 pt`.
+Renders: `dsCardBackground` background + continuous corner clip + `dsAccentPrimary @ 0.15` stroke at `0.5 pt`.
 
-**In Figma:** dark fill `#2C2C2E`, stroke `#D4AF37` at 15% opacity, 0.5 width, matching radius.
+**In Figma:** dark fill `#151C33`, stroke `#E0E5EC` at 15% opacity, 0.5 width, matching radius.
 
 ---
 
@@ -168,8 +168,8 @@ SelectionChip(
 
 | State | Background | Text | Border |
 |---|---|---|---|
-| Unselected | `dsSurface` | `dsTextSecondary` | `dsAccentGold @ 30%` |
-| Selected | `dsAccentGold` | `dsDeepSlate` | none |
+| Unselected | `dsSurface` | `dsTextSecondary` | `dsAccentPrimary @ 30%` |
+| Selected | `dsAccentPrimary` | `dsBackground` | none |
 
 Sizes: `.dsLabel` font, `18 pt` H-padding (no swatch) / `14 pt` (with swatch), `10 pt` V-padding, `24 pt` radius.
 
@@ -177,27 +177,27 @@ Sizes: `.dsLabel` font, `18 pt` H-padding (no swatch) / `14 pt` (with swatch), `
 
 ---
 
-### `GoldDivider`
+### `AccentDivider`
 
-Horizontal rule. `0.5 pt` height, `dsAccentGold @ 25%` fill. Full-width by default.
+Horizontal rule. `0.5 pt` height, `dsAccentPrimary @ 25%` fill. Full-width by default.
 
 ```swift
-GoldDivider()
+AccentDivider()
 ```
 
-**In Figma:** line stroke `#D4AF37` at 25%, 0.5 height.
+**In Figma:** line stroke `#E0E5EC` at 25%, 0.5 height.
 
 ---
 
 ### `LuxuryLoadingView`
 
-Full-width loading state for AI generation. Multi-ring gold spinner + cycling localized messages.
+Full-width loading state for AI generation. Multi-ring platinum spinner + cycling localized messages.
 
 ```swift
 LuxuryLoadingView()
 ```
 
-Structure: `72 pt` outer arc (AngularGradient, gold) + `50 pt` static ring + `30 pt` pulsing inner circle + `5 pt` center dot. Vertical padding `80 pt` top/bottom.
+Structure: `72 pt` outer arc (AngularGradient, platinum) + `50 pt` static ring + `30 pt` pulsing inner circle + `5 pt` center dot. Vertical padding `80 pt` top/bottom.
 
 **In Figma:** use as a full-width overlay/section. Center-aligned. Not interactive.
 
@@ -213,9 +213,9 @@ LuxuryErrorView(error: .aiUnavailable("msg")) {
 }
 ```
 
-Icon badge: `80 pt` circle, `dsSurface` fill, `dsAccentGold @ 22%` stroke, SF Symbol at `28 pt` light weight.
-Primary button: `dsAccentGold` fill, `dsDeepSlate` text, `14 pt` radius, gold shadow.
-Secondary button: `dsSurface` fill, `dsAccentGold` text, `dsAccentGold @ 30%` stroke.
+Icon badge: `80 pt` circle, `dsSurface` fill, `dsAccentPrimary @ 22%` stroke, SF Symbol at `28 pt` light weight.
+Primary button: `dsAccentPrimary` fill, `dsBackground` text, `14 pt` radius, platinum shadow.
+Secondary button: `dsSurface` fill, `dsAccentPrimary` text, `dsAccentPrimary @ 30%` stroke.
 
 ---
 
@@ -227,9 +227,9 @@ Canvas-drawn clothing silhouette placeholder. One per `ClothingCategory` using p
 SilhouetteView(category: .top, size: 60)
 ```
 
-Stroke: `dsAccentGold @ 35%`, `1 pt` line width. Scales proportionally via the `size` parameter.
+Stroke: `dsAccentPrimary @ 35%`, `1 pt` line width. Scales proportionally via the `size` parameter.
 
-**In Figma:** can substitute with actual outlined clothing icons at same gold opacity.
+**In Figma:** can substitute with actual outlined clothing icons at same accent opacity.
 
 ---
 
@@ -254,7 +254,7 @@ Default spacing `8 pt`. Used for chip groups in onboarding steps.
 Every screen root wraps content in:
 ```swift
 ZStack {
-    Color.dsDeepSlate.ignoresSafeArea()
+    Color.dsBackground.ignoresSafeArea()
     // content
 }
 ```
@@ -267,7 +267,7 @@ All `NavigationStack` screens use:
     ToolbarItem(placement: .principal) {
         Text("TITLE")
             .font(.dsTitle2)
-            .foregroundStyle(Color.dsAccentGold)
+            .foregroundStyle(Color.dsAccentPrimary)
             .tracking(3)
     }
 }
@@ -276,7 +276,7 @@ All `NavigationStack` screens use:
 
 Navigation title display mode: `.inline`. Actual `navigationTitle` string is ignored visually — the principal toolbar item is the visible title.
 
-**In Figma:** nav bar = ultra-thin material blur overlay + gold serif title centered.
+**In Figma:** nav bar = ultra-thin material blur overlay + platinum serif title centered.
 
 ### Primary CTA button
 
@@ -284,28 +284,28 @@ Navigation title display mode: `.inline`. Actual `navigationTitle` string is ign
 Button { action } label: {
     Text("Label")
         .font(.dsBodyMedium)
-        .foregroundStyle(Color.dsDeepSlate)
+        .foregroundStyle(Color.dsBackground)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color.dsAccentGold)
+        .background(Color.dsAccentPrimary)
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .shadow(color: Color.dsAccentGold.opacity(0.35), radius: 12, y: 6)
+        .shadow(color: Color.dsAccentPrimary.opacity(0.35), radius: 12, y: 6)
 }
 ```
 
-**In Figma:** full-width, 48 pt tall (16 pt V-padding × 2 + 16 pt body line height). Gold fill. Deep slate text. 14 pt continuous radius. Gold shadow: 0.35 opacity, 12 blur, 6 Y-offset.
+**In Figma:** full-width, 48 pt tall (16 pt V-padding × 2 + 16 pt body line height). Platinum fill. Midnight blue text. 14 pt continuous radius. Platinum shadow: 0.35 opacity, 12 blur, 6 Y-offset.
 
 ### Secondary / outlined button
 
 ```swift
-.foregroundStyle(Color.dsAccentGold)
+.foregroundStyle(Color.dsAccentPrimary)
 .overlay(
     RoundedRectangle(cornerRadius: 12, style: .continuous)
-        .stroke(Color.dsAccentGold, lineWidth: 1)
+        .stroke(Color.dsAccentPrimary, lineWidth: 1)
 )
 ```
 
-**In Figma:** transparent fill, 1 pt gold stroke, 12 pt radius.
+**In Figma:** transparent fill, 1 pt platinum stroke, 12 pt radius.
 
 ### Destructive button
 
@@ -333,11 +333,11 @@ Text("SECTION TITLE")
 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 .overlay(
     RoundedRectangle(cornerRadius: 14, style: .continuous)
-        .strokeBorder(Color.dsAccentGold.opacity(0.18), lineWidth: 0.5)
+        .strokeBorder(Color.dsAccentPrimary.opacity(0.18), lineWidth: 0.5)
 )
 ```
 
-Used for: filter panel, category badge overlays. Not for main cards (those use `dsCardSlate` solid).
+Used for: filter panel, category badge overlays. Not for main cards (those use `dsCardBackground` solid).
 
 ---
 
@@ -459,15 +459,15 @@ SwiftData queries live in views (`@Query`), not ViewModels — pass results down
 
 When implementing a screen from Figma:
 
-- [ ] Background is `Color.dsDeepSlate.ignoresSafeArea()` wrapping everything
-- [ ] Navigation title uses the `principal` toolbar item pattern with `.dsTitle2 + .dsAccentGold + tracking(3)`
+- [ ] Background is `Color.dsBackground.ignoresSafeArea()` wrapping everything
+- [ ] Navigation title uses the `principal` toolbar item pattern with `.dsTitle2 + .dsAccentPrimary + tracking(3)`
 - [ ] `.toolbarBackground(Material.ultraThinMaterial, for: .navigationBar)` applied
 - [ ] Cards use `.luxuryCard(cornerRadius:)` modifier or `LuxuryCard` wrapper
-- [ ] All border strokes are `dsAccentGold` at 0.12–0.55 opacity, 0.5 pt weight
+- [ ] All border strokes are `dsAccentPrimary` at 0.12–0.55 opacity, 0.5 pt weight
 - [ ] Shared components from `Views/Components/` are used before writing new ones
 - [ ] All text uses `ds` font tokens (no `.font(.system(...))` inline except for icon sizing)
 - [ ] ALL-CAPS section headers use `.dsCaption + .dsTextTertiary + .tracking(2)`
-- [ ] Primary CTA matches the established button pattern (gold fill, 16 pt V-padding, 14 pt radius, gold shadow)
+- [ ] Primary CTA matches the established button pattern (platinum fill, 16 pt V-padding, 14 pt radius, platinum shadow)
 - [ ] Animations use `dsDefault`/`dsFast`/`dsSpring` tokens (not custom values)
 - [ ] Icons use SF Symbols only
 - [ ] All strings go through the `Strings` enum and `.strings` files

@@ -17,5 +17,5 @@ struct LuxuryCard<Content: View>: View {
             .padding()
     }
     .padding()
-    .background(Color.dsDeepSlate)
+    .background(Color.dsBackground)
 }

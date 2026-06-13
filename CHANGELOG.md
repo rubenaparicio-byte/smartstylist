@@ -70,7 +70,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 #### Navigation
-- **MainTabView** — 4-tab navigation hub with luxury `UITabBarAppearance` (`dsCardSlate` background, `dsAccentGold` tint, `dsTextTertiary` unselected icons): Today · Wardrobe · Insights · Profile
+- **MainTabView** — 4-tab navigation hub with luxury `UITabBarAppearance` (`dsCardBackground` background, `dsAccentPrimary` tint, `dsTextTertiary` unselected icons): Today · Wardrobe · Insights · Profile
 - `RootView` cleaned up; inline `MainTabView` stub removed
 
 #### UX Quality — Luxury Components
@@ -84,7 +84,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 #### Closet — Advanced Filters & Search (Module 2)
 - `ClosetViewModel`: `selectedStyles: Set<String>`, `selectedPattern: String?`, `showOnlyStatus: ItemStatus?`; `hasActiveFilters: Bool`; `clearFilters()`; static `knownStyles` / `knownPatterns` lookup tables; `filteredItems` refactored into five private predicates (`statusMatches` / `categoryMatches` / `styleMatches` / `patternMatches` / `textMatches`)
-- `VirtualClosetView`: replaced `.searchable` with a luxury custom search bar (gold border 0.5 pt, `dsCardSlate` background, animated magnifying-glass icon); expandable filter panel (`Material.ultraThinMaterial`, STATUS / STYLES / PATTERNS chip sections, `GoldDivider` separators, in-panel clear-filters link); badge dot on filter toggle when `hasActiveFilters`; `filterKey`-driven `.easeInOut(0.22 s)` grid animation
+- `VirtualClosetView`: replaced `.searchable` with a luxury custom search bar (gold border 0.5 pt, `dsCardBackground` background, animated magnifying-glass icon); expandable filter panel (`Material.ultraThinMaterial`, STATUS / STYLES / PATTERNS chip sections, `AccentDivider` separators, in-panel clear-filters link); badge dot on filter toggle when `hasActiveFilters`; `filterKey`-driven `.easeInOut(0.22 s)` grid animation
 - **NoResultsView** — luxury empty state with `magnifyingglass` icon and gold "Clear Filters" button
 
 #### Insights — WardrobeInsightsView & ViewModel (Module 3)
@@ -92,11 +92,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - `styleDistribution(from:)` — counts visible items by style, sorted desc, assigns gold/slate palette hex
   - `topWornItems(from:history:referenceDate:)` — cross-references `OutfitHistory` for the last 30 days, returns top 3 active items by wear count
   - `closetHealth(from:)` — counts active/archived/disposed, computes percentages, finds top disposal reason
-- `WardrobeInsightsView` — Swift Charts `SectorMark` donut (innerRadius 0.56, gold/slate palette, custom 2-col legend); ranked top-worn cards with `GoldDivider`; closet health stat pills + segmented proportion bar; luxury empty state
+- `WardrobeInsightsView` — Swift Charts `SectorMark` donut (innerRadius 0.56, gold/slate palette, custom 2-col legend); ranked top-worn cards with `AccentDivider`; closet health stat pills + segmented proportion bar; luxury empty state
 
 #### Profile — ProfileSettingsView & ViewModel (Module 4)
 - `ProfileViewModel` (`@MainActor @Observable`) — `retakeAnalysis(profile:context:)` deletes only `UserProfile` preserving the wardrobe; `deleteAllData(context:)` purges all SwiftData entities (`UserProfile`, `ClothingItem`, `OutfitHistory`) — satisfies Apple's data-deletion App Store requirement
-- `ProfileSettingsView` — profile header (seasonal colorimetry name, metal indicator); recommended colour palette swatches (scrollable circles from `recommendedColorHexes`, colour-matched shadow); avoid-colour swatches with `xmark` overlay; physical traits card with `GoldDivider` rows; Retake Analysis button (gold outline); Danger Zone section with destructive Delete All button (red, with 0.08-opacity red fill)
+- `ProfileSettingsView` — profile header (seasonal colorimetry name, metal indicator); recommended colour palette swatches (scrollable circles from `recommendedColorHexes`, colour-matched shadow); avoid-colour swatches with `xmark` overlay; physical traits card with `AccentDivider` rows; Retake Analysis button (gold outline); Danger Zone section with destructive Delete All button (red, with 0.08-opacity red fill)
 - Both actions are guarded by `.alert` confirmation dialogs with localized titles and messages
 
 #### CD Pipeline
@@ -148,7 +148,7 @@ First complete baseline of the SmartStylist iOS app.
 ### Modules
 
 #### Design System
-- `DS+Colors.swift` — 9 colour tokens (dsDeepSlate, dsCardSlate, dsSurface, dsAccentGold, dsSoftGold, dsErrorRed + text variants); `Color.init(hex:)`
+- `DS+Colors.swift` — 9 colour tokens (dsBackground, dsCardBackground, dsSurface, dsAccentPrimary, dsAccentSecondary, dsErrorRed + text variants); `Color.init(hex:)`
 - `DS+Typography.swift` — 7 font styles; `EditorialStyle` ViewModifier; `View.editorialStyle()`
 - `DS+Shapes.swift` — `ContinuousCard`; `LuxuryCardStyle`; `View.luxuryCard(cornerRadius:)`
 - `DS+Animations.swift` — `dsDefault` (easeInOut 0.3 s), `dsFast` (0.18 s), `dsSpring`
