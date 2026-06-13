@@ -71,19 +71,19 @@ enum ClothingCategory: String, Codable, CaseIterable {
 
 @Model
 final class ClothingItem {
-    @Attribute(.unique) var id: UUID
+    // @Attribute(.unique) is incompatible with CloudKit — uniqueness is managed via CKRecord.ID.
+    var id: UUID = UUID()
     var imagePath: String?
-    var category: ClothingCategory
-    // Optional so SwiftData can migrate existing stores that predate this field.
+    var category: ClothingCategory = .top
     var thermalLayer: ThermalLayer?
     var subcategory: ClothingSubcategory?
-    var primaryColor: String
-    var pattern: String
-    var style: String
-    var tags: [String]
-    var status: ItemStatus
-    var createdAt: Date
-    var disposeReason: String
+    var primaryColor: String = "#000000"
+    var pattern: String = "Solid"
+    var style: String = "Casual"
+    var tags: [String] = []
+    var status: ItemStatus = .active
+    var createdAt: Date = .now
+    var disposeReason: String = ""
 
     // Non-optional accessor; falls back to the category default for migrated records.
     var resolvedThermalLayer: ThermalLayer { thermalLayer ?? category.defaultThermalLayer }

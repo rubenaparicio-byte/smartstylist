@@ -117,7 +117,12 @@ struct ColorimetryResultView: View {
                     }
                 }
 
-                Button(action: onComplete) {
+                Button {
+                    // Request notification permission at the end of onboarding, while
+                    // the user still has context about daily outfit suggestions.
+                    Task { await NotificationService.shared.requestAndSchedule() }
+                    onComplete()
+                } label: {
                     Text(Strings.onboardingResultEnter)
                         .font(.dsBodyMedium)
                         .foregroundStyle(Color.dsDeepSlate)

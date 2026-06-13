@@ -7,6 +7,7 @@ struct StyleEngineView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var ctx
     @State private var vm = StyleEngineViewModel()
+    @State private var shareImage: Image?
 
     private var activeItems: [ClothingItem] { allItems.filter { $0.status == .active } }
     private var profile: UserProfile? { profiles.first(where: { $0.onboardingCompleted }) }
@@ -146,8 +147,10 @@ struct StyleEngineView: View {
                 if vm.isOfflineSuggestion { offlineBanner }
                 OutfitSuggestionCard(response: suggestion, items: activeItems)
                 usarOutfitButton
+                shareButton
             }
             .transition(.opacity.combined(with: .move(edge: .bottom)))
+            .onAppear { renderShareImage(suggestion: suggestion) }
 
         } else {
             emptyState
@@ -215,6 +218,43 @@ struct StyleEngineView: View {
                 .shadow(color: Color.dsAccentGold.opacity(0.35), radius: 12, y: 6)
             }
             .transition(.opacity)
+        }
+    }
+
+    // ── Share ─────────────────────────────────────────────────────────────────
+
+    private func renderShareImage(suggestion: StyleResponse) {
+        let card = OutfitSuggestionCard(response: suggestion, items: activeItems)
+            .frame(width: 360)
+            .padding(16)
+            .background(Color.dsDeepSlate)
+        let renderer = ImageRenderer(content: card)
+        renderer.scale = 3   // 3× for crisp sharing regardless of device density
+        shareImage = renderer.uiImage.map { Image(uiImage: $0) }
+    }
+
+    @ViewBuilder
+    private var shareButton: some View {
+        if let image = shareImage {
+            ShareLink(
+                item: image,
+                preview: SharePreview(Strings.shareOutfitMessage, image: image)
+            ) {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text(Strings.shareOutfitButton)
+                }
+                .font(.dsBodyMedium)
+                .foregroundStyle(Color.dsAccentGold)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color.dsAccentGold.opacity(0.10))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.dsAccentGold.opacity(0.35), lineWidth: 0.5)
+                )
+            }
         }
     }
 

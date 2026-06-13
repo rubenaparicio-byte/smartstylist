@@ -3,23 +3,24 @@ import SwiftData
 
 @Model
 final class UserProfile {
-    @Attribute(.unique) var id: UUID
+    // @Attribute(.unique) is incompatible with CloudKit — uniqueness is managed via CKRecord.ID.
+    var id: UUID = UUID()
     var gender: String?           // "Male" | "Female" — optional for safe migration
-    var bodyType: String
-    var skinTone: String
-    var eyeColor: String
-    var hairColor: String
-    var seasonalColorimetry: String
-    var styleGuidelines: String
-    var onboardingCompleted: Bool
-    var recommendedColorNames: [String]
-    var recommendedColorHexes: [String]
-    var avoidColorNames: [String]
-    var avoidColorHexes: [String]
-    var metalPreference: String
-    var accessoryStyle: [String]  // ["Minimal", "Statement", "Layered", "Vintage"]
-    var preferredStores: [String] // brand names the user shops at
-    var age: Int?                 // nil = not set
+    var bodyType: String = ""
+    var skinTone: String = ""
+    var eyeColor: String = ""
+    var hairColor: String = ""
+    var seasonalColorimetry: String = ""
+    var styleGuidelines: String = ""
+    var onboardingCompleted: Bool = false
+    var recommendedColorNames: [String] = []
+    var recommendedColorHexes: [String] = []
+    var avoidColorNames: [String] = []
+    var avoidColorHexes: [String] = []
+    var metalPreference: String = "Gold"
+    var accessoryStyle: [String] = []   // ["Minimal", "Statement", "Layered", "Vintage"]
+    var preferredStores: [String] = []  // brand names the user shops at
+    var age: Int?                        // nil = not set
 
     init(id: UUID = UUID(),
          gender: String? = nil,

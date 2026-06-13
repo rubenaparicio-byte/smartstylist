@@ -19,6 +19,7 @@ struct LuxuryLoadingView: View {
     var body: some View {
         VStack(spacing: 28) {
             spinner
+                .accessibilityHidden(true)
             Text(messages[messageIndex])
                 .font(.dsBody)
                 .foregroundStyle(Color.dsTextSecondary)
@@ -28,6 +29,7 @@ struct LuxuryLoadingView: View {
                     insertion: .opacity.combined(with: .move(edge: .bottom)),
                     removal:   .opacity
                 ))
+                .accessibilityLiveRegion(.polite)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 80)

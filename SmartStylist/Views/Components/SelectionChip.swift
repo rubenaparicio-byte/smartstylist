@@ -14,6 +14,7 @@ struct SelectionChip: View {
                         .fill(color)
                         .frame(width: 14, height: 14)
                         .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 0.5))
+                        .accessibilityHidden(true)
                 }
                 Text(label)
                     .font(.dsLabel)
@@ -30,5 +31,8 @@ struct SelectionChip: View {
             .scaleEffect(isSelected ? 1.04 : 1.0)
         }
         .animation(.dsSpring, value: isSelected)
+        .accessibilityLabel(label)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityRemoveTraits(isSelected ? [] : .isSelected)
     }
 }

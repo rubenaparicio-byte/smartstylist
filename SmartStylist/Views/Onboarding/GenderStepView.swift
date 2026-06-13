@@ -61,6 +61,7 @@ struct GenderStepView: View {
                     )
             }
         }
+        .accessibilityIdentifier("gender.\(value.lowercased())")
         .animation(.dsSpring, value: selected)
     }
 }
