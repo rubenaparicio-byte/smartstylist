@@ -464,6 +464,100 @@ Use this on any `Text` or `View` whose content changes dynamically (e.g. loading
 
 `DebugLogger` (singleton `@MainActor`) retiene los últimos 30 eventos con timestamp. Se activa en `ProfileSettingsView` pulsando **5 veces el icono de perfil** → sección "DEVELOPER LOGS" con texto seleccionable. Los errores de red y de API se loguean automáticamente desde `GeminiService`.
 
+### Image caching (`Services/ImageLoader.swift`)
+
+`ImageLoader` is a `@MainActor` singleton backed by `NSCache<NSString, UIImage>` (100 items, 50 MB limit). All disk I/O runs off the main thread via `Task.detached(priority: .userInitiated)`.
+
+```swift
+// Load (cache-hit is synchronous; miss is async off-main)
+let image = await ImageLoader.shared.load(from: url)
+
+// Evict a single entry (call when a ClothingItem is retired)
+ImageLoader.shared.evict(url: url)
+
+// Evict everything (e.g. on sign-out)
+ImageLoader.shared.evictAll()
+```
+
+**Pattern in card views:** add `@State private var loadedImage: UIImage?` and a `.task(id: item.id)` modifier that calls `ImageLoader.shared.load(from:)`. The task cancels automatically when the view disappears or `item.id` changes.
+
+**Eviction on retire:** `ClosetViewModel.disposeItem(_:)` calls `ImageLoader.shared.evict(url:)` so retired garment memory is freed immediately.
+
+### Spacing & size tokens (`DesignSystem/DS+Spacing.swift`)
+
+`DSSpacing` and `DSSize` live alongside the other DS+ files in `DesignSystem/`.
+
+| Enum | Cases |
+|------|-------|
+| `DSSpacing` | `xs`=4, `sm`=8, `md`=12, `lg`=16, `xl`=24, `xxl`=32, `xxxl`=48 |
+| `DSSize` | `thumbnailSquare`=96, `cardHeight`=160, `garmentTileWidth`=52, `garmentTileHeight`=68, `iconButton`=38, `floatingButton`=56, `cornerRadiusCard`=20, `cornerRadiusMedium`=14, `cornerRadiusSmall`=10, `cornerRadiusChip`=8 |
+
+Never hardcode pixel values — always reference a `DSSpacing` or `DSSize` constant.
+
+### Search debouncing (`Views/Closet/VirtualClosetView.swift`)
+
+`ClosetViewModel` exposes two properties:
+
+- `searchText: String` — raw binding for the `TextField` (updates on every keystroke)
+- `debouncedSearchText: String` — used by `filteredItems`; updated 300 ms after the user stops typing
+
+The debounce lives in `VirtualClosetView` via `.onChange(of: vm.searchText)` + a cancellable `Task.sleep(300ms)`. `clearFilters()` resets both properties.
+
+**Rule:** never read `vm.searchText` in filter predicates — always read `vm.debouncedSearchText`.
+
+### Task cancellation
+
+Long-running async tasks are stored and cancelled before re-launch to prevent stale results:
+
+| ViewModel | Property | Cancelled when |
+|-----------|----------|----------------|
+| `StyleEngineViewModel` | `generationTask` | User taps refresh; view disappears |
+| `OnboardingViewModel` | `analysisTask` | User re-triggers profile analysis |
+
+`StyleEngineView` also cancels its local generation task in `.onDisappear`. `StyleEngineViewModel.cancelGeneration()` is public for external callers.
+
+### Outfit suggestion cache (`ViewModels/StyleEngineViewModel.swift`)
+
+The last successful `StyleResponse` is persisted to `UserDefaults` under `"ss_lastSuggestion"` using `JSONEncoder`. On the next launch, `StyleEngineViewModel.init()` restores it so users see their previous outfit immediately while a new one generates.
+
+**Rule:** only valid, non-nil AI responses are cached. Offline fallback responses are also persisted.
+
+### LLM exponential backoff (`Services/GeminiService.swift`)
+
+`postWithFallback` retries across model slots with increasing delays:
+
+| Attempt | Delay before call |
+|---------|------------------|
+| 0 (primary model) | none |
+| 1 | 1 s |
+| 2 | 2 s |
+| 3 | 4 s |
+
+Each iteration checks `Task.isCancelled` before sleeping. Network timeouts: 30 s for LLM requests, 10 s for weather.
+
+### Onboarding funnel analytics (`ViewModels/OnboardingViewModel.swift`)
+
+Privacy-first: no network calls, stored only in `UserDefaults`.
+
+```swift
+// Written after each step completes
+UserDefaults.standard.set(step.rawValue, forKey: "onboarding_last_step")
+
+// Read from anywhere (e.g. debug tooling)
+OnboardingViewModel.lastCompletedFunnelStep   // → OnboardingStep?
+```
+
+### UserProfile color swatches (`Models/UserProfile.swift`)
+
+Use the computed properties instead of accessing the raw parallel arrays:
+
+```swift
+profile.recommendedColorSwatches  // → [ColorSwatch]  (zip-safe, never out-of-range)
+profile.avoidColorSwatches         // → [ColorSwatch]
+```
+
+`ColorSwatch` is a `Codable, Hashable` struct with `name: String` and `hex: String`. The `zip` implementation truncates silently if the LLM returns mismatched array lengths — no crash.
+
 ## Testing
 
 ### Unit tests (`SmartStylistTests/`)
@@ -480,6 +574,16 @@ xcodebuild test -project SmartStylist.xcodeproj -scheme SmartStylist \
 - Always use in-memory `ModelContainer` — never write to disk in tests
 - Never hit real APIs in tests — use `MockURLProtocol` or `KeychainStore` injection
 - Use `/new-test <SubjectName>` to generate a test file following project conventions
+
+**Test files:**
+
+| File | What it covers |
+|------|---------------|
+| `ViewModels/ClosetViewModelTests.swift` | Filter predicates, debounce split (`searchText` vs `debouncedSearchText`), `clearFilters` |
+| `ViewModels/AuthServiceTests.swift` | Keychain injection, Apple credential validation |
+| `Services/GeminiServiceTests.swift` | 429 fallback, model rotation via `MockURLProtocol` |
+| `Models/StyleResponseTests.swift` | Full JSON decode, encode↔decode roundtrip (UserDefaults cache), `allItemIds` |
+| `Models/UserProfileTests.swift` | `recommendedColorSwatches`/`avoidColorSwatches` zip safety, default init values |
 
 **Network mocking (`GeminiServiceTests`)** — `MockURLProtocol` intercepts `URLSession` requests:
 

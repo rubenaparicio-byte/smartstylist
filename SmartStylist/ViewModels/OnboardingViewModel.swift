@@ -19,6 +19,7 @@ final class OnboardingViewModel {
     var analysisResult: ColorimetryAnalysis?
 
     private let gemini = GeminiService()
+    private var analysisTask: Task<Void, Never>?
 
     enum OnboardingStep: Int, CaseIterable {
         case language = 0, gender, bodyType, skinTone, hairEye, result
@@ -36,16 +37,29 @@ final class OnboardingViewModel {
     }
 
     func advance() {
+        trackFunnelStep(currentStep)
         switch currentStep {
         case .language, .gender, .bodyType, .skinTone:
             if let next = OnboardingStep(rawValue: currentStep.rawValue + 1) {
                 currentStep = next
             }
         case .hairEye:
-            Task { await analyseProfile() }
+            analysisTask?.cancel()
+            analysisTask = Task { await analyseProfile() }
         case .result:
             break
         }
+    }
+
+    // Records which step the user reached last (privacy-first: local only, no network).
+    // Used to understand onboarding funnel completion via in-app dev logs.
+    private func trackFunnelStep(_ step: OnboardingStep) {
+        UserDefaults.standard.set(step.rawValue, forKey: "onboarding_last_step")
+    }
+
+    static var lastCompletedFunnelStep: OnboardingStep? {
+        let raw = UserDefaults.standard.integer(forKey: "onboarding_last_step")
+        return OnboardingStep(rawValue: raw)
     }
 
     @MainActor
@@ -90,7 +104,11 @@ final class OnboardingViewModel {
             accessoryStyle: selectedAccessoryStyles
         )
         context.insert(profile)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            Task { await DebugLogger.shared.log("OnboardingViewModel.save failed: \(error.localizedDescription)") }
+        }
     }
 
     let skinToneOptions  = ["Warm Light", "Warm Medium", "Warm Deep",

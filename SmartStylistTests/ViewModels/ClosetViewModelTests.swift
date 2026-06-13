@@ -171,17 +171,19 @@ final class ClosetViewModelTests: XCTestCase {
     // ── clearFilters ──────────────────────────────────────────────────────────
 
     func test_clearFilters_resetsAllFilters() {
-        vm.selectedStyles   = ["Casual", "Formal"]
-        vm.selectedPattern  = "Stripes"
-        vm.showOnlyStatus   = .active
-        vm.selectedCategory = .top
-        vm.searchText       = "blue"
+        vm.selectedStyles      = ["Casual", "Formal"]
+        vm.selectedPattern     = "Stripes"
+        vm.showOnlyStatus      = .active
+        vm.selectedCategory    = .top
+        vm.searchText          = "blue"
+        vm.debouncedSearchText = "blue"
         vm.clearFilters()
         XCTAssertTrue(vm.selectedStyles.isEmpty)
         XCTAssertNil(vm.selectedPattern)
         XCTAssertNil(vm.showOnlyStatus)
         XCTAssertNil(vm.selectedCategory)
         XCTAssertTrue(vm.searchText.isEmpty)
+        XCTAssertTrue(vm.debouncedSearchText.isEmpty)
     }
 
     // ── filteredItems — style filter ──────────────────────────────────────────
@@ -248,12 +250,12 @@ final class ClosetViewModelTests: XCTestCase {
         XCTAssertEqual(result.first?.status, .archived)
     }
 
-    // ── filteredItems — text search ───────────────────────────────────────────
+    // ── filteredItems — text search (uses debouncedSearchText) ───────────────
 
     func test_filteredItems_searchByColor_returnsMatch() {
         let blue = makeItem(color: "#0000FF")
         let red  = makeItem(color: "#FF0000")
-        vm.searchText = "#0000FF"
+        vm.debouncedSearchText = "#0000FF"
         let result = vm.filteredItems(from: [blue, red])
         XCTAssertEqual(result.count, 1)
     }
@@ -261,7 +263,7 @@ final class ClosetViewModelTests: XCTestCase {
     func test_filteredItems_searchByTag_returnsMatch() {
         let workItem   = makeItem(tags: ["work", "formal"])
         let casualItem = makeItem(tags: ["weekend"])
-        vm.searchText = "formal"
+        vm.debouncedSearchText = "formal"
         let result = vm.filteredItems(from: [workItem, casualItem])
         XCTAssertEqual(result.count, 1)
     }
@@ -269,7 +271,7 @@ final class ClosetViewModelTests: XCTestCase {
     func test_filteredItems_searchByStyle_returnsMatch() {
         let casual = makeItem(style: "Casual")
         let formal = makeItem(style: "Formal")
-        vm.searchText = "casual"
+        vm.debouncedSearchText = "casual"
         let result = vm.filteredItems(from: [casual, formal])
         XCTAssertEqual(result.count, 1)
     }
@@ -278,10 +280,19 @@ final class ClosetViewModelTests: XCTestCase {
         // ClothingCategory.top rawValue = "superior" (Spanish)
         let top    = makeItem(category: .top)
         let bottom = makeItem(category: .bottom)
-        vm.searchText = "superior"
+        vm.debouncedSearchText = "superior"
         let result = vm.filteredItems(from: [top, bottom])
         XCTAssertEqual(result.count, 1)
         XCTAssertEqual(result.first?.category, .top)
+    }
+
+    func test_filteredItems_rawSearchText_doesNotFilterBeforeDebounce() {
+        let blue = makeItem(color: "#0000FF")
+        let red  = makeItem(color: "#FF0000")
+        vm.searchText = "#0000FF"       // raw text — no debounce applied
+        vm.debouncedSearchText = ""     // debounced still empty
+        let result = vm.filteredItems(from: [blue, red])
+        XCTAssertEqual(result.count, 2) // both items shown until debounce fires
     }
 
     // ── filteredItems — combined filters ──────────────────────────────────────
@@ -302,8 +313,8 @@ final class ClosetViewModelTests: XCTestCase {
         let blueFormal  = makeItem(style: "Formal", color: "#0000FF")
         let blueCasual  = makeItem(style: "Casual", color: "#0000FF")
         let redFormal   = makeItem(style: "Formal", color: "#FF0000")
-        vm.selectedStyles = ["Formal"]
-        vm.searchText     = "#0000FF"
+        vm.selectedStyles      = ["Formal"]
+        vm.debouncedSearchText = "#0000FF"
         let result = vm.filteredItems(from: [blueFormal, blueCasual, redFormal])
         XCTAssertEqual(result.count, 1)
         XCTAssertEqual(result.first?.style, "Formal")

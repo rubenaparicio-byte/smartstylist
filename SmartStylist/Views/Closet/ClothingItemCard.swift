@@ -6,24 +6,34 @@ struct ClothingItemCard: View {
     var onArchive: (() -> Void)? = nil
     var onRestore: (() -> Void)? = nil
 
+    @State private var loadedImage: UIImage?
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             thumbnail
             categoryBadge
             if item.status == .archived { archivedBadge }
         }
-        .frame(height: 160)
+        .frame(height: DSSize.cardHeight)
         .luxuryCard(cornerRadius: 16)
         .opacity(item.status == .archived ? 0.65 : 1.0)
         .contextMenu { contextMenuItems }
+        .task(id: item.id) {
+            guard let url = item.resolvedImageURL else { return }
+            loadedImage = await ImageLoader.shared.load(from: url)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityDescription)
+        .accessibilityHint(Strings.cardAccessibilityHint)
+        .accessibilityAddTraits(item.status == .archived ? .isStaticText : [])
     }
 
     // ── Subviews ──────────────────────────────────────────────────────────────
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let url = item.resolvedImageURL, let uiImage = UIImage(contentsOfFile: url.path) {
-            Image(uiImage: uiImage)
+        if let image = loadedImage {
+            Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
         } else {
@@ -40,13 +50,13 @@ struct ClothingItemCard: View {
                 Text(item.subcategory?.localizedName ?? item.category.localizedName)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextSecondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, DSSpacing.sm)
+                    .padding(.vertical, DSSpacing.xs)
                     .background(Material.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 Spacer()
             }
-            .padding(8)
+            .padding(DSSpacing.sm)
         }
     }
 
@@ -61,7 +71,7 @@ struct ClothingItemCard: View {
                     .padding(.vertical, 3)
                     .background(Material.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-                    .padding(8)
+                    .padding(DSSpacing.sm)
             }
             Spacer()
         }
@@ -84,5 +94,11 @@ struct ClothingItemCard: View {
                 Label(Strings.cardActionRetire, systemImage: "trash")
             }
         }
+    }
+
+    private var accessibilityDescription: String {
+        let name = item.subcategory?.localizedName ?? item.category.localizedName
+        let status = item.status == .archived ? ", \(Strings.cardArchived)" : ""
+        return "\(name)\(status)"
     }
 }

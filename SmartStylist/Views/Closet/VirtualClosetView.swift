@@ -8,6 +8,7 @@ struct VirtualClosetView: View {
     @State private var showAddItem = false
     @State private var itemToDispose: ClothingItem?
     @State private var showFilters = false
+    @State private var searchDebounceTask: Task<Void, Never>?
 
     private let columns = [
         GridItem(.flexible(), spacing: 12),
@@ -58,7 +59,7 @@ struct VirtualClosetView: View {
     // Changes whenever any filter-driving state changes, triggering grid animation.
 
     private var filterKey: String {
-        "\(vm.searchText)|\(vm.selectedCategory?.rawValue ?? "")|" +
+        "\(vm.debouncedSearchText)|\(vm.selectedCategory?.rawValue ?? "")|" +
         "\(vm.selectedStyles.sorted().joined(separator: ","))|\(vm.selectedPattern ?? "")|\(vm.showOnlyStatus?.rawValue ?? "")"
     }
 
@@ -77,9 +78,21 @@ struct VirtualClosetView: View {
                     .foregroundStyle(Color.dsTextPrimary)
                     .autocorrectionDisabled()
                     .tint(Color.dsAccentPrimary)
+                    .onChange(of: vm.searchText) { _, newValue in
+                        searchDebounceTask?.cancel()
+                        searchDebounceTask = Task {
+                            try? await Task.sleep(nanoseconds: 300_000_000)
+                            guard !Task.isCancelled else { return }
+                            vm.debouncedSearchText = newValue
+                        }
+                    }
 
                 if !vm.searchText.isEmpty {
-                    Button { vm.searchText = "" } label: {
+                    Button {
+                        vm.searchText = ""
+                        vm.debouncedSearchText = ""
+                        searchDebounceTask?.cancel()
+                    } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(Color.dsTextTertiary)
                     }
@@ -262,7 +275,7 @@ struct VirtualClosetView: View {
     @ViewBuilder
     private var gridSection: some View {
         let filtered = vm.filteredItems(from: allItems)
-        let hasActiveQuery = !vm.searchText.isEmpty || vm.hasActiveFilters || vm.selectedCategory != nil
+        let hasActiveQuery = !vm.debouncedSearchText.isEmpty || vm.hasActiveFilters || vm.selectedCategory != nil
         if filtered.isEmpty && hasActiveQuery {
             noResultsView
                 .transition(.opacity)
@@ -338,5 +351,7 @@ struct VirtualClosetView: View {
                 .clipShape(Circle())
                 .shadow(color: Color.dsAccentPrimary.opacity(0.4), radius: 12, y: 6)
         }
+        .accessibilityLabel(Strings.wardrobeAddItem)
+        .accessibilityHint(Strings.wardrobeAddItemHint)
     }
 }

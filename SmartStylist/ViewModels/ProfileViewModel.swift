@@ -16,14 +16,22 @@ final class ProfileViewModel {
     /// The wardrobe (ClothingItem) is intentionally preserved.
     func retakeAnalysis(profile: UserProfile, context: ModelContext) {
         context.delete(profile)
-        try? context.save()
+        do {
+            try context.save()
+        } catch {
+            Task { await DebugLogger.shared.log("retakeAnalysis save failed: \(error.localizedDescription)") }
+        }
     }
 
     /// Purges every SwiftData entity — fulfils Apple's data-deletion requirement.
     func deleteAllData(context: ModelContext) {
-        try? context.delete(model: UserProfile.self)
-        try? context.delete(model: ClothingItem.self)
-        try? context.delete(model: OutfitHistory.self)
-        try? context.save()
+        do {
+            try context.delete(model: UserProfile.self)
+            try context.delete(model: ClothingItem.self)
+            try context.delete(model: OutfitHistory.self)
+            try context.save()
+        } catch {
+            Task { await DebugLogger.shared.log("deleteAllData failed: \(error.localizedDescription)") }
+        }
     }
 }

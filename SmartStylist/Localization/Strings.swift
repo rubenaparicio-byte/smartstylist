@@ -65,6 +65,8 @@ enum Strings {
 
     // MARK: — Style Engine
     static var styleNavTitle:         String { String(localized: "style.nav.title",           locale: activeLocale) }
+    static var styleNavRefresh:       String { String(localized: "style.nav.refresh",         locale: activeLocale) }
+    static var styleNavRefreshHint:   String { String(localized: "style.nav.refresh.hint",    locale: activeLocale) }
     static var styleEventContext:     String { String(localized: "style.section.event_context", locale: activeLocale) }
     static var styleOutfitRegistered: String { String(localized: "style.outfit.registered",   locale: activeLocale) }
     static var styleOutfitSave:       String { String(localized: "style.outfit.save",         locale: activeLocale) }
@@ -86,6 +88,8 @@ enum Strings {
     static var wardrobeFilterAll:         String { String(localized: "wardrobe.filter.all",         locale: activeLocale) }
     static var wardrobeStatusActive:      String { String(localized: "wardrobe.status.active",      locale: activeLocale) }
     static var wardrobeStatusArchived:    String { String(localized: "wardrobe.status.archived",    locale: activeLocale) }
+    static var wardrobeAddItem:           String { String(localized: "wardrobe.add.item",           locale: activeLocale) }
+    static var wardrobeAddItemHint:       String { String(localized: "wardrobe.add.item.hint",      locale: activeLocale) }
 
     // MARK: — Clothing categories
     static var categoryTop:       String { String(localized: "category.top",       locale: activeLocale) }
@@ -110,6 +114,7 @@ enum Strings {
     static var addButtonAnalyse:     String { String(localized: "add.button.analyse",     locale: activeLocale) }
     static var addButtonAnalysing:   String { String(localized: "add.button.analysing",   locale: activeLocale) }
     static var addLabelSegmenting:   String { String(localized: "add.label.segmenting",   locale: activeLocale) }
+    static var addAIError:           String { String(localized: "add.ai.error",           locale: activeLocale) }
 
     // MARK: — Validate sheet
     static var validateNavTitle:       String { String(localized: "validate.nav.title",         locale: activeLocale) }
@@ -126,10 +131,11 @@ enum Strings {
     static var validateButtonConfirm:  String { String(localized: "validate.button.confirm",     locale: activeLocale) }
 
     // MARK: — Card actions
-    static var cardArchived:      String { String(localized: "card.archived",       locale: activeLocale) }
-    static var cardActionArchive: String { String(localized: "card.action.archive", locale: activeLocale) }
-    static var cardActionRestore: String { String(localized: "card.action.restore", locale: activeLocale) }
-    static var cardActionRetire:  String { String(localized: "card.action.retire",  locale: activeLocale) }
+    static var cardArchived:          String { String(localized: "card.archived",            locale: activeLocale) }
+    static var cardActionArchive:     String { String(localized: "card.action.archive",      locale: activeLocale) }
+    static var cardActionRestore:     String { String(localized: "card.action.restore",      locale: activeLocale) }
+    static var cardActionRetire:      String { String(localized: "card.action.retire",       locale: activeLocale) }
+    static var cardAccessibilityHint: String { String(localized: "card.accessibility.hint",  locale: activeLocale) }
 
     // MARK: — Outfit card
     static var outfitLayerComposition: String { String(localized: "outfit.layer.composition", locale: activeLocale) }
