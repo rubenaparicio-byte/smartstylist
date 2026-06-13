@@ -49,7 +49,7 @@ struct OutfitSuggestionCard: View {
             AccentDivider().padding(.horizontal, 20)
             styleTipSection
         }
-        .luxuryCard()
+        .luxuryGlowCard()
     }
 
     // ── Context header ────────────────────────────────────────────────────────

@@ -29,6 +29,15 @@ struct StyleEngineView: View {
             ZStack {
                 Color.dsBackground.ignoresSafeArea()
 
+                RadialGradient(
+                    colors: [Color.dsAccentPrimary.opacity(0.12), .clear],
+                    center: .top,
+                    startRadius: 0,
+                    endRadius: 320
+                )
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
                         if let wx = vm.currentWeather {

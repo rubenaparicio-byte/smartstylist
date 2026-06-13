@@ -10,6 +10,7 @@ extension Color {
     static let dsAccentPrimary   = Color(hex: "#E0E5EC")
     static let dsAccentSecondary = Color(hex: "#B0B7C6")
     static let dsErrorRed   = Color(hex: "#E63946")
+    static let dsGlow            = Color.dsAccentPrimary.opacity(0.15)
 
     // ── Text ─────────────────────────────────────────────────
     static let dsTextPrimary   = Color.white

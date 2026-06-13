@@ -37,6 +37,21 @@ struct GlassCardStyle: ViewModifier {
     }
 }
 
+struct LuxuryGlowCardStyle: ViewModifier {
+    var cornerRadius: CGFloat = 20
+
+    func body(content: Content) -> some View {
+        content
+            .background(Color.dsCardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)
+            )
+            .shadow(color: Color.dsGlow, radius: 24, x: 0, y: 12)
+    }
+}
+
 struct CardPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -48,6 +63,10 @@ struct CardPressStyle: ButtonStyle {
 extension View {
     func luxuryCard(cornerRadius: CGFloat = 20) -> some View {
         modifier(LuxuryCardStyle(cornerRadius: cornerRadius))
+    }
+
+    func luxuryGlowCard(cornerRadius: CGFloat = 20) -> some View {
+        modifier(LuxuryGlowCardStyle(cornerRadius: cornerRadius))
     }
 
     func glassCard(cornerRadius: CGFloat = 20) -> some View {
