@@ -1,8 +1,10 @@
 import AuthenticationServices
 import Foundation
+import GoogleSignIn
 import Observation
 import Security
 import SwiftUI
+import UIKit
 
 // ── Keychain ──────────────────────────────────────────────────────────────────
 // Wraps Security.framework for safe, non-exportable storage on this device only.
@@ -49,7 +51,8 @@ private enum KeychainHelper {
 
 // ── AuthService ───────────────────────────────────────────────────────────────
 
-private let kAppleUserID = "appleUserID"
+private let kAppleUserID  = "appleUserID"
+private let kGoogleUserID = "googleUserID"
 
 @MainActor
 @Observable
@@ -58,10 +61,12 @@ final class AuthService {
     var loginError: String?
 
     init() {
-        isAuthenticated = KeychainHelper.load(account: kAppleUserID) != nil
+        isAuthenticated = KeychainHelper.load(account: kAppleUserID)  != nil
+                       || KeychainHelper.load(account: kGoogleUserID) != nil
     }
 
-    // Called from SignInWithAppleButton onCompletion on success.
+    // ── Apple Sign-In ─────────────────────────────────────────────────────────
+
     func handleAuthorization(_ authorization: ASAuthorization) {
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
         KeychainHelper.save(credential.user, account: kAppleUserID)
@@ -69,22 +74,17 @@ final class AuthService {
         withAnimation(.dsSpring) { isAuthenticated = true }
     }
 
-    // Called from SignInWithAppleButton onCompletion on failure.
     func handleError(_ error: Error) {
         let code = (error as? ASAuthorizationError)?.code
         guard code != .canceled else { return }
         loginError = "Sign-in failed. Please try again."
     }
 
-    func signOut() {
-        KeychainHelper.delete(account: kAppleUserID)
-        withAnimation(.dsDefault) { isAuthenticated = false }
-    }
-
-    // Validates the stored Apple credential on each cold launch.
-    // Only signs out on .revoked — .notFound is a false positive in the simulator
-    // and in development builds where Apple's servers may not recognise the user ID.
+    // Validates the stored Apple credential on cold launch.
+    // Only signs out on .revoked — .notFound is a false positive in simulator/dev.
+    // Skipped when the active session is Google-based.
     func validateAppleCredential() async {
+        guard KeychainHelper.load(account: kGoogleUserID) == nil else { return }
         guard let userID = KeychainHelper.load(account: kAppleUserID) else {
             isAuthenticated = false
             return
@@ -98,5 +98,35 @@ final class AuthService {
         if state == .revoked {
             signOut()
         }
+    }
+
+    // ── Google Sign-In ────────────────────────────────────────────────────────
+
+    func signInWithGoogle() async {
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = scene.windows.first?.rootViewController else {
+            loginError = "Unable to present sign-in."
+            return
+        }
+        do {
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: root)
+            let userID = result.user.userID ?? result.user.profile?.email ?? ""
+            KeychainHelper.save(userID, account: kGoogleUserID)
+            loginError = nil
+            withAnimation(.dsSpring) { isAuthenticated = true }
+        } catch let error as GIDSignInError where error.code == .canceled {
+            return
+        } catch {
+            loginError = "Google sign-in failed. Please try again."
+        }
+    }
+
+    // ── Common ────────────────────────────────────────────────────────────────
+
+    func signOut() {
+        KeychainHelper.delete(account: kAppleUserID)
+        KeychainHelper.delete(account: kGoogleUserID)
+        GIDSignIn.sharedInstance.signOut()
+        withAnimation(.dsDefault) { isAuthenticated = false }
     }
 }

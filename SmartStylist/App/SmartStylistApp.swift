@@ -1,5 +1,6 @@
-import SwiftUI
+import GoogleSignIn
 import SwiftData
+import SwiftUI
 
 @main
 struct SmartStylistApp: App {
@@ -19,6 +20,7 @@ struct SmartStylistApp: App {
             RootView()
                 .environment(auth)
                 .environment(\.locale, activeLocale)
+                .onOpenURL { GIDSignIn.sharedInstance.handle($0) }
         }
         .modelContainer(for: [UserProfile.self, ClothingItem.self, OutfitHistory.self])
     }

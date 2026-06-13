@@ -166,10 +166,13 @@ NavigationLink(destination: ...) { ClothingItemCard(...) }
 Swift `actor` that isolates the Vision + CoreImage pipeline on a background thread. Called from `AddItemView.processCapture()` and the gallery picker handler.
 
 **Pipeline:**
-1. `VNGenerateForegroundInstanceMaskRequest` — on-device foreground subject detection (iOS 17+, no network)
-2. `VNInstanceMaskObservation.generateScaledMaskForImage(forInstances:from:)` — pixel-accurate mask matching the CGImage dimensions
-3. `CIFilter.blendWithMask()` — composites the garment over DS neutral background (`#2C2C2E` / `dsCardSlate`)
-4. Output as `Data` (PNG) via `pngData()`
+1. `UIImage.normalized()` — redraws pixels to `.up` orientation eliminating EXIF ambiguity
+2. `UIImage.downscaled(maxDimension: 1200)` — reduces 12MP camera photos (~4032px) to ≤1200px; Vision is ~11× faster and more stable at this resolution
+3. `VNGenerateForegroundInstanceMaskRequest` — on-device foreground subject detection (iOS 17+, no network)
+4. `VNInstanceMaskObservation.generateScaledMaskForImage(forInstances:from:)` — pixel-accurate mask
+5. `CIGaussianBlur(radius: 2.0)` on mask — feathers edges to avoid hard cutout artifacts
+6. `CIFilter.blendWithMask()` — composites the garment over **white** background for catalog-style presentation
+7. Output as `Data` (PNG) via `pngData()`
 
 **Image persistence:**
 ```swift
@@ -195,7 +198,7 @@ var resolvedImageURL: URL? {
 Both `AddItemView.saveManual()` and `ValidationWorkspaceSheet.confirm()` call `saveToDocuments` before inserting the SwiftData model, ensuring `ClothingItem.imagePath` is never `nil` after save. Views must use `resolvedImageURL` — never read `imagePath` directly.
 
 **EXIF orientation:**
-Camera photos often have non-Up orientation. The service works in native CGImage space and passes `cgImagePropertyOrientation` to `VNImageRequestHandler`, restoring the correct `UIImage` orientation on output. Do not pre-apply orientation transforms before passing images to the service.
+Camera photos often have non-Up orientation. The service normalizes orientation at the start of the pipeline via `UIImage.normalized()` (redraws to `.up`), so Vision receives correctly-oriented pixels and no orientation metadata is needed on the output image. Do not pre-apply orientation transforms before calling `segment(_:)` — the service handles it internally.
 
 **Fallback:** if segmentation fails, `AddItemView.processCapture` assigns the raw capture to `imageData` so the user always sees a thumbnail.
 

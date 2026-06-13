@@ -1,6 +1,6 @@
 # SmartStylist
 
-> AI-powered luxury virtual wardrobe for iOS — built with SwiftUI, SwiftData, and Gemini.
+> AI-powered luxury virtual wardrobe for iOS — built with SwiftUI, SwiftData, and OpenRouter.
 
 ![CI](https://github.com/rubenaparicio-byte/smartstylist/actions/workflows/ios-ci.yml/badge.svg)
 ![Platform](https://img.shields.io/badge/platform-iOS%2017%2B-black)
@@ -13,11 +13,12 @@
 
 | Module | Description |
 |--------|-------------|
-| **Onboarding** | 4-step colorimetry wizard — body type, skin tone, hair/eye colour → Gemini analyses your seasonal palette |
-| **Virtual Closet** | Camera/photo ingestion with AI vision tagging; lifecycle management (active / archived / disposed); advanced filters by style, pattern, status; luxury search bar |
-| **Style Engine** | Daily outfit generation via Gemini — respects colorimetry, weather, occasion, and 14-day wear history; offline colorimetry fallback |
+| **Authentication** | Sign In with Apple (primary) + Sign In with Google — both sessions stored in Keychain |
+| **Onboarding** | 6-step colorimetry funnel — language, gender, body type, skin tone, hair/eye colours → AI analyses your seasonal palette and accessory style |
+| **Virtual Closet** | Camera/gallery ingestion with on-device Vision segmentation (white background), AI vision tagging, 39-type subcategory taxonomy, thermal layer system, lifecycle management (active / archived / disposed) |
+| **Style Engine** | Daily outfit generation via OpenRouter — respects colorimetry, weather, occasion, thermal coherence, and 14-day wear history; offline colorimetry fallback |
 | **Insights** | Style distribution donut chart (Swift Charts), top-3 most worn items, closet health snapshot |
-| **Profile** | Colorimetry palette display, physical traits, Retake Analysis, Delete All My Data (App Store compliance) |
+| **Profile** | Colorimetry palette, physical traits, preferred stores, age, accessory style, language selector, Retake Analysis, Delete All Data |
 
 ---
 
@@ -26,32 +27,32 @@
 ```
 SmartStylist/
 ├── App/
-│   ├── SmartStylistApp.swift   — @main, modelContainer
-│   └── RootView.swift          — @Query gate: Onboarding ↔ MainTabView
+│   ├── SmartStylistApp.swift   — @main, modelContainer, locale injection, Google URL callback
+│   └── RootView.swift          — auth gate: Login → Onboarding → MainTabView
 ├── DesignSystem/               — Colors, Typography, Shapes, Animations tokens
 ├── Models/                     — SwiftData @Model: UserProfile, ClothingItem, OutfitHistory
+│                                 Enums: ThermalLayer, ClothingSubcategory (39 types)
 │                                 Codable: StyleResponse
-├── Services/                   — Pure async: GeminiService, WeatherService,
-│                                 LocationService, LocationWeatherService
-├── ViewModels/                 — @Observable (no SwiftUI): ClosetViewModel,
-│                                 StyleEngineViewModel, InsightsViewModel,
-│                                 OnboardingViewModel, ProfileViewModel (@MainActor)
+├── Services/                   — Pure async: AuthService, GeminiService, GarmentSegmentationService
+│                                 WeatherService, LocationService, LocationWeatherService
+├── ViewModels/                 — @Observable: ClosetViewModel, StyleEngineViewModel,
+│                                 InsightsViewModel, OnboardingViewModel, ProfileViewModel
 └── Views/
-    ├── Main/                   — MainTabView (4 tabs, luxury UITabBarAppearance)
-    ├── Onboarding/             — 4-step paged wizard
-    ├── Closet/                 — VirtualClosetView, AddItemView, ItemDetailView,
-    │                             ClothingItemCard, DisposeItemSheet, ValidationWorkspaceSheet
+    ├── Auth/                   — LoginView (Apple + Google)
+    ├── Main/                   — MainTabView (4 tabs)
+    ├── Onboarding/             — 6-step funnel (Language, Gender, BodyType, SkinTone, HairEye, Result)
+    ├── Closet/                 — VirtualClosetView, AddItemView, ValidationWorkspaceSheet,
+    │                             ClothingItemCard, ItemDetailView, DisposeItemSheet
     ├── StyleEngine/            — StyleEngineView, OutfitSuggestionCard, WeatherBadgeView
     ├── Insights/               — WardrobeInsightsView (Swift Charts)
-    ├── Profile/                — ProfileSettingsView
-    └── Components/             — LuxuryLoadingView, LuxuryErrorView, SelectionChip,
-                                  GoldDivider, FlowLayout, LuxuryCard, LoadingPulse
+    ├── Profile/                — ProfileSettingsView, StoreSelectionView
+    └── Components/             — CameraPicker, SelectionChip, LuxuryCard, FlowLayout, …
 ```
 
-**Layer rules** (enforced by CI):
+**Layer rules:**
 - ViewModels import `Foundation`, `SwiftData`, `Observation` only — never SwiftUI
 - Views own all animation calls (`withAnimation`, `.animation(value:)`, `.transition`)
-- Services are pure async functions with no stored state
+- Services are pure async functions; `GarmentSegmentationService` is a Swift `actor`
 
 ---
 
@@ -74,10 +75,10 @@ Typography: serif editorial titles (`dsLargeTitle` → `dsTitle2`), lightweight 
 
 | Service | Key constant | Purpose |
 |---------|-------------|---------|
-| Gemini 1.5 Flash | `APIKeys.gemini` | Colorimetry analysis + outfit suggestions + vision tagging |
+| OpenRouter (free tier) | `APIKeys.openRouter` | Colorimetry analysis, outfit suggestions, vision tagging — with model fallback |
 | OpenWeather 3.0 | `APIKeys.openWeather` | Real-time weather for outfit context |
 
-Both keys are injected at build time. See [API Keys](#api-keys) below.
+Both keys are injected at build time from `APIKeys.swift` (gitignored). See [API Keys](#api-keys) below.
 
 ---
 
@@ -100,7 +101,7 @@ brew install xcodegen
 
 # 3. Add API keys
 cp SmartStylist/Config/APIKeys.swift.template SmartStylist/Config/APIKeys.swift
-# Edit APIKeys.swift and fill in your Gemini and OpenWeather keys
+# Edit APIKeys.swift and fill in your OpenRouter and OpenWeather keys
 
 # 4. Generate Xcode project
 xcodegen generate
@@ -122,12 +123,12 @@ Grant location permission when prompted — required for weather-based outfit su
 // APIKeys.swift (create locally from template — do not commit)
 import Foundation
 enum APIKeys {
-    static let gemini      = "YOUR_GEMINI_KEY"
+    static let openRouter  = "YOUR_OPENROUTER_KEY"
     static let openWeather = "YOUR_OPENWEATHER_KEY"
 }
 ```
 
-For CI, keys are injected from GitHub Secrets: `GEMINI_API_KEY` and `WEATHER_API_KEY`.
+For CI, keys are injected from GitHub Secrets: `OPENROUTER_API_KEY` and `WEATHER_API_KEY`.
 
 ---
 
@@ -144,7 +145,7 @@ The CD workflow uses **manual code signing** (certificate + provisioning profile
 
 | Secret | Description |
 |--------|-------------|
-| `GEMINI_API_KEY` / `WEATHER_API_KEY` | App API keys |
+| `OPENROUTER_API_KEY` / `WEATHER_API_KEY` | App API keys |
 | `DISTRIBUTION_CERTIFICATE_P12` | base64-encoded Apple Distribution `.p12` |
 | `DISTRIBUTION_CERTIFICATE_PASSWORD` | `.p12` password |
 | `APP_STORE_PROVISIONING_PROFILE` | base64-encoded App Store `.mobileprovision` |
@@ -152,8 +153,6 @@ The CD workflow uses **manual code signing** (certificate + provisioning profile
 | `APP_STORE_CONNECT_KEY_ID` | ASC key ID |
 | `APP_STORE_CONNECT_ISSUER_ID` | ASC issuer ID |
 | `DEVELOPMENT_TEAM` | Apple Team ID |
-
-Both workflows opt into Node.js 24 via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 
 ---
 
@@ -186,13 +185,13 @@ Rules:
 
 ## Localization
 
-EN and ES fully supported (78 keys). Keys are centralised in `Strings.swift` using `String(localized:)` for bundle-based lookup at call time.
+EN and ES fully supported (305 keys). Keys are centralised in `Strings.swift` using `String(localized:locale:Strings.activeLocale)` for runtime locale switching without app restart.
 
 ```swift
 Text(Strings.profileRetakeButton)   // → "Retake Analysis" / "Repetir Análisis"
 ```
 
-To add a locale: create `xx.lproj/Localizable.strings`, mirror all 78 keys, add the language to `project.yml`.
+To add a locale: create `xx.lproj/Localizable.strings`, mirror all 305 keys, add the language to `project.yml`.
 
 ---
 
@@ -203,7 +202,6 @@ The `.claude/` directory contains skills and reference docs for working with thi
 | Skill / File | Invocation | Purpose |
 |---|---|---|
 | `run-smartstylist` | `/run-smartstylist` | Build, launch, and screenshot the app on iOS Simulator |
-| `run-tests` | `/run-tests` | Run the full XCTest suite and report results |
 | `new-test` | `/new-test <Subject>` | Generate an XCTest file following project conventions |
 | `figma-design-system.md` | — | Token reference and Figma↔SwiftUI translation guide |
 
