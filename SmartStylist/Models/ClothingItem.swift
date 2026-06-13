@@ -74,15 +74,15 @@ final class ClothingItem {
     // @Attribute(.unique) is incompatible with CloudKit — uniqueness is managed via CKRecord.ID.
     var id: UUID = UUID()
     var imagePath: String?
-    var category: ClothingCategory = .top
+    var category: ClothingCategory = ClothingCategory.top
     var thermalLayer: ThermalLayer?
     var subcategory: ClothingSubcategory?
     var primaryColor: String = "#000000"
     var pattern: String = "Solid"
     var style: String = "Casual"
     var tags: [String] = []
-    var status: ItemStatus = .active
-    var createdAt: Date = .now
+    var status: ItemStatus = ItemStatus.active
+    var createdAt: Date = Date.now
     var disposeReason: String = ""
 
     // Non-optional accessor; falls back to the category default for migrated records.
