@@ -378,7 +378,7 @@ GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` 
 6. Write App Store Connect `.p8` key from `APP_STORE_CONNECT_KEY_CONTENT`
 7. Generate `ExportOptions.plist` with `signingStyle: manual`
 8. **Patch `CFBundleVersion`** with `PlistBuddy` using a Unix timestamp (`date +%s`) — XcodeGen expands `$(CURRENT_PROJECT_VERSION)` to its literal default at generation time, so the xcodebuild CLI override has no effect (see [Critical: XcodeGen expands build setting variables](#critical-xcodegen-expands-build-setting-variables-in-infoplist))
-9. `xcodebuild archive` with `CODE_SIGN_STYLE=Manual`, `CODE_SIGN_IDENTITY="Apple Distribution"`, `PROVISIONING_PROFILE_SPECIFIER=<uuid>`
+9. `xcodebuild archive` passing only `PROVISIONING_PROFILE_UUID_CI=<uuid>` and `DEVELOPMENT_TEAM` — signing identity and style are declared in `project.yml` for the `SmartStylist` target's Release config only (see **Critical: SPM targets and manual signing** below)
 10. `xcodebuild -exportArchive`
 11. `xcrun altool --upload-app` with ASC API key
 12. Upload IPA as GitHub artifact (30-day retention, runs even on failure)
@@ -422,6 +422,20 @@ base64 -w 0 profile.mobileprovision   # → paste as APP_STORE_PROVISIONING_PROF
 ```
 
 All certificate files (`*.p12`, `*.cer`, `*.pem`, `*.mobileprovision`, `private.key`, `*.certSigningRequest`) are **gitignored** — never commit them.
+
+### Critical: SPM targets and manual signing
+
+Passing `CODE_SIGN_STYLE=Manual` or `PROVISIONING_PROFILE_SPECIFIER` as **global** `xcodebuild` CLI overrides applies those settings to **every target** in the build graph — including all SPM package targets pulled in by GoogleSignIn (Promises, GTMAppAuth, AppAuth, GoogleUtilities, GTMSessionFetcher…). Those library targets have no bundle ID and do not support provisioning profiles, so the archive fails with:
+
+> `Promises_FBLPromises does not support provisioning profiles, but provisioning profile … has been manually specified.`
+
+**Rule:** never pass `CODE_SIGN_STYLE`, `CODE_SIGN_IDENTITY`, or `PROVISIONING_PROFILE_SPECIFIER` as global xcodebuild overrides when the project includes SPM dependencies.
+
+**How signing is configured instead:**
+
+- `project.yml` declares `CODE_SIGN_STYLE: Manual`, `CODE_SIGN_IDENTITY: "Apple Distribution"`, and `PROVISIONING_PROFILE_SPECIFIER: "$(PROVISIONING_PROFILE_UUID_CI)"` under `targets.SmartStylist.settings.configs.Release` — this applies only to the SmartStylist app target.
+- The CI passes the dynamic profile UUID as a **custom build variable** `PROVISIONING_PROFILE_UUID_CI=<uuid>` on the xcodebuild command line. This variable is harmless to SPM targets because they never reference it.
+- SPM package targets retain their default `CODE_SIGN_STYLE: Automatic` / `CODE_SIGNING_ALLOWED: NO` and are unaffected.
 
 ### Critical: Info.plist is owned by XcodeGen
 
