@@ -17,7 +17,7 @@ struct VirtualClosetView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
@@ -44,7 +44,7 @@ struct VirtualClosetView: View {
                 ToolbarItem(placement: .principal) {
                     Text(Strings.wardrobeNavTitle)
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
             }
@@ -69,14 +69,14 @@ struct VirtualClosetView: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .font(.subheadline)
-                    .foregroundStyle(vm.searchText.isEmpty ? Color.dsTextTertiary : Color.dsAccentGold)
+                    .foregroundStyle(vm.searchText.isEmpty ? Color.dsTextTertiary : Color.dsAccentPrimary)
                     .animation(.dsDefault, value: vm.searchText.isEmpty)
 
                 TextField(Strings.wardrobeSearchPlaceholder, text: $vm.searchText)
                     .font(.dsBody)
                     .foregroundStyle(Color.dsTextPrimary)
                     .autocorrectionDisabled()
-                    .tint(Color.dsAccentGold)
+                    .tint(Color.dsAccentPrimary)
 
                 if !vm.searchText.isEmpty {
                     Button { vm.searchText = "" } label: {
@@ -88,14 +88,14 @@ struct VirtualClosetView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 11)
-            .background(Color.dsCardSlate)
+            .background(Color.dsCardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(
                         vm.searchText.isEmpty
-                            ? Color.dsAccentGold.opacity(0.12)
-                            : Color.dsAccentGold.opacity(0.55),
+                            ? Color.dsAccentPrimary.opacity(0.12)
+                            : Color.dsAccentPrimary.opacity(0.55),
                         lineWidth: 0.5
                     )
                     .animation(.dsDefault, value: vm.searchText.isEmpty)
@@ -111,11 +111,11 @@ struct VirtualClosetView: View {
                           : "line.3.horizontal.decrease.circle")
                         .font(.title3)
                         .foregroundStyle(showFilters || vm.hasActiveFilters
-                                         ? Color.dsAccentGold : Color.dsTextSecondary)
+                                         ? Color.dsAccentPrimary : Color.dsTextSecondary)
                         .contentTransition(.symbolEffect(.replace.offUp))
                     if vm.hasActiveFilters {
                         Circle()
-                            .fill(Color.dsAccentGold)
+                            .fill(Color.dsAccentPrimary)
                             .frame(width: 7, height: 7)
                             .offset(x: 2, y: -2)
                     }
@@ -147,7 +147,7 @@ struct VirtualClosetView: View {
                 }
             }
 
-            GoldDivider()
+            AccentDivider()
 
             filterSection(title: Strings.filterSectionStyles) {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -168,7 +168,7 @@ struct VirtualClosetView: View {
                 }
             }
 
-            GoldDivider()
+            AccentDivider()
 
             filterSection(title: Strings.filterSectionPatterns) {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -191,7 +191,7 @@ struct VirtualClosetView: View {
                 } label: {
                     Text(Strings.filterClearAll)
                         .font(.dsCaption)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
@@ -201,7 +201,7 @@ struct VirtualClosetView: View {
         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.dsAccentGold.opacity(0.18), lineWidth: 0.5)
+                .strokeBorder(Color.dsAccentPrimary.opacity(0.18), lineWidth: 0.5)
         )
     }
 
@@ -309,10 +309,10 @@ struct VirtualClosetView: View {
             } label: {
                 Text(Strings.filterClearAll)
                     .font(.dsBodyMedium)
-                    .foregroundStyle(Color.dsDeepSlate)
+                    .foregroundStyle(Color.dsBackground)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color.dsAccentGold)
+                    .background(Color.dsAccentPrimary)
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
         }
@@ -325,12 +325,12 @@ struct VirtualClosetView: View {
     private var addButton: some View {
         Button { showAddItem = true } label: {
             Image(systemName: "plus")
-                .foregroundStyle(Color.dsDeepSlate)
+                .foregroundStyle(Color.dsBackground)
                 .font(.title2.weight(.semibold))
                 .padding(18)
-                .background(Color.dsAccentGold)
+                .background(Color.dsAccentPrimary)
                 .clipShape(Circle())
-                .shadow(color: Color.dsAccentGold.opacity(0.4), radius: 12, y: 6)
+                .shadow(color: Color.dsAccentPrimary.opacity(0.4), radius: 12, y: 6)
         }
     }
 }

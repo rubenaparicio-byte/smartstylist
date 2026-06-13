@@ -14,11 +14,11 @@ struct LuxuryCardStyle: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Color.dsCardSlate)
+            .background(Color.dsCardBackground)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Color.dsAccentGold.opacity(0.15), lineWidth: 0.5)
+                    .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)
             )
     }
 }
@@ -32,7 +32,7 @@ struct GlassCardStyle: ViewModifier {
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Color.dsAccentGold.opacity(0.18), lineWidth: 0.5)
+                    .stroke(Color.dsAccentPrimary.opacity(0.18), lineWidth: 0.5)
             )
     }
 }

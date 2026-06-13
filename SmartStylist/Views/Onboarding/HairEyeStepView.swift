@@ -13,7 +13,7 @@ struct HairEyeStepView: View {
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
-                GoldDivider()
+                AccentDivider()
 
                 VStack(alignment: .leading, spacing: 20) {
                     Text(Strings.onboardingHairColour).font(.dsLabel).foregroundStyle(Color.dsTextSecondary)

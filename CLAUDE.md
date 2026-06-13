@@ -153,7 +153,7 @@ Tokens live in `SmartStylist/DesignSystem/`. Never hardcode colors, fonts, radii
 
 | Modifier | Background | Use when |
 |----------|-----------|---------|
-| `.luxuryCard(cornerRadius:)` | `Color.dsCardSlate` (opaque) | Cards with no image or over a known dark background |
+| `.luxuryCard(cornerRadius:)` | `Color.dsCardBackground` (opaque) | Cards with no image or over a known dark background |
 | `.glassCard(cornerRadius:)` | `Material.ultraThinMaterial` | Cards that float over content or images |
 
 Both share a `0.5pt` gold border at `0.15–0.18` opacity and `.continuous` corner style.
@@ -392,7 +392,7 @@ shareImage = renderer.uiImage.map { Image(uiImage: $0) }
 ```
 
 - `ShareLink` uses `SharePreview` with the rendered image and `Strings.shareOutfitMessage`
-- The share button (`"share.outfit.button"`) is styled in `dsAccentGold` and appears below the save button
+- The share button (`"share.outfit.button"`) is styled in `dsAccentPrimary` and appears below the save button
 - `renderShareImage(suggestion:)` is called from `.onAppear` on the suggestion VStack — `StyleResponse` is not `Equatable` so `.onChange` cannot be used
 
 ### Accessibility in SwiftUI
@@ -628,4 +628,4 @@ Never rely on a xcodebuild CLI build-setting override reaching a plist key.
 
 `SmartStylist/Assets.xcassets/AppIcon.appiconset/` contains a single 1024×1024 universal PNG (`AppIcon.png`). This is the modern Xcode format — no per-size variants needed.
 
-Current design: `dsDeepSlate` (`#1C1C1E`) background with three 4-pointed gold sparkle stars (`dsAccentGold` `#C9A84C`) — generated with PyCairo. Replace with the final brand icon before public App Store release.
+Current design: `dsBackground` (`#1C1C1E`) background with three 4-pointed gold sparkle stars (`dsAccentPrimary` `#C9A84C`) — generated with PyCairo. Replace with the final brand icon before public App Store release.

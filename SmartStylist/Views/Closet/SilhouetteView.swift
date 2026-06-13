@@ -8,7 +8,7 @@ struct SilhouetteView: View {
         Canvas { ctx, canvasSize in
             let s = min(canvasSize.width, canvasSize.height)
             ctx.stroke(path(for: category, in: s),
-                       with: .color(Color.dsAccentGold.opacity(0.35)),
+                       with: .color(Color.dsAccentPrimary.opacity(0.35)),
                        lineWidth: 1)
         }
         .frame(width: size, height: size)
@@ -108,5 +108,5 @@ struct SilhouetteView: View {
         }
     }
     .padding()
-    .background(Color.dsDeepSlate)
+    .background(Color.dsBackground)
 }

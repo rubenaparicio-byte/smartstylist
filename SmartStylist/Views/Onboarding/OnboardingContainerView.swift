@@ -8,7 +8,7 @@ struct OnboardingContainerView: View {
     var body: some View {
         @Bindable var vm = vm
         return ZStack {
-            Color.dsDeepSlate.ignoresSafeArea()
+            Color.dsBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 progressBar
@@ -36,7 +36,7 @@ struct OnboardingContainerView: View {
 
             // Premium loading overlay during Gemini analysis
             if vm.isLoading {
-                Color.dsDeepSlate.opacity(0.82)
+                Color.dsBackground.opacity(0.82)
                     .ignoresSafeArea()
                     .transition(.opacity)
                 LuxuryLoadingView()
@@ -63,7 +63,7 @@ struct OnboardingContainerView: View {
             ForEach(OnboardingViewModel.OnboardingStep.allCases, id: \.self) { step in
                 Capsule()
                     .fill(vm.currentStep.rawValue >= step.rawValue
-                          ? Color.dsAccentGold : Color.dsSurface)
+                          ? Color.dsAccentPrimary : Color.dsSurface)
                     .frame(height: 3)
                     .animation(.dsDefault, value: vm.currentStep)
             }
@@ -78,10 +78,10 @@ struct OnboardingContainerView: View {
                  ? Strings.onboardingAnalyseMyStyle
                  : Strings.onboardingContinue)
                 .font(.dsBodyMedium)
-                .foregroundStyle(Color.dsDeepSlate)
+                .foregroundStyle(Color.dsBackground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(vm.canAdvance ? Color.dsAccentGold : Color.dsSurface)
+                .background(vm.canAdvance ? Color.dsAccentPrimary : Color.dsSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .accessibilityIdentifier("onboarding.advance")

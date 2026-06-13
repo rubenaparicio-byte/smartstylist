@@ -40,13 +40,13 @@ struct OutfitSuggestionCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             contextHeader
-            GoldDivider().padding(.horizontal, 20)
+            AccentDivider().padding(.horizontal, 20)
             layerStackSection
             if let shoe = footwearItem {
-                GoldDivider().padding(.horizontal, 20)
+                AccentDivider().padding(.horizontal, 20)
                 footwearRow(shoe)
             }
-            GoldDivider().padding(.horizontal, 20)
+            AccentDivider().padding(.horizontal, 20)
             styleTipSection
         }
         .luxuryCard()
@@ -59,7 +59,7 @@ struct OutfitSuggestionCard: View {
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.seal.fill")
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
                     .font(.caption)
                 Text(response.climaProcesado)
                     .font(.dsCaption)
@@ -81,10 +81,10 @@ struct OutfitSuggestionCard: View {
             HStack(spacing: 6) {
                 Image(systemName: "square.3.layers.3d")
                     .font(.caption)
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
                 Text(Strings.outfitLayerComposition)
                     .font(.dsLabel)
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
                     .tracking(2)
             }
             .padding(.horizontal, 20)
@@ -117,14 +117,14 @@ struct OutfitSuggestionCard: View {
             HStack(spacing: 6) {
                 Text("\(group.layer.layerNumber)")
                     .font(.system(size: 9, weight: .bold, design: .monospaced))
-                    .foregroundStyle(Color.dsDeepSlate)
+                    .foregroundStyle(Color.dsBackground)
                     .frame(width: 16, height: 16)
-                    .background(Color.dsAccentGold)
+                    .background(Color.dsAccentPrimary)
                     .clipShape(Circle())
 
                 Text("LAYER \(group.layer.layerNumber)  ·  \(group.layer.localizedName.uppercased())")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
                     .tracking(1.5)
             }
             .padding(.horizontal, 20)
@@ -144,13 +144,13 @@ struct OutfitSuggestionCard: View {
             Spacer().frame(width: 27)  // aligns with badge center
             VStack(spacing: 0) {
                 Circle()
-                    .fill(Color.dsAccentGold.opacity(0.5))
+                    .fill(Color.dsAccentPrimary.opacity(0.5))
                     .frame(width: 3, height: 3)
                 Rectangle()
-                    .fill(Color.dsAccentGold.opacity(0.2))
+                    .fill(Color.dsAccentPrimary.opacity(0.2))
                     .frame(width: 0.5, height: 18)
                 Circle()
-                    .fill(Color.dsAccentGold.opacity(0.5))
+                    .fill(Color.dsAccentPrimary.opacity(0.5))
                     .frame(width: 3, height: 3)
             }
             Spacer()
@@ -164,7 +164,7 @@ struct OutfitSuggestionCard: View {
             HStack(spacing: 6) {
                 Image(systemName: "shoeprints.fill")
                     .font(.caption)
-                    .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                    .foregroundStyle(Color.dsAccentPrimary.opacity(0.7))
                 Text(Strings.outfitFootwear)
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Color.dsTextTertiary)
@@ -188,7 +188,7 @@ struct OutfitSuggestionCard: View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "sparkles")
                 .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(Color.dsAccentGold)
+                .foregroundStyle(Color.dsAccentPrimary)
                 .font(.caption)
                 .padding(.top, 1)
             Text(response.consejoEstilo)
@@ -216,7 +216,7 @@ private struct GarmentTile: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(Color.dsAccentGold.opacity(0.12), lineWidth: 0.5)
+                .stroke(Color.dsAccentPrimary.opacity(0.12), lineWidth: 0.5)
         )
     }
 
@@ -230,7 +230,7 @@ private struct GarmentTile: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Color.dsCardSlate
+                Color.dsCardBackground
                     .overlay(
                         SilhouetteView(category: item.category, size: 38)
                     )
@@ -262,7 +262,7 @@ private struct GarmentTile: View {
                 .foregroundStyle(Color.dsTextTertiary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
-                .background(Color.dsDeepSlate)
+                .background(Color.dsBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 
             if !item.tags.isEmpty {

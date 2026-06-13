@@ -61,7 +61,7 @@ smartstylist/
 │       └── Components/
 │           ├── LuxuryCard.swift                 # Reusable card shell
 │           ├── SelectionChip.swift              # Onboarding tap-to-select chip
-│           ├── GoldDivider.swift
+│           ├── AccentDivider.swift
 │           └── LoadingPulse.swift
 └── SmartStylistTests/
     ├── Models/
@@ -296,13 +296,13 @@ import SwiftUI
 
 extension Color {
     // ── Backgrounds ──────────────────────────────────────────
-    static let dsDeepSlate  = Color(hex: "#1C1C1E")   // base background
-    static let dsCardSlate  = Color(hex: "#2C2C2E")   // cards / containers
+    static let dsBackground  = Color(hex: "#1C1C1E")   // base background
+    static let dsCardBackground  = Color(hex: "#2C2C2E")   // cards / containers
     static let dsSurface    = Color(hex: "#3A3A3C")   // elevated surfaces
 
     // ── Accents ──────────────────────────────────────────────
-    static let dsAccentGold = Color(hex: "#D4AF37")   // primary accent
-    static let dsSoftGold   = Color(hex: "#E9C46A")   // states / warnings
+    static let dsAccentPrimary = Color(hex: "#D4AF37")   // primary accent
+    static let dsAccentSecondary   = Color(hex: "#E9C46A")   // states / warnings
     static let dsErrorRed   = Color(hex: "#E63946")   // destructive actions
 
     // ── Text ─────────────────────────────────────────────────
@@ -412,11 +412,11 @@ struct LuxuryCardStyle: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Color.dsCardSlate)
+            .background(Color.dsCardBackground)
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .stroke(Color.dsAccentGold.opacity(0.15), lineWidth: 0.5)
+                    .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)
             )
     }
 }
@@ -705,7 +705,7 @@ git push
 **Files:**
 - Create: `SmartStylist/Views/Components/LuxuryCard.swift`
 - Create: `SmartStylist/Views/Components/SelectionChip.swift`
-- Create: `SmartStylist/Views/Components/GoldDivider.swift`
+- Create: `SmartStylist/Views/Components/AccentDivider.swift`
 - Create: `SmartStylist/Views/Components/LoadingPulse.swift`
 
 - [ ] **Step 8.1 — LuxuryCard**
@@ -731,7 +731,7 @@ struct LuxuryCard<Content: View>: View {
             .padding()
     }
     .padding()
-    .background(Color.dsDeepSlate)
+    .background(Color.dsBackground)
 }
 ```
 
@@ -750,14 +750,14 @@ struct SelectionChip: View {
         Button(action: action) {
             Text(label)
                 .font(.dsLabel)
-                .foregroundStyle(isSelected ? Color.dsDeepSlate : Color.dsTextSecondary)
+                .foregroundStyle(isSelected ? Color.dsBackground : Color.dsTextSecondary)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)
-                .background(isSelected ? Color.dsAccentGold : Color.dsSurface)
+                .background(isSelected ? Color.dsAccentPrimary : Color.dsSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(Color.dsAccentGold.opacity(isSelected ? 0 : 0.3), lineWidth: 0.5)
+                        .stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.3), lineWidth: 0.5)
                 )
         }
         .animation(.dsDefault, value: isSelected)
@@ -765,16 +765,16 @@ struct SelectionChip: View {
 }
 ```
 
-- [ ] **Step 8.3 — GoldDivider**
+- [ ] **Step 8.3 — AccentDivider**
 
 ```swift
-// GoldDivider.swift
+// AccentDivider.swift
 import SwiftUI
 
-struct GoldDivider: View {
+struct AccentDivider: View {
     var body: some View {
         Rectangle()
-            .fill(Color.dsAccentGold.opacity(0.25))
+            .fill(Color.dsAccentPrimary.opacity(0.25))
             .frame(height: 0.5)
     }
 }
@@ -792,7 +792,7 @@ struct LoadingPulse: View {
 
     var body: some View {
         Circle()
-            .fill(Color.dsAccentGold)
+            .fill(Color.dsAccentPrimary)
             .frame(width: 10, height: 10)
             .scaleEffect(scale)
             .opacity(opacity)
@@ -810,7 +810,7 @@ struct LoadingPulse: View {
 
 ```bash
 git add SmartStylist/Views/Components/
-git commit -m "feat(ui): reusable luxury components — LuxuryCard, SelectionChip, GoldDivider, LoadingPulse"
+git commit -m "feat(ui): reusable luxury components — LuxuryCard, SelectionChip, AccentDivider, LoadingPulse"
 git push
 ```
 
@@ -836,7 +836,7 @@ struct SilhouetteView: View {
         Canvas { ctx, canvasSize in
             let s = min(canvasSize.width, canvasSize.height)
             ctx.stroke(path(for: category, in: s),
-                       with: .color(Color.dsAccentGold.opacity(0.35)),
+                       with: .color(Color.dsAccentPrimary.opacity(0.35)),
                        lineWidth: 1)
         }
         .frame(width: size, height: size)
@@ -948,7 +948,7 @@ struct SilhouetteView: View {
         }
     }
     .padding()
-    .background(Color.dsDeepSlate)
+    .background(Color.dsBackground)
 }
 ```
 
@@ -1488,7 +1488,7 @@ struct OnboardingContainerView: View {
 
     var body: some View {
         ZStack {
-            Color.dsDeepSlate.ignoresSafeArea()
+            Color.dsBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 progressBar
@@ -1513,7 +1513,7 @@ struct OnboardingContainerView: View {
             }
 
             if vm.isLoading {
-                Color.dsDeepSlate.opacity(0.7).ignoresSafeArea()
+                Color.dsBackground.opacity(0.7).ignoresSafeArea()
                 VStack(spacing: 16) {
                     LoadingPulse()
                     Text("Analysing your profile…")
@@ -1534,7 +1534,7 @@ struct OnboardingContainerView: View {
             ForEach(OnboardingViewModel.OnboardingStep.allCases, id: \.self) { step in
                 Capsule()
                     .fill(vm.currentStep.rawValue >= step.rawValue
-                          ? Color.dsAccentGold : Color.dsSurface)
+                          ? Color.dsAccentPrimary : Color.dsSurface)
                     .frame(height: 3)
                     .animation(.dsDefault, value: vm.currentStep)
             }
@@ -1547,10 +1547,10 @@ struct OnboardingContainerView: View {
         } label: {
             Text(vm.currentStep == .hairEye ? "Analyse My Style" : "Continue")
                 .font(.dsBodyMedium)
-                .foregroundStyle(Color.dsDeepSlate)
+                .foregroundStyle(Color.dsBackground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(vm.canAdvance ? Color.dsAccentGold : Color.dsSurface)
+                .background(vm.canAdvance ? Color.dsAccentPrimary : Color.dsSurface)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .disabled(!vm.canAdvance)
@@ -1579,7 +1579,7 @@ struct BodyTypeStepView: View {
                         .foregroundStyle(Color.dsTextSecondary)
                 }
 
-                GoldDivider()
+                AccentDivider()
 
                 FlowLayout(spacing: 10) {
                     ForEach(vm.bodyTypeOptions, id: \.self) { option in
@@ -1615,7 +1615,7 @@ struct SkinToneStepView: View {
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
-                GoldDivider()
+                AccentDivider()
                 FlowLayout(spacing: 10) {
                     ForEach(vm.skinToneOptions, id: \.self) { option in
                         SelectionChip(label: option,
@@ -1650,7 +1650,7 @@ struct HairEyeStepView: View {
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
-                GoldDivider()
+                AccentDivider()
 
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Hair Colour").font(.dsLabel).foregroundStyle(Color.dsTextSecondary)
@@ -1704,18 +1704,18 @@ struct ColorimetryResultView: View {
                         .foregroundStyle(Color.dsTextSecondary)
                 }
 
-                GoldDivider()
+                AccentDivider()
 
                 LuxuryCard {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text(season.uppercased())
                                 .font(.dsTitle)
-                                .foregroundStyle(Color.dsAccentGold)
+                                .foregroundStyle(Color.dsAccentPrimary)
                                 .tracking(3)
                             Spacer()
                             Image(systemName: seasonIcon(for: season))
-                                .foregroundStyle(Color.dsAccentGold)
+                                .foregroundStyle(Color.dsAccentPrimary)
                                 .font(.title2)
                         }
                         Text(guidelines)
@@ -1728,10 +1728,10 @@ struct ColorimetryResultView: View {
                 Button(action: onComplete) {
                     Text("Enter My Wardrobe")
                         .font(.dsBodyMedium)
-                        .foregroundStyle(Color.dsDeepSlate)
+                        .foregroundStyle(Color.dsBackground)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(Color.dsAccentGold)
+                        .background(Color.dsAccentPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
             }
@@ -2037,7 +2037,7 @@ struct VirtualClosetView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottomTrailing) {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -2056,7 +2056,7 @@ struct VirtualClosetView: View {
                 ToolbarItem(placement: .principal) {
                     Text("WARDROBE")
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
             }
@@ -2099,12 +2099,12 @@ struct VirtualClosetView: View {
     private var addButton: some View {
         Button { showAddItem = true } label: {
             Image(systemName: "plus")
-                .foregroundStyle(Color.dsDeepSlate)
+                .foregroundStyle(Color.dsBackground)
                 .font(.title2.weight(.semibold))
                 .padding(18)
-                .background(Color.dsAccentGold)
+                .background(Color.dsAccentPrimary)
                 .clipShape(Circle())
-                .shadow(color: Color.dsAccentGold.opacity(0.4), radius: 12, y: 6)
+                .shadow(color: Color.dsAccentPrimary.opacity(0.4), radius: 12, y: 6)
         }
     }
 }
@@ -2129,7 +2129,7 @@ struct AddItemView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
                 Form {
                     Picker("Category", selection: $category) {
                         ForEach(ClothingCategory.allCases, id: \.self) { cat in
@@ -2180,7 +2180,7 @@ struct ItemDetailView: View {
 
     var body: some View {
         ZStack {
-            Color.dsDeepSlate.ignoresSafeArea()
+            Color.dsBackground.ignoresSafeArea()
             VStack(alignment: .leading, spacing: 24) {
                 SilhouetteView(category: item.category, size: 160)
                     .frame(maxWidth: .infinity)
@@ -2371,7 +2371,7 @@ struct WeatherBadgeView: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: weatherIcon(for: weather.condition))
-                .foregroundStyle(Color.dsAccentGold)
+                .foregroundStyle(Color.dsAccentPrimary)
             VStack(alignment: .leading, spacing: 2) {
                 Text(weather.displayString)
                     .font(.dsBodyMedium)
@@ -2420,15 +2420,15 @@ struct OutfitSuggestionCard: View {
                     .font(.dsBody)
                     .foregroundStyle(Color.dsTextSecondary)
 
-                GoldDivider()
+                AccentDivider()
 
                 outfitGrid
 
-                GoldDivider()
+                AccentDivider()
 
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                     Text(response.consejoEstilo)
                         .font(.dsCaption)
                         .foregroundStyle(Color.dsTextSecondary)
@@ -2486,7 +2486,7 @@ struct StyleEngineView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
@@ -2515,7 +2515,7 @@ struct StyleEngineView: View {
                 ToolbarItem(placement: .principal) {
                     Text("TODAY'S LOOK")
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -2528,7 +2528,7 @@ struct StyleEngineView: View {
                         }
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .foregroundStyle(Color.dsAccentGold)
+                            .foregroundStyle(Color.dsAccentPrimary)
                     }
                 }
             }
@@ -2577,7 +2577,7 @@ struct StyleEngineView: View {
             VStack(spacing: 12) {
                 Image(systemName: "tshirt")
                     .font(.system(size: 48))
-                    .foregroundStyle(Color.dsAccentGold.opacity(0.4))
+                    .foregroundStyle(Color.dsAccentPrimary.opacity(0.4))
                 Text("Tap ↻ to generate today's look")
                     .font(.dsBody)
                     .foregroundStyle(Color.dsTextTertiary)
@@ -2655,8 +2655,8 @@ struct MainTabView: View {
             VirtualClosetView()
                 .tabItem { Label("Wardrobe", systemImage: "tshirt") }
         }
-        .tint(Color.dsAccentGold)
-        .background(Color.dsDeepSlate)
+        .tint(Color.dsAccentPrimary)
+        .background(Color.dsBackground)
     }
 }
 ```

@@ -10,7 +10,7 @@ struct WardrobeInsightsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 if allItems.isEmpty {
                     emptyState
@@ -31,7 +31,7 @@ struct WardrobeInsightsView: View {
                 ToolbarItem(placement: .principal) {
                     Text(Strings.insightsNavTitle)
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
             }
@@ -76,7 +76,7 @@ struct WardrobeInsightsView: View {
                             Spacer()
                             Text("\(entry.count)")
                                 .font(.dsLabel)
-                                .foregroundStyle(Color.dsAccentGold)
+                                .foregroundStyle(Color.dsAccentPrimary)
                         }
                     }
                 }
@@ -98,7 +98,7 @@ struct WardrobeInsightsView: View {
             } else {
                 ForEach(Array(topItems.enumerated()), id: \.element.id) { rank, entry in
                     topWornRow(rank: rank + 1, entry: entry)
-                    if rank < topItems.count - 1 { GoldDivider() }
+                    if rank < topItems.count - 1 { AccentDivider() }
                 }
             }
         }
@@ -110,7 +110,7 @@ struct WardrobeInsightsView: View {
         HStack(spacing: 14) {
             Text("#\(rank)")
                 .font(.dsTitle2)
-                .foregroundStyle(rank == 1 ? Color.dsAccentGold : Color.dsTextTertiary)
+                .foregroundStyle(rank == 1 ? Color.dsAccentPrimary : Color.dsTextTertiary)
                 .frame(width: 32, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -127,7 +127,7 @@ struct WardrobeInsightsView: View {
             HStack(spacing: 4) {
                 Text("\(entry.wearCount)")
                     .font(.dsBodyMedium)
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
                 Text(Strings.insightsWorn)
                     .font(.dsCaption)
                     .foregroundStyle(Color.dsTextTertiary)
@@ -159,11 +159,11 @@ struct WardrobeInsightsView: View {
                 GeometryReader { geo in
                     HStack(spacing: 2) {
                         if health.active > 0 {
-                            Color.dsAccentGold
+                            Color.dsAccentPrimary
                                 .frame(width: geo.size.width * CGFloat(health.active) / CGFloat(health.total))
                         }
                         if health.archived > 0 {
-                            Color.dsSoftGold.opacity(0.65)
+                            Color.dsAccentSecondary.opacity(0.65)
                                 .frame(width: geo.size.width * CGFloat(health.archived) / CGFloat(health.total))
                         }
                         if health.disposed > 0 {

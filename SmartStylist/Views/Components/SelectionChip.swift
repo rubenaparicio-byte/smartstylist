@@ -18,15 +18,15 @@ struct SelectionChip: View {
                 }
                 Text(label)
                     .font(.dsLabel)
-                    .foregroundStyle(isSelected ? Color.dsDeepSlate : Color.dsTextSecondary)
+                    .foregroundStyle(isSelected ? Color.dsBackground : Color.dsTextSecondary)
             }
             .padding(.horizontal, swatchColor != nil ? 14 : 18)
             .padding(.vertical, 10)
-            .background(isSelected ? Color.dsAccentGold : Color.dsSurface)
+            .background(isSelected ? Color.dsAccentPrimary : Color.dsSurface)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(Color.dsAccentGold.opacity(isSelected ? 0 : 0.3), lineWidth: 0.5)
+                    .stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.3), lineWidth: 0.5)
             )
             .scaleEffect(isSelected ? 1.04 : 1.0)
         }

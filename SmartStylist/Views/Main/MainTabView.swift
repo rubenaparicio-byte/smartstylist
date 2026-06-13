@@ -5,7 +5,7 @@ struct MainTabView: View {
         let appearance = UITabBarAppearance()
         appearance.configureWithTransparentBackground()
         appearance.backgroundEffect = UIBlurEffect(style: .systemThinMaterialDark)
-        appearance.shadowColor = UIColor(Color.dsAccentGold.opacity(0.12))
+        appearance.shadowColor = UIColor(Color.dsAccentPrimary.opacity(0.12))
 
         appearance.stackedLayoutAppearance.normal.iconColor = UIColor(Color.dsTextTertiary)
         appearance.stackedLayoutAppearance.normal.titleTextAttributes = [
@@ -31,7 +31,7 @@ struct MainTabView: View {
             ProfileSettingsView()
                 .tabItem { Label(Strings.tabsProfile, systemImage: "person.crop.circle") }
         }
-        .tint(Color.dsAccentGold)
+        .tint(Color.dsAccentPrimary)
         .task { await NotificationService.shared.scheduleDailyLookNotification() }
     }
 }

@@ -2,13 +2,13 @@ import SwiftUI
 
 extension Color {
     // ── Backgrounds ──────────────────────────────────────────
-    static let dsDeepSlate  = Color(hex: "#1C1C1E")
-    static let dsCardSlate  = Color(hex: "#2C2C2E")
+    static let dsBackground  = Color(hex: "#1C1C1E")
+    static let dsCardBackground  = Color(hex: "#2C2C2E")
     static let dsSurface    = Color(hex: "#3A3A3C")
 
     // ── Accents ──────────────────────────────────────────────
-    static let dsAccentGold = Color(hex: "#D4AF37")
-    static let dsSoftGold   = Color(hex: "#E9C46A")
+    static let dsAccentPrimary = Color(hex: "#D4AF37")
+    static let dsAccentSecondary   = Color(hex: "#E9C46A")
     static let dsErrorRed   = Color(hex: "#E63946")
 
     // ── Text ─────────────────────────────────────────────────

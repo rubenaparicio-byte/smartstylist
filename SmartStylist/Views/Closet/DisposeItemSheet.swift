@@ -10,7 +10,7 @@ struct DisposeItemSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     VStack(spacing: 12) {
@@ -27,7 +27,7 @@ struct DisposeItemSheet: View {
                     .padding(.top, 32)
                     .padding(.horizontal, 24)
 
-                    GoldDivider()
+                    AccentDivider()
                         .padding(.horizontal, 24)
                         .padding(.top, 24)
 
@@ -70,21 +70,21 @@ struct DisposeItemSheet: View {
         Button { reason = r } label: {
             HStack(spacing: 16) {
                 Image(systemName: r.icon)
-                    .foregroundStyle(reason == r ? Color.dsDeepSlate : Color.dsAccentGold)
+                    .foregroundStyle(reason == r ? Color.dsBackground : Color.dsAccentPrimary)
                     .frame(width: 20)
                 Text(r.label)
                     .font(.dsBodyMedium)
-                    .foregroundStyle(reason == r ? Color.dsDeepSlate : Color.dsTextPrimary)
+                    .foregroundStyle(reason == r ? Color.dsBackground : Color.dsTextPrimary)
                 Spacer()
                 if reason == r {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.dsDeepSlate)
+                        .foregroundStyle(Color.dsBackground)
                         .font(.caption.weight(.semibold))
                 }
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 14)
-            .background(reason == r ? Color.dsAccentGold : Color.dsSurface)
+            .background(reason == r ? Color.dsAccentPrimary : Color.dsSurface)
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .animation(.dsDefault, value: reason)

@@ -33,13 +33,13 @@ struct AddItemView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
                 Form {
                     Section {
                         photoScanSection
                     } header: {
                         Text(Strings.addSectionPhoto)
-                            .font(.dsLabel).foregroundStyle(Color.dsAccentGold).tracking(1.5)
+                            .font(.dsLabel).foregroundStyle(Color.dsAccentPrimary).tracking(1.5)
                     }
 
                     Section {
@@ -89,7 +89,7 @@ struct AddItemView: View {
                         TextField(Strings.addFieldTags, text: $tags)
                     } header: {
                         Text(Strings.addSectionDetails)
-                            .font(.dsLabel).foregroundStyle(Color.dsAccentGold).tracking(1.5)
+                            .font(.dsLabel).foregroundStyle(Color.dsAccentPrimary).tracking(1.5)
                     }
                 }
                 .scrollContentBackground(.hidden)
@@ -169,17 +169,17 @@ struct AddItemView: View {
             } label: {
                 HStack(spacing: 8) {
                     if isAnalysing {
-                        ProgressView().tint(Color.dsDeepSlate).scaleEffect(0.8)
+                        ProgressView().tint(Color.dsBackground).scaleEffect(0.8)
                     } else {
                         Image(systemName: "wand.and.stars")
                     }
                     Text(isAnalysing ? Strings.addButtonAnalysing : Strings.addButtonAnalyse)
                         .font(.dsBodyMedium)
                 }
-                .foregroundStyle(Color.dsDeepSlate)
+                .foregroundStyle(Color.dsBackground)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
-                .background(Color.dsAccentGold)
+                .background(Color.dsAccentPrimary)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .disabled(isAnalysing || isSegmenting)
@@ -200,7 +200,7 @@ struct AddItemView: View {
                 .frame(width: 96, height: 96)
                 .overlay(
                     VStack(spacing: 6) {
-                        ProgressView().tint(Color.dsAccentGold)
+                        ProgressView().tint(Color.dsAccentPrimary)
                         Text(Strings.addLabelSegmenting)
                             .font(.system(size: 9, weight: .medium))
                             .foregroundStyle(Color.dsTextTertiary)
@@ -214,7 +214,7 @@ struct AddItemView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.dsAccentGold.opacity(0.3), lineWidth: 0.5)
+                        .stroke(Color.dsAccentPrimary.opacity(0.3), lineWidth: 0.5)
                 )
         } else {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -238,7 +238,7 @@ struct AddItemView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(Color.dsAccentGold.opacity(0.25), lineWidth: 0.5)
+                    .stroke(Color.dsAccentPrimary.opacity(0.25), lineWidth: 0.5)
             )
     }
 

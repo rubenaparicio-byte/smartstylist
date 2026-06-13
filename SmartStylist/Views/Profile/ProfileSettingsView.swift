@@ -18,7 +18,7 @@ struct ProfileSettingsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
 
                 if let profile {
                     ScrollView {
@@ -29,9 +29,9 @@ struct ProfileSettingsView: View {
                             avoidSection(profile)
                             traitsSection(profile)
                             shoppingSection(profile)
-                            GoldDivider().padding(.horizontal, 4)
+                            AccentDivider().padding(.horizontal, 4)
                             languageSection
-                            GoldDivider().padding(.horizontal, 4)
+                            AccentDivider().padding(.horizontal, 4)
                             actionSection(profile)
                             if showDevLogs {
                                 devLogsSection
@@ -51,7 +51,7 @@ struct ProfileSettingsView: View {
                 ToolbarItem(placement: .principal) {
                     Text(Strings.profileNavTitle)
                         .font(.dsTitle2)
-                        .foregroundStyle(Color.dsAccentGold)
+                        .foregroundStyle(Color.dsAccentPrimary)
                         .tracking(3)
                 }
             }
@@ -89,10 +89,10 @@ struct ProfileSettingsView: View {
                 Circle()
                     .fill(Color.dsSurface)
                     .frame(width: 72, height: 72)
-                    .overlay(Circle().stroke(Color.dsAccentGold.opacity(0.35), lineWidth: 0.5))
+                    .overlay(Circle().stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5))
                 Image(systemName: genderIcon(for: profile.gender))
                     .font(.system(size: 36, weight: .thin))
-                    .foregroundStyle(Color.dsAccentGold)
+                    .foregroundStyle(Color.dsAccentPrimary)
             }
             .onTapGesture {
                 devTapCount += 1
@@ -129,7 +129,7 @@ struct ProfileSettingsView: View {
 
             if let gender = profile.gender {
                 traitRow(label: Strings.profileTraitGender, value: localizedGender(gender))
-                GoldDivider()
+                AccentDivider()
             }
 
             HStack {
@@ -147,13 +147,13 @@ struct ProfileSettingsView: View {
                             .foregroundStyle(Color.dsTextPrimary)
                         Image(systemName: "pencil")
                             .font(.caption)
-                            .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                            .foregroundStyle(Color.dsAccentPrimary.opacity(0.7))
                     }
                 }
             }
 
             if !profile.accessoryStyle.isEmpty {
-                GoldDivider()
+                AccentDivider()
                 VStack(alignment: .leading, spacing: 8) {
                     Text(Strings.profileTraitAccessoryStyle)
                         .font(.dsCaption)
@@ -166,12 +166,12 @@ struct ProfileSettingsView: View {
                             )
                             Text(localized)
                                 .font(.dsCaption)
-                                .foregroundStyle(Color.dsAccentGold)
+                                .foregroundStyle(Color.dsAccentPrimary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
-                                .background(Color.dsAccentGold.opacity(0.12))
+                                .background(Color.dsAccentPrimary.opacity(0.12))
                                 .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color.dsAccentGold.opacity(0.35), lineWidth: 0.5))
+                                .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5))
                         }
                     }
                 }
@@ -238,13 +238,13 @@ struct ProfileSettingsView: View {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader(Strings.profileSectionTraits)
             traitRow(label: Strings.profileTraitBody,  value: localizedBodyType(profile.bodyType))
-            GoldDivider()
+            AccentDivider()
             traitRow(label: Strings.profileTraitSkin,  value: profile.skinTone)
-            GoldDivider()
+            AccentDivider()
             traitRow(label: Strings.profileTraitEye,   value: profile.eyeColor)
-            GoldDivider()
+            AccentDivider()
             traitRow(label: Strings.profileTraitHair,  value: profile.hairColor)
-            GoldDivider()
+            AccentDivider()
             traitRow(label: Strings.profileTraitMetal, value: profile.metalPreference)
         }
         .padding(18)
@@ -262,7 +262,7 @@ struct ProfileSettingsView: View {
                     showStoreSheet = true
                 }
                 .font(.dsCaption)
-                .foregroundStyle(Color.dsAccentGold.opacity(0.8))
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.8))
             }
 
             if profile.preferredStores.isEmpty {
@@ -271,7 +271,7 @@ struct ProfileSettingsView: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "bag")
-                            .foregroundStyle(Color.dsAccentGold.opacity(0.6))
+                            .foregroundStyle(Color.dsAccentPrimary.opacity(0.6))
                         Text(Strings.profileStoresEmpty)
                             .font(.dsCaption)
                             .foregroundStyle(Color.dsTextTertiary)
@@ -287,7 +287,7 @@ struct ProfileSettingsView: View {
                             .padding(.vertical, 5)
                             .background(Color.dsSurface.opacity(0.6))
                             .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.dsAccentGold.opacity(0.2), lineWidth: 0.5))
+                            .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.2), lineWidth: 0.5))
                     }
                 }
             }
@@ -312,7 +312,7 @@ struct ProfileSettingsView: View {
                     Text(Strings.settingsLanguageES).tag("es")
                 }
                 .pickerStyle(.menu)
-                .tint(Color.dsAccentGold)
+                .tint(Color.dsAccentPrimary)
             }
         }
         .padding(18)
@@ -329,12 +329,12 @@ struct ProfileSettingsView: View {
                     Text(Strings.profileRetakeButton)
                 }
                 .font(.dsBodyMedium)
-                .foregroundStyle(Color.dsAccentGold)
+                .foregroundStyle(Color.dsAccentPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 15)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Color.dsAccentGold, lineWidth: 1)
+                        .stroke(Color.dsAccentPrimary, lineWidth: 1)
                 )
             }
 
@@ -370,7 +370,7 @@ struct ProfileSettingsView: View {
     private var agePickerSheet: some View {
         NavigationStack {
             ZStack {
-                Color.dsDeepSlate.ignoresSafeArea()
+                Color.dsBackground.ignoresSafeArea()
                 VStack(spacing: 24) {
                     Text(Strings.profileTraitAge)
                         .font(.dsLabel)
@@ -391,10 +391,10 @@ struct ProfileSettingsView: View {
                     } label: {
                         Text(Strings.commonSave)
                             .font(.dsBodyMedium)
-                            .foregroundStyle(Color.dsDeepSlate)
+                            .foregroundStyle(Color.dsBackground)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 15)
-                            .background(Color.dsAccentGold)
+                            .background(Color.dsAccentPrimary)
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                     .padding(.horizontal, 24)
@@ -485,7 +485,7 @@ struct ProfileSettingsView: View {
                 } label: {
                     Text("Clear")
                         .font(.dsCaption)
-                        .foregroundStyle(Color.dsAccentGold.opacity(0.7))
+                        .foregroundStyle(Color.dsAccentPrimary.opacity(0.7))
                 }
             }
 
@@ -513,7 +513,7 @@ struct ProfileSettingsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.dsAccentGold.opacity(0.2), lineWidth: 0.5)
+                .stroke(Color.dsAccentPrimary.opacity(0.2), lineWidth: 0.5)
         )
         .padding(.bottom, 16)
     }

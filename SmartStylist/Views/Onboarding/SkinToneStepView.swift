@@ -13,7 +13,7 @@ struct SkinToneStepView: View {
                         .font(.dsBody)
                         .foregroundStyle(Color.dsTextSecondary)
                 }
-                GoldDivider()
+                AccentDivider()
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
                     ForEach(vm.skinToneOptions, id: \.self) { tone in
@@ -46,13 +46,13 @@ private struct SkinToneCard: View {
                     .frame(width: 64, height: 64)
                     .overlay {
                         Circle()
-                            .stroke(isSelected ? Color.dsAccentGold : Color.white.opacity(0.12), lineWidth: isSelected ? 2 : 0.5)
+                            .stroke(isSelected ? Color.dsAccentPrimary : Color.white.opacity(0.12), lineWidth: isSelected ? 2 : 0.5)
                     }
                     .shadow(color: baseColor.opacity(0.4), radius: 10, y: 5)
 
                 Text(localizedName)
                     .font(.dsBodyMedium)
-                    .foregroundStyle(isSelected ? Color.dsAccentGold : Color.dsTextPrimary)
+                    .foregroundStyle(isSelected ? Color.dsAccentPrimary : Color.dsTextPrimary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -65,12 +65,12 @@ private struct SkinToneCard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.dsAccentGold.opacity(0.08) : Color.dsSurface.opacity(0.3))
+            .background(isSelected ? Color.dsAccentPrimary.opacity(0.08) : Color.dsSurface.opacity(0.3))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(
-                        isSelected ? Color.dsAccentGold.opacity(0.6) : Color.dsAccentGold.opacity(0.12),
+                        isSelected ? Color.dsAccentPrimary.opacity(0.6) : Color.dsAccentPrimary.opacity(0.12),
                         lineWidth: isSelected ? 1.5 : 0.5
                     )
             }
