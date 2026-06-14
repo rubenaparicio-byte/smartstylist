@@ -216,6 +216,13 @@
 "profile.section.avoid"            = "EVITAR";
 "profile.section.traits"           = "PERFIL FÍSICO";
 "profile.section.shopping"         = "PERFIL DE COMPRAS";
+"profile.section.dna"              = "STYLE DNA";
+"profile.section.physical"         = "PERFIL FÍSICO";
+"profile.section.prefs"            = "PREFERENCIAS";
+"profile.section.account"          = "CUENTA";
+"profile.stats.items"              = "prendas";
+"profile.stats.looks"              = "looks";
+"profile.stats.stores"             = "tiendas";
 "profile.trait.gender"             = "Género";
 "profile.trait.age"                = "Edad";
 "profile.trait.body"               = "Tipo de Cuerpo";
@@ -226,6 +233,10 @@
 "profile.trait.accessory_style"    = "Estilo de Accesorios";
 "profile.stores.edit"              = "Editar";
 "profile.stores.empty"             = "Toca Editar para añadir tus marcas favoritas";
+"profile.empty.colors"             = "Sin colores aún";
+"profile.empty.stores"             = "Sin tiendas seleccionadas";
+"profile.empty.style"              = "Sin preferencias de estilo";
+"profile.update.analysis"          = "Actualizar Análisis";
 "profile.retake.button"            = "Repetir Análisis";
 "profile.retake.title"             = "¿Repetir el Análisis?";
 "profile.retake.message"           = "Tu armario se conservará, pero tu perfil de color se borrará. La IA analizará tu estilo desde cero.";

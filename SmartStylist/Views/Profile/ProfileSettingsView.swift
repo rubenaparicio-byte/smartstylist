@@ -3,6 +3,8 @@ import SwiftData
 
 struct ProfileSettingsView: View {
     @Query private var profiles: [UserProfile]
+    @Query private var allItems: [ClothingItem]
+    @Query private var outfitHistory: [OutfitHistory]
     @Environment(\.modelContext) private var ctx
     @State private var vm = ProfileViewModel()
     @State private var devTapCount = 0
@@ -23,15 +25,11 @@ struct ProfileSettingsView: View {
                 if let profile {
                     ScrollView {
                         VStack(spacing: 20) {
-                            profileHeader(profile)
-                            identitySection(profile)
-                            colorimetrySection(profile)
-                            avoidSection(profile)
-                            traitsSection(profile)
-                            shoppingSection(profile)
-                            AccentDivider().padding(.horizontal, 4)
-                            languageSection
-                            AccentDivider().padding(.horizontal, 4)
+                            heroHeader(profile)
+                            styleDNASection(profile)
+                            physicalSection(profile)
+                            preferencesSection(profile)
+                            accountSection(profile)
                             actionSection(profile)
                             if showDevLogs {
                                 devLogsSection
@@ -81,57 +79,246 @@ struct ProfileSettingsView: View {
         }
     }
 
-    // ── Profile header ────────────────────────────────────────────────────────
+    // ── Hero header ───────────────────────────────────────────────────────────
 
-    private func profileHeader(_ profile: UserProfile) -> some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(Color.dsSurface)
-                    .frame(width: 72, height: 72)
-                    .overlay(Circle().stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5))
-                Image(systemName: genderIcon(for: profile.gender))
-                    .font(.system(size: 36, weight: .thin))
-                    .foregroundStyle(Color.dsAccentPrimary)
-            }
-            .onTapGesture {
-                devTapCount += 1
-                if devTapCount >= 5 {
-                    showDevLogs.toggle()
-                    devTapCount = 0
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(profile.seasonalColorimetry.isEmpty ? "—" : profile.seasonalColorimetry)
-                    .font(.dsTitle2)
-                    .foregroundStyle(Color.dsTextPrimary)
-                HStack(spacing: 6) {
+    private func heroHeader(_ profile: UserProfile) -> some View {
+        VStack(spacing: 16) {
+            // Avatar + season chip
+            VStack(spacing: 12) {
+                ZStack {
                     Circle()
-                        .fill(Color(hex: profile.metalPreference == "Gold" ? "#D4AF37" : "#C0C0C0"))
-                        .frame(width: 11, height: 11)
-                    Text(profile.metalPreference.isEmpty ? "—" : profile.metalPreference)
-                        .font(.dsCaption)
-                        .foregroundStyle(Color.dsTextSecondary)
+                        .fill(Color.dsSurface)
+                        .frame(width: 72, height: 72)
+                        .overlay(Circle().stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5))
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 32, weight: .thin))
+                        .foregroundStyle(Color.dsAccentPrimary.opacity(0.7))
+                }
+                .onTapGesture {
+                    devTapCount += 1
+                    if devTapCount >= 5 {
+                        showDevLogs.toggle()
+                        devTapCount = 0
+                    }
+                }
+
+                if !profile.seasonalColorimetry.isEmpty {
+                    let metalColor = profile.metalPreference == "Gold"
+                        ? Color(hex: "#D4AF37")
+                        : Color(hex: "#C0C0C0")
+                    HStack(spacing: 5) {
+                        Circle()
+                            .fill(metalColor)
+                            .frame(width: 8, height: 8)
+                        Text(profile.metalPreference.isEmpty
+                            ? profile.seasonalColorimetry
+                            : "\(profile.seasonalColorimetry) · \(profile.metalPreference)")
+                            .font(.dsCaption)
+                            .foregroundStyle(Color.dsTextSecondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Material.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.18), lineWidth: 0.5))
                 }
             }
-            Spacer()
+
+            // Stats row
+            HStack(spacing: 0) {
+                statColumn(value: allItems.count, label: Strings.profileStatsItems)
+                Rectangle()
+                    .fill(Color.dsAccentPrimary.opacity(0.15))
+                    .frame(width: 0.5, height: 32)
+                statColumn(value: outfitHistory.count, label: Strings.profileStatsLooks)
+                Rectangle()
+                    .fill(Color.dsAccentPrimary.opacity(0.15))
+                    .frame(width: 0.5, height: 32)
+                statColumn(value: profile.preferredStores.count, label: Strings.profileStatsStores)
+            }
+            .padding(.vertical, 12)
+            .background(Color.dsSurface.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: DSSize.cornerRadiusMedium, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: DSSize.cornerRadiusMedium, style: .continuous)
+                    .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)
+            )
         }
         .padding(18)
         .luxuryCard()
     }
 
-    // ── Identity section ──────────────────────────────────────────────────────
+    private func statColumn(value: Int, label: String) -> some View {
+        VStack(spacing: 4) {
+            Text("\(value)")
+                .font(.system(.title2, design: .default, weight: .semibold))
+                .foregroundStyle(Color.dsAccentPrimary)
+                .contentTransition(.numericText())
+            Text(label)
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsTextTertiary)
+        }
+        .frame(maxWidth: .infinity)
+    }
 
-    private func identitySection(_ profile: UserProfile) -> some View {
+    // ── Style DNA ─────────────────────────────────────────────────────────────
+
+    private func styleDNASection(_ profile: UserProfile) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(Strings.profileSectionIdentity)
+            sectionHeader(Strings.profileSectionDNA)
+
+            if !profile.seasonalColorimetry.isEmpty {
+                Text(profile.seasonalColorimetry)
+                    .font(.dsBodyMedium)
+                    .foregroundStyle(Color.dsTextPrimary)
+                AccentDivider()
+            }
+
+            // Recommended colours
+            VStack(alignment: .leading, spacing: 8) {
+                Text(Strings.profileSectionColorimetry)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+                let recommended = profile.recommendedColorSwatches
+                if recommended.isEmpty {
+                    profileEmptyNote(Strings.profileEmptyColors)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(recommended, id: \.hex) { swatch in
+                                colorSwatch(hex: swatch.hex, name: swatch.name)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Avoid colours (only if non-empty)
+            let avoid = profile.avoidColorSwatches
+            if !avoid.isEmpty {
+                AccentDivider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(Strings.profileSectionAvoid)
+                        .font(.dsCaption)
+                        .foregroundStyle(Color.dsTextTertiary)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(avoid, id: \.hex) { swatch in
+                                colorSwatch(hex: swatch.hex, name: swatch.name)
+                                    .opacity(0.6)
+                                    .overlay(
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .foregroundStyle(Color.white.opacity(0.8))
+                                    )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .luxuryCard()
+    }
+
+    // ── Physical profile ──────────────────────────────────────────────────────
+
+    private func physicalSection(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader(Strings.profileSectionPhysical)
+            traitRow(label: Strings.profileTraitBody, value: localizedBodyType(profile.bodyType))
+            AccentDivider()
+            traitRow(label: Strings.profileTraitSkin, value: profile.skinTone)
+            AccentDivider()
+            traitRow(label: Strings.profileTraitEye,  value: profile.eyeColor)
+            AccentDivider()
+            traitRow(label: Strings.profileTraitHair, value: profile.hairColor)
+        }
+        .padding(18)
+        .luxuryCard()
+    }
+
+    // ── Preferences ───────────────────────────────────────────────────────────
+
+    private func preferencesSection(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader(Strings.profileSectionPrefs)
+
+            // Accessory style chips
+            VStack(alignment: .leading, spacing: 8) {
+                Text(Strings.profileTraitAccessoryStyle)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+                if profile.accessoryStyle.isEmpty {
+                    profileEmptyNote(Strings.profileEmptyStyle)
+                } else {
+                    FlowLayout(spacing: 8) {
+                        ForEach(profile.accessoryStyle, id: \.self) { style in
+                            let localized = String(
+                                localized: String.LocalizationValue("accessory.\(style.lowercased())"),
+                                locale: Strings.activeLocale
+                            )
+                            Text(localized)
+                                .font(.dsCaption)
+                                .foregroundStyle(Color.dsAccentPrimary)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.dsAccentPrimary.opacity(0.12))
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5))
+                        }
+                    }
+                }
+            }
+
+            AccentDivider()
+
+            // Preferred stores
+            HStack {
+                Text(Strings.profileSectionShopping)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
+                Spacer()
+                Button(Strings.profileStoresEdit) {
+                    showStoreSheet = true
+                }
+                .font(.dsCaption)
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.8))
+            }
+
+            if profile.preferredStores.isEmpty {
+                profileEmptyNote(Strings.profileEmptyStores)
+            } else {
+                FlowLayout(spacing: 8) {
+                    ForEach(profile.preferredStores, id: \.self) { store in
+                        Text(store)
+                            .font(.dsCaption)
+                            .foregroundStyle(Color.dsTextSecondary)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.dsSurface.opacity(0.6))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.2), lineWidth: 0.5))
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .luxuryCard()
+    }
+
+    // ── Account ───────────────────────────────────────────────────────────────
+
+    private func accountSection(_ profile: UserProfile) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader(Strings.profileSectionAccount)
 
             if let gender = profile.gender {
                 traitRow(label: Strings.profileTraitGender, value: localizedGender(gender))
                 AccentDivider()
             }
 
+            // Age (editable)
             HStack {
                 Text(Strings.profileTraitAge)
                     .font(.dsCaption)
@@ -152,155 +339,13 @@ struct ProfileSettingsView: View {
                 }
             }
 
-            if !profile.accessoryStyle.isEmpty {
-                AccentDivider()
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(Strings.profileTraitAccessoryStyle)
-                        .font(.dsCaption)
-                        .foregroundStyle(Color.dsTextTertiary)
-                    FlowLayout(spacing: 8) {
-                        ForEach(profile.accessoryStyle, id: \.self) { style in
-                            let localized = String(
-                                localized: String.LocalizationValue("accessory.\(style.lowercased())"),
-                                locale: Strings.activeLocale
-                            )
-                            Text(localized)
-                                .font(.dsCaption)
-                                .foregroundStyle(Color.dsAccentPrimary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color.dsAccentPrimary.opacity(0.12))
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.35), lineWidth: 0.5))
-                        }
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .luxuryCard()
-    }
-
-    // ── Colour palette ────────────────────────────────────────────────────────
-
-    private func colorimetrySection(_ profile: UserProfile) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(Strings.profileSectionColorimetry)
-            let swatches = profile.recommendedColorSwatches
-            if swatches.isEmpty {
-                emptyNote
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(swatches, id: \.hex) { swatch in
-                            colorSwatch(hex: swatch.hex, name: swatch.name)
-                        }
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .luxuryCard()
-    }
-
-    @ViewBuilder
-    private func avoidSection(_ profile: UserProfile) -> some View {
-        let swatches = profile.avoidColorSwatches
-        if !swatches.isEmpty {
-            VStack(alignment: .leading, spacing: 14) {
-                sectionHeader(Strings.profileSectionAvoid)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(swatches, id: \.hex) { swatch in
-                            colorSwatch(hex: swatch.hex, name: swatch.name)
-                                .opacity(0.6)
-                                .overlay(
-                                    Image(systemName: "xmark")
-                                        .font(.system(size: 8, weight: .bold))
-                                        .foregroundStyle(Color.white.opacity(0.8))
-                                )
-                        }
-                    }
-                }
-            }
-            .padding(18)
-            .luxuryCard()
-        }
-    }
-
-    // ── Physical traits ───────────────────────────────────────────────────────
-
-    private func traitsSection(_ profile: UserProfile) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(Strings.profileSectionTraits)
-            traitRow(label: Strings.profileTraitBody,  value: localizedBodyType(profile.bodyType))
             AccentDivider()
-            traitRow(label: Strings.profileTraitSkin,  value: profile.skinTone)
-            AccentDivider()
-            traitRow(label: Strings.profileTraitEye,   value: profile.eyeColor)
-            AccentDivider()
-            traitRow(label: Strings.profileTraitHair,  value: profile.hairColor)
-            AccentDivider()
-            traitRow(label: Strings.profileTraitMetal, value: profile.metalPreference)
-        }
-        .padding(18)
-        .luxuryCard()
-    }
 
-    // ── Shopping profile ──────────────────────────────────────────────────────
-
-    private func shoppingSection(_ profile: UserProfile) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                sectionHeader(Strings.profileSectionShopping)
-                Spacer()
-                Button(Strings.profileStoresEdit) {
-                    showStoreSheet = true
-                }
-                .font(.dsCaption)
-                .foregroundStyle(Color.dsAccentPrimary.opacity(0.8))
-            }
-
-            if profile.preferredStores.isEmpty {
-                Button {
-                    showStoreSheet = true
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "bag")
-                            .foregroundStyle(Color.dsAccentPrimary.opacity(0.6))
-                        Text(Strings.profileStoresEmpty)
-                            .font(.dsCaption)
-                            .foregroundStyle(Color.dsTextTertiary)
-                    }
-                }
-            } else {
-                FlowLayout(spacing: 8) {
-                    ForEach(profile.preferredStores, id: \.self) { store in
-                        Text(store)
-                            .font(.dsCaption)
-                            .foregroundStyle(Color.dsTextSecondary)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.dsSurface.opacity(0.6))
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(0.2), lineWidth: 0.5))
-                    }
-                }
-            }
-        }
-        .padding(18)
-        .luxuryCard()
-    }
-
-    // ── Language section ──────────────────────────────────────────────────────
-
-    private var languageSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader(Strings.settingsSectionLanguage)
+            // Language
             HStack {
                 Text(Strings.settingsLanguageLabel)
-                    .font(.dsBody)
-                    .foregroundStyle(Color.dsTextPrimary)
+                    .font(.dsCaption)
+                    .foregroundStyle(Color.dsTextTertiary)
                 Spacer()
                 Picker("", selection: $preferredLanguage) {
                     Text(Strings.settingsLanguageSystem).tag("system")
@@ -315,14 +360,14 @@ struct ProfileSettingsView: View {
         .luxuryCard()
     }
 
-    // ── Action section ────────────────────────────────────────────────────────
+    // ── Actions ───────────────────────────────────────────────────────────────
 
     private func actionSection(_ profile: UserProfile) -> some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 16) {
             Button { vm.showRetakeConfirmation = true } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "arrow.counterclockwise")
-                    Text(Strings.profileRetakeButton)
+                    Text(Strings.profileUpdateAnalysis)
                 }
                 .font(.dsBodyMedium)
                 .foregroundStyle(Color.dsAccentPrimary)
@@ -410,6 +455,12 @@ struct ProfileSettingsView: View {
             .tracking(2)
     }
 
+    private func profileEmptyNote(_ message: String) -> some View {
+        Label(message, systemImage: "circle.dashed")
+            .font(.dsCaption)
+            .foregroundStyle(Color.dsTextTertiary)
+    }
+
     private func colorSwatch(hex: String, name: String) -> some View {
         VStack(spacing: 6) {
             Circle()
@@ -438,20 +489,6 @@ struct ProfileSettingsView: View {
         }
     }
 
-    private var emptyNote: some View {
-        Text("—")
-            .font(.dsCaption)
-            .foregroundStyle(Color.dsTextTertiary)
-    }
-
-    private func genderIcon(for gender: String?) -> String {
-        switch gender {
-        case "Male":   return "figure.stand"
-        case "Female": return "figure.stand.dress"
-        default:       return "person.crop.circle"
-        }
-    }
-
     private func localizedGender(_ gender: String) -> String {
         switch gender {
         case "Male":   return Strings.onboardingGenderMale
@@ -466,7 +503,7 @@ struct ProfileSettingsView: View {
         return localized == key ? rawValue : localized
     }
 
-    // ── Developer Logs (hidden — 5 taps on profile icon) ─────────────────────
+    // ── Developer Logs (hidden — 5 taps on avatar) ────────────────────────────
 
     private var devLogsSection: some View {
         VStack(alignment: .leading, spacing: 12) {

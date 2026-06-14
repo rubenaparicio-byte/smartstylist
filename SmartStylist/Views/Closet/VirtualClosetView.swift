@@ -260,10 +260,14 @@ struct VirtualClosetView: View {
             HStack(spacing: 4) {
                 Text("\(activeCount) \(Strings.wardrobeStatusActive)")
                     .foregroundStyle(Color.dsTextSecondary)
+                    .contentTransition(.numericText(value: Double(activeCount)))
+                    .animation(.dsDefault, value: activeCount)
                 Text("·")
                     .foregroundStyle(Color.dsTextTertiary)
                 Text("\(archivedCount) \(Strings.wardrobeStatusArchived)")
                     .foregroundStyle(Color.dsTextTertiary)
+                    .contentTransition(.numericText(value: Double(archivedCount)))
+                    .animation(.dsDefault, value: archivedCount)
             }
             .font(.dsCaption)
             .padding(.leading, 2)
@@ -307,9 +311,9 @@ struct VirtualClosetView: View {
 
     private var noResultsView: some View {
         VStack(spacing: 20) {
-            Image(systemName: "magnifyingglass")
+            Image(systemName: "circle.slash")
                 .font(.system(size: 40, weight: .thin))
-                .foregroundStyle(Color.dsTextTertiary)
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.35))
                 .symbolRenderingMode(.hierarchical)
 
             VStack(spacing: 8) {

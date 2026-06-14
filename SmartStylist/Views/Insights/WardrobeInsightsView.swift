@@ -227,17 +227,22 @@ struct WardrobeInsightsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(Color.dsSurface)
+        .background(Material.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.dsAccentPrimary.opacity(0.15), lineWidth: 0.5)
+        )
     }
 
     // ── Empty / Helpers ───────────────────────────────────────────────────────
 
     private var emptyState: some View {
         VStack(spacing: 16) {
-            Image(systemName: "chart.pie")
+            Image(systemName: "circle.dashed")
                 .font(.system(size: 48, weight: .thin))
-                .foregroundStyle(Color.dsTextTertiary)
+                .foregroundStyle(Color.dsAccentPrimary.opacity(0.4))
+                .symbolRenderingMode(.hierarchical)
             Text(Strings.insightsEmptyTitle)
                 .font(.dsTitle2)
                 .foregroundStyle(Color.dsTextPrimary)
@@ -251,11 +256,10 @@ struct WardrobeInsightsView: View {
     }
 
     private var emptyNote: some View {
-        Text(Strings.insightsEmptySubtitle)
+        Label(Strings.insightsEmptyTitle, systemImage: "circle.dashed")
             .font(.dsCaption)
             .foregroundStyle(Color.dsTextTertiary)
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 8)
     }
 

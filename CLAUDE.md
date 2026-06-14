@@ -99,13 +99,6 @@ AuthService(keychain: KeychainStore(
 
 `KeychainStore.live` wraps the private `KeychainHelper` enum (Security.framework). Never reference `KeychainHelper` directly outside `AuthService.swift`.
 
-### Wiring up Google Sign-In (future)
-
-1. Configure OAuth 2.0 credentials in Google Cloud Console
-2. Add `GoogleSignIn-iOS` package via Swift Package Manager
-3. Register the reversed client ID as `GIDClientID` in `project.yml` `info.properties`
-4. Replace the `TODO` placeholder in `LoginView.googleSignInButton` with `GIDSignIn.sharedInstance.signIn(withPresenting:)`
-
 ## API Keys
 
 `SmartStylist/Config/APIKeys.swift` is **gitignored** — it contains real keys and must never be committed.
@@ -333,18 +326,74 @@ Selecting a new gender in `GenderStepView` resets `selectedBodyType = ""` to pre
 
 ### ProfileSettingsView — section layout (`Views/Profile/ProfileSettingsView.swift`)
 
+**Hero header** — avatar circle (72 pt, `dsSurface` fill, `person.fill` icon), season + metal chip (glass capsule, `Material.ultraThinMaterial`), and a 3-column stats row driven by `@Query`:
+
+| Stat column | Source |
+|-------------|--------|
+| items | `@Query [ClothingItem].count` |
+| looks | `@Query [OutfitHistory].count` |
+| stores | `profile.preferredStores.count` |
+
+Stats use `contentTransition(.numericText())`. Tap avatar 5× to reveal dev logs.
+
+**5 card sections:**
+
 | Section | Content |
 |---------|---------|
-| Header | Season + metal badge; tap 5× for dev logs |
-| Identity | Gender (read-only), Age (wheel picker sheet), Accessory Style chips |
-| Colour Palette | Horizontal scroll of recommended swatches |
-| Avoid | Muted swatches with ✕ overlay |
-| Physical Profile | Body type (localised), skin tone, eye/hair colour, metal |
-| Shopping Profile | Multi-select store chips → opens `StoreSelectionView` sheet |
-| Language | `"system"` / `"en"` / `"es"` menu picker |
-| Actions | Retake Analysis, Danger Zone (Delete All Data) |
+| STYLE DNA | Season label (read-only) + recommended colour swatches + avoid swatches |
+| PHYSICAL PROFILE | Body type, skin tone, eye colour, hair colour (all read-only) |
+| PREFERENCES | Accessory style chips + preferred stores → `StoreSelectionView` sheet |
+| ACCOUNT | Gender (read-only), Age (wheel picker sheet), Language picker |
+| ACTIONS | "Update Analysis" outline button + Danger Zone (Delete All Data) |
+
+`metalPreference` is shown only in the hero chip — not duplicated in Physical Profile.
 
 `StoreSelectionView` (`Views/Profile/StoreSelectionView.swift`) shows ~25 brands segmented as Budget / Mid-range / Premium / Sports. Selections are written directly to `profile.preferredStores` (SwiftData `@Model` class — auto-persisted).
+
+### App-wide UX patterns
+
+These conventions apply across all content views. Enforce them when adding new views or empty states.
+
+**Empty states — two tiers:**
+
+| Context | Pattern | Icon |
+|---------|---------|------|
+| Full-page (no data at all) | `VStack` with large icon + title + subtitle | `circle.dashed` (`dsAccentPrimary.opacity(0.4)`, `.hierarchical`) |
+| Full-page (search/filter no results) | Same VStack + "Clear filters" button | `circle.slash` (`dsAccentPrimary.opacity(0.35)`, `.hierarchical`) |
+| Inline (empty section inside a card) | `Label(text, systemImage: "circle.dashed")` | built into `Label` |
+
+```swift
+// Inline empty state — copy this pattern everywhere
+Label(Strings.profileEmptyColors, systemImage: "circle.dashed")
+    .font(.dsCaption)
+    .foregroundStyle(Color.dsTextTertiary)
+```
+
+**Glass chips (unselected interactive state):**
+
+Use `Material.ultraThinMaterial` + `Capsule()` + `dsAccentPrimary.opacity(0.18–0.25)` stroke for any chip or pill that is tappable but currently unselected. Selected state uses solid `dsAccentPrimary` fill.
+
+```swift
+.background {
+    if isSelected { Color.dsAccentPrimary } else { Material.ultraThinMaterial }
+}
+.clipShape(Capsule())
+.overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.25), lineWidth: 0.5))
+```
+
+Applied in: `StyleEngineView` event context chips, `ProfileSettingsView` season/metal chip, `WardrobeInsightsView` stat pills.
+
+**Numeric text transitions:**
+
+All `Text` views displaying a count that can change at runtime must use:
+
+```swift
+Text("\(count)")
+    .contentTransition(.numericText(value: Double(count)))
+    .animation(.dsDefault, value: count)
+```
+
+Applied in: `ProfileSettingsView` stats row, `VirtualClosetView` status summary, `WardrobeInsightsView` chart legend + stat pills + top worn rows.
 
 ### OutfitSuggestionCard — Layer Composition Stack (`Views/StyleEngine/OutfitSuggestionCard.swift`)
 
@@ -401,7 +450,11 @@ All user-facing strings go through `SmartStylist/Localization/Strings.swift`. **
 | `bodytype.*` / `bodytype.*.desc` | Body type names + one-line definitions |
 | `skintone.*` / `skintone.*.desc` | Skin tone names + undertone descriptions |
 | `accessory.*` | Accessory style labels (Minimal, Statement, Layered, Vintage) |
-| `profile.*` | Profile section headers and trait labels |
+| `profile.section.*` | Section headers (dna, physical, prefs, account) |
+| `profile.stats.*` | Hero stats labels (items, looks, stores) |
+| `profile.trait.*` | Trait row labels (gender, age, body, skin, eye, hair, metal) |
+| `profile.empty.*` | Inline empty state messages (colors, stores, style) |
+| `profile.*` | Alert titles/messages, action buttons |
 | `stores.*` | Store sheet navigation and section headers |
 
 **Adding new strings:**
@@ -655,136 +708,9 @@ GitHub Actions (`.github/workflows/ios-ci.yml`) runs on push/PR to `main`:
 
 ## CD — TestFlight
 
-GitHub Actions (`.github/workflows/ios-cd.yml`) triggers on `workflow_dispatch` or a `v*` tag.
+Full CD pipeline details (secrets, certificate generation, signing gotchas, SPM/signing rules, Info.plist patching): see [`.claude/cd-testflight.md`](.claude/cd-testflight.md).
 
-**Runner:** `macos-26` (Xcode 26, iOS 26 SDK). Apple requires the iOS 26 SDK for all new TestFlight uploads — `macos-15` (Xcode 16.4, iOS 18.5 SDK) is rejected at upload time.
-
-### Pipeline steps
-
-1. Checkout + install XcodeGen
-2. Inject `APIKeys.swift` from `OPENROUTER_API_KEY` / `WEATHER_API_KEY`
-3. `xcodegen generate`
-4. **Install distribution certificate** — decodes `DISTRIBUTION_CERTIFICATE_P12` (base64), imports into a temporary keychain via `security create-keychain` + `security import` + `security set-key-partition-list`
-5. **Install provisioning profile** — decodes `APP_STORE_PROVISIONING_PROFILE` (base64), extracts UUID via `security cms -D | plutil -extract UUID raw`, copies to `~/Library/MobileDevice/Provisioning Profiles/`
-6. Write App Store Connect `.p8` key from `APP_STORE_CONNECT_KEY_CONTENT`
-7. Generate `ExportOptions.plist` with `signingStyle: manual`
-8. **Patch `CFBundleVersion`** with `PlistBuddy` using a Unix timestamp (`date +%s`) — XcodeGen expands `$(CURRENT_PROJECT_VERSION)` to its literal default at generation time, so the xcodebuild CLI override has no effect (see [Critical: XcodeGen expands build setting variables](#critical-xcodegen-expands-build-setting-variables-in-infoplist))
-9. `xcodebuild archive` passing only `PROVISIONING_PROFILE_UUID_CI=<uuid>` and `DEVELOPMENT_TEAM` — signing identity and style are declared in `project.yml` for the `SmartStylist` target's Release config only (see **Critical: SPM targets and manual signing** below)
-10. `xcodebuild -exportArchive`
-11. `xcrun altool --upload-app` with ASC API key
-12. Upload IPA as GitHub artifact (30-day retention, runs even on failure)
-
-### Critical: provisioning profile must include all app capabilities
-
-The `APP_STORE_PROVISIONING_PROFILE` Secret must be regenerated whenever new capabilities are added to the app. If the profile was created before a capability was enabled, the archive step fails with:
-
-> `Provisioning profile "…" doesn't include the WeatherKit capability.`
-> `Provisioning profile "…" doesn't include the iCloud capability.`
-
-**Capabilities currently required in the App ID (`com.rubenaparicio.SmartStylist`):**
-
-| Capability | Notes |
-|------------|-------|
-| Sign In with Apple | entitlement: `com.apple.developer.applesignin` |
-| iCloud (CloudKit) | container: `iCloud.com.rubenaparicio.SmartStylist` |
-| WeatherKit | entitlement: `com.apple.developer.weatherkit` |
-
-**Procedure to update the profile:**
-1. developer.apple.com → **Identifiers** → `com.rubenaparicio.SmartStylist` → enable/verify capabilities → **Save**
-2. **Profiles** → "SmartStylist AppStore Profile" → **Edit** → **Regenerate** → download
-3. Verify capabilities: `grep -a -o 'com\.apple\.[a-z.-]*' profile.mobileprovision | sort -u`
-4. Encode and update Secret: `base64 -w 0 profile.mobileprovision` → paste into `APP_STORE_PROVISIONING_PROFILE`
-
-### Required GitHub Secrets
-
-| Secret | Contents |
-|--------|----------|
-| `OPENROUTER_API_KEY` | OpenRouter API key (free tier) |
-| `WEATHER_API_KEY` | OpenWeather API key |
-| `DISTRIBUTION_CERTIFICATE_P12` | base64-encoded `.p12` (Apple Distribution cert + private key) |
-| `DISTRIBUTION_CERTIFICATE_PASSWORD` | Password for the `.p12` |
-| `APP_STORE_PROVISIONING_PROFILE` | base64-encoded App Store distribution `.mobileprovision` |
-| `APP_STORE_CONNECT_KEY_CONTENT` | Contents of the `.p8` ASC API key file |
-| `APP_STORE_CONNECT_KEY_ID` | Key ID from App Store Connect |
-| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID from App Store Connect |
-| `DEVELOPMENT_TEAM` | Apple Team ID (e.g. `CY3J5RM5UX`) |
-
-### Generating the certificate and provisioning profile (Linux / no Keychain Access)
-
-```bash
-# 1. Generate private key + CSR
-openssl genrsa -out private.key 2048
-openssl req -new -key private.key -out request.certSigningRequest \
-  -subj "/emailAddress=you@example.com/CN=Apple Distribution/C=ES"
-
-# 2. Upload CSR at developer.apple.com → Certificates → + → Apple Distribution
-#    Download the resulting distribution.cer
-
-# 3. Convert .cer → PEM
-openssl x509 -in distribution.cer -inform DER -out distribution.pem -outform PEM
-
-# 4. Bundle into .p12 (choose a password)
-openssl pkcs12 -export \
-  -inkey private.key -in distribution.pem \
-  -out distribution.p12 -passout pass:YOUR_PASSWORD
-
-# 5. Encode for GitHub Secret
-base64 -w 0 distribution.p12   # → paste as DISTRIBUTION_CERTIFICATE_P12
-base64 -w 0 profile.mobileprovision   # → paste as APP_STORE_PROVISIONING_PROFILE
-```
-
-All certificate files (`*.p12`, `*.cer`, `*.pem`, `*.mobileprovision`, `private.key`, `*.certSigningRequest`) are **gitignored** — never commit them.
-
-### Critical: SPM targets and manual signing
-
-Passing `CODE_SIGN_STYLE=Manual` or `PROVISIONING_PROFILE_SPECIFIER` as **global** `xcodebuild` CLI overrides applies those settings to **every target** in the build graph — including all SPM package targets pulled in by GoogleSignIn (Promises, GTMAppAuth, AppAuth, GoogleUtilities, GTMSessionFetcher…). Those library targets have no bundle ID and do not support provisioning profiles, so the archive fails with:
-
-> `Promises_FBLPromises does not support provisioning profiles, but provisioning profile … has been manually specified.`
-
-**Rule:** never pass `CODE_SIGN_STYLE`, `CODE_SIGN_IDENTITY`, or `PROVISIONING_PROFILE_SPECIFIER` as global xcodebuild overrides when the project includes SPM dependencies.
-
-**How signing is configured instead:**
-
-- `project.yml` declares `CODE_SIGN_STYLE: Manual`, `CODE_SIGN_IDENTITY: "Apple Distribution"`, and `PROVISIONING_PROFILE_SPECIFIER: "$(PROVISIONING_PROFILE_UUID_CI)"` under `targets.SmartStylist.settings.configs.Release` — this applies only to the SmartStylist app target.
-- The CI passes the dynamic profile UUID as a **custom build variable** `PROVISIONING_PROFILE_UUID_CI=<uuid>` on the xcodebuild command line. This variable is harmless to SPM targets because they never reference it.
-- SPM package targets retain their default `CODE_SIGN_STYLE: Automatic` / `CODE_SIGNING_ALLOWED: NO` and are unaffected.
-
-### Critical: Info.plist is owned by XcodeGen
-
-`xcodegen generate` **regenerates `SmartStylist/Info.plist` from scratch** on every run, using the `info.properties` block in `project.yml`. Any key edited directly in `Info.plist` is silently discarded.
-
-All app-level Info.plist keys must be declared in `project.yml` under `targets.SmartStylist.info.properties`:
-
-```yaml
-info:
-  path: SmartStylist/Info.plist
-  properties:
-    CFBundleIconName: AppIcon
-    UILaunchScreen: {}
-    UIRequiresFullScreen: true
-    UISupportedInterfaceOrientations:
-      - UIInterfaceOrientationPortrait
-      - UIInterfaceOrientationLandscapeLeft
-      - UIInterfaceOrientationLandscapeRight
-```
-
-### Critical: XcodeGen expands build setting variables in Info.plist
-
-XcodeGen **evaluates** `$(VARIABLE)` references in `info.properties` at generation time using the values from `settings.base`. For example, `CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"` with `CURRENT_PROJECT_VERSION: 1` produces `<string>1</string>` in the generated `Info.plist` — not the variable reference.
-
-**Consequence:** passing `CURRENT_PROJECT_VERSION="<value>"` on the `xcodebuild` command line has no effect on `CFBundleVersion`, because the reference no longer exists in the plist.
-
-**Rule:** to set any Info.plist value dynamically in CI, use `PlistBuddy` or `plutil` to patch the generated file *after* `xcodegen generate` and *before* `xcodebuild archive`:
-
-```bash
-BUILD_NUMBER=$(date +%s)
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" SmartStylist/Info.plist
-```
-
-Never rely on a xcodebuild CLI build-setting override reaching a plist key.
-
-### App icon
-
-`SmartStylist/Assets.xcassets/AppIcon.appiconset/` contains a single 1024×1024 universal PNG (`AppIcon.png`). This is the modern Xcode format — no per-size variants needed.
-
-Current design: `dsBackground` (`#0B1021`) background with three 4-pointed platinum sparkle stars (`dsAccentPrimary` `#E0E5EC`) — generated with Pillow. Replace with the final brand icon before public App Store release.
+**Key rules:**
+- Never pass `CODE_SIGN_STYLE`/`PROVISIONING_PROFILE_SPECIFIER` as global xcodebuild overrides (breaks SPM targets) — signing is declared in `project.yml` under `targets.SmartStylist.settings.configs.Release` only
+- Patch `CFBundleVersion` with `PlistBuddy` after `xcodegen generate` — XcodeGen expands `$(VARIABLE)` at generation time, so CLI overrides don't reach Info.plist
+- Regenerate the provisioning profile after adding any new app capability (Sign In with Apple, iCloud, WeatherKit)

@@ -209,6 +209,13 @@ enum Strings {
     static var profileSectionAvoid:          String { String(localized: "profile.section.avoid",          locale: activeLocale) }
     static var profileSectionTraits:         String { String(localized: "profile.section.traits",         locale: activeLocale) }
     static var profileSectionShopping:       String { String(localized: "profile.section.shopping",       locale: activeLocale) }
+    static var profileSectionDNA:            String { String(localized: "profile.section.dna",            locale: activeLocale) }
+    static var profileSectionPhysical:       String { String(localized: "profile.section.physical",       locale: activeLocale) }
+    static var profileSectionPrefs:          String { String(localized: "profile.section.prefs",          locale: activeLocale) }
+    static var profileSectionAccount:        String { String(localized: "profile.section.account",        locale: activeLocale) }
+    static var profileStatsItems:            String { String(localized: "profile.stats.items",            locale: activeLocale) }
+    static var profileStatsLooks:            String { String(localized: "profile.stats.looks",            locale: activeLocale) }
+    static var profileStatsStores:           String { String(localized: "profile.stats.stores",           locale: activeLocale) }
     static var profileTraitGender:           String { String(localized: "profile.trait.gender",           locale: activeLocale) }
     static var profileTraitAge:              String { String(localized: "profile.trait.age",              locale: activeLocale) }
     static var profileTraitBody:             String { String(localized: "profile.trait.body",             locale: activeLocale) }
@@ -219,6 +226,10 @@ enum Strings {
     static var profileTraitAccessoryStyle:   String { String(localized: "profile.trait.accessory_style",  locale: activeLocale) }
     static var profileStoresEdit:            String { String(localized: "profile.stores.edit",            locale: activeLocale) }
     static var profileStoresEmpty:           String { String(localized: "profile.stores.empty",           locale: activeLocale) }
+    static var profileEmptyColors:           String { String(localized: "profile.empty.colors",           locale: activeLocale) }
+    static var profileEmptyStores:           String { String(localized: "profile.empty.stores",           locale: activeLocale) }
+    static var profileEmptyStyle:            String { String(localized: "profile.empty.style",            locale: activeLocale) }
+    static var profileUpdateAnalysis:        String { String(localized: "profile.update.analysis",        locale: activeLocale) }
     static var profileRetakeButton:          String { String(localized: "profile.retake.button",          locale: activeLocale) }
     static var profileRetakeTitle:           String { String(localized: "profile.retake.title",           locale: activeLocale) }
     static var profileRetakeMessage:         String { String(localized: "profile.retake.message",         locale: activeLocale) }
