@@ -572,6 +572,10 @@ Apple WeatherKit is the primary weather source. `LocationWeatherService.refresh(
 
 3-column chip grid for all six `EventContext` cases. Single "Generate Now" button with inline loading spinner. After generation, a secondary button saves the look as a `PlannedLook` for today (`.isInstant = true`); tapping confirms with a checkmark banner.
 
+Two state-reset behaviours to be aware of:
+- Tapping a different occasion chip sets `vm.suggestion = nil` and `savedToCalendar = false` — clears the previous result so the UI always reflects the selected context.
+- After tapping "Save to Today", the button transitions to a `Strings.instantSavedToCalendar` confirmation chip (`.dsSpring` animation). It does not revert — the user must switch occasions or leave the view to reset.
+
 **Shared pattern — cancel on disappear**
 
 Both views cancel their `generationTask` and call `vm.cancelGeneration()` in `.onDisappear`. `LookPlannerView` also cancels on `selectedDate` change (switching days).
@@ -590,21 +594,27 @@ SwiftData `@Model` persisting a calendar slot with an AI-generated outfit.
 | `itemIds` | `[UUID]` | Snapshot of outfit item IDs |
 | `isInstant` | `Bool` | `true` = created from Instant mode |
 | `weatherContext` | `String?` | `CurrentWeatherData.displayString` at time of generation |
-| `notificationIdentifier` | computed `String` | `"smartstylist.planned-look.\(id)"` — deterministic, no storage needed |
+| `notificationIdentifier` | computed `String` | `"smartstylist.planned-look.\(id.uuidString)"` — deterministic, no storage needed |
 
-Registered in `SmartStylistApp.modelContainer` schema alongside `UserProfile`, `ClothingItem`, `OutfitHistory`.
+Registered in `SmartStylistApp.modelContainer` schema (line added to `SmartStylist/App/SmartStylistApp.swift`):
+
+```swift
+let schema = Schema([UserProfile.self, ClothingItem.self, OutfitHistory.self, PlannedLook.self])
+```
 
 ### NotificationService (`Services/NotificationService.swift`)
 
 Singleton `@MainActor` class managing push notifications.
 
+All scheduling methods are `async`. `cancelPlannedLookReminder` is the only synchronous one.
+
 | Method | Purpose |
 |--------|---------|
-| `requestPermission()` | Requests `.alert + .sound + .badge`; returns `Bool` |
-| `scheduleDailyLookNotification()` | Schedules `UNCalendarNotificationTrigger` at 08:00, `repeats: true` |
-| `requestAndSchedule()` | Convenience: request then schedule if granted |
-| `schedulePlannedLookReminder(for:)` | Schedules a one-shot notification at 20:00 the evening before the event date; no-ops if permission denied or date in the past |
-| `cancelPlannedLookReminder(identifier:)` | Synchronously removes a pending planned-look notification |
+| `requestPermission() async` | Requests `.alert + .sound + .badge`; returns `Bool` |
+| `scheduleDailyLookNotification() async` | Schedules `UNCalendarNotificationTrigger` at 08:00, `repeats: true` |
+| `requestAndSchedule() async` | Convenience: request then schedule if granted |
+| `schedulePlannedLookReminder(for:) async` | One-shot trigger at 20:00 the evening before the event; no-ops if permission denied (`.authorized` or `.provisional` required) or if the computed fire date is in the past |
+| `cancelPlannedLookReminder(identifier:)` | Synchronously removes a pending planned-look notification by UNNotificationRequest identifier |
 
 **Wiring:**
 - `ColorimetryResultView` — calls `requestAndSchedule()` when the user taps "Enter my Wardrobe" (first-time permission prompt at the end of onboarding)
