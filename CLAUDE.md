@@ -373,12 +373,22 @@ Label(Strings.profileEmptyColors, systemImage: "circle.dashed")
 
 Use `Material.ultraThinMaterial` + `Capsule()` + `dsAccentPrimary.opacity(0.18–0.25)` stroke for any chip or pill that is tappable but currently unselected. Selected state uses solid `dsAccentPrimary` fill.
 
+`Material` conforms to `ShapeStyle` but **not** `View` — passing it to `background { }` (`@ViewBuilder` overload) fails at compile time on Xcode 16.4. Always use `AnyShapeStyle` type erasure with the `ShapeStyle` overload:
+
 ```swift
+// ✅ Correct — uses background(_: some ShapeStyle) overload
+.background(
+    isSelected
+        ? AnyShapeStyle(Color.dsAccentPrimary)
+        : AnyShapeStyle(Material.ultraThinMaterial)
+)
+.clipShape(Capsule())
+.overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.25), lineWidth: 0.5))
+
+// ❌ Wrong — @ViewBuilder rejects Material (not a View), CI build fails
 .background {
     if isSelected { Color.dsAccentPrimary } else { Material.ultraThinMaterial }
 }
-.clipShape(Capsule())
-.overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.25), lineWidth: 0.5))
 ```
 
 Applied in: `StyleEngineView` event context chips, `ProfileSettingsView` season/metal chip, `WardrobeInsightsView` stat pills.
