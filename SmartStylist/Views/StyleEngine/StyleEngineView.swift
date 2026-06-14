@@ -115,12 +115,18 @@ struct StyleEngineView: View {
                             )
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(vm.occasion == context ? Color.dsAccentPrimary : Color.dsSurface)
+                            .background {
+                                if vm.occasion == context {
+                                    Color.dsAccentPrimary
+                                } else {
+                                    Material.ultraThinMaterial
+                                }
+                            }
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .stroke(
-                                        Color.dsAccentPrimary.opacity(vm.occasion == context ? 0 : 0.3),
+                                        Color.dsAccentPrimary.opacity(vm.occasion == context ? 0 : 0.25),
                                         lineWidth: 0.5
                                     )
                             )

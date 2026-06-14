@@ -217,6 +217,13 @@
 "profile.section.avoid"            = "AVOID";
 "profile.section.traits"           = "PHYSICAL PROFILE";
 "profile.section.shopping"         = "SHOPPING PROFILE";
+"profile.section.dna"              = "STYLE DNA";
+"profile.section.physical"         = "PHYSICAL PROFILE";
+"profile.section.prefs"            = "PREFERENCES";
+"profile.section.account"          = "ACCOUNT";
+"profile.stats.items"              = "items";
+"profile.stats.looks"              = "looks";
+"profile.stats.stores"             = "stores";
 "profile.trait.gender"             = "Gender";
 "profile.trait.age"                = "Age";
 "profile.trait.body"               = "Body Type";
@@ -227,6 +234,10 @@
 "profile.trait.accessory_style"    = "Accessory Style";
 "profile.stores.edit"              = "Edit";
 "profile.stores.empty"             = "Tap Edit to add your favourite brands";
+"profile.empty.colors"             = "No colours yet";
+"profile.empty.stores"             = "No stores selected";
+"profile.empty.style"              = "No style preferences";
+"profile.update.analysis"          = "Update Analysis";
 "profile.retake.button"            = "Retake Analysis";
 "profile.retake.title"             = "Retake Style Analysis?";
 "profile.retake.message"           = "Your wardrobe will be kept, but your colour profile will be reset. The AI will re-analyse your style from scratch.";
