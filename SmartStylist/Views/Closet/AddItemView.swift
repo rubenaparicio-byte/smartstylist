@@ -103,7 +103,7 @@ struct AddItemView: View {
                     Button(Strings.commonCancel) { dismiss() }
                 }
             }
-            .sheet(isPresented: $showCamera) {
+            .fullScreenCover(isPresented: $showCamera) {
                 CameraPicker(imageData: $rawCameraData)
                     .ignoresSafeArea()
             }

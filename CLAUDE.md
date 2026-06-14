@@ -274,6 +274,8 @@ Cards in `VirtualClosetView` (grid items) and `WardrobeInsightsView` (section ca
 
 `CameraPicker` mounts a `CameraGuideOverlayView` as `UIImagePickerController.cameraOverlayView`. The overlay has `isUserInteractionEnabled = false` so native camera controls (shutter, flip, cancel) remain fully tappable.
 
+**Presentation rule — always use `.fullScreenCover`, never `.sheet`:** `UIImagePickerController` is a full-screen UIKit controller; presenting it via SwiftUI `.sheet` causes it to dismiss itself on the first tap (~1 s after opening) while the camera session initialises. `.fullScreenCover` is the correct presentation and matches iOS HIG for camera UIs. This rule applies to any `UIViewControllerRepresentable` wrapping a full-screen UIKit controller.
+
 `NSCameraUsageDescription` is declared in `project.yml`. Current copy: _"SmartStylist uses the camera to photograph clothing items and automatically segment them from the background using on-device Vision analysis."_
 
 ### Camera guide overlay (`Views/Components/CameraGuideOverlayView.swift`)
