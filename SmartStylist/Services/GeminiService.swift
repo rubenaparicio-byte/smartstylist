@@ -63,9 +63,16 @@ final class GeminiService {
 
     // ── Text generation ───────────────────────────────────────────────────────
 
-    func generate(prompt: String) async throws -> String {
+    // systemPrompt is sent as a "system" role message so providers that support
+    // prefix caching (e.g. Anthropic via OpenRouter) can cache it across calls.
+    func generate(prompt: String, systemPrompt: String? = nil) async throws -> String {
+        var messages: [[String: Any]] = []
+        if let system = systemPrompt {
+            messages.append(["role": "system", "content": system])
+        }
+        messages.append(["role": "user", "content": prompt])
         let body: [String: Any] = [
-            "messages": [["role": "user", "content": prompt]],
+            "messages": messages,
             "temperature": 0.7,
             "max_tokens": 2048,
             "response_format": ["type": "json_object"]
@@ -77,12 +84,9 @@ final class GeminiService {
 
     func analyseProfile(gender: String, bodyType: String, skinTone: String,
                         eyeColor: String, hairColor: String) async throws -> ColorimetryAnalysis {
+        let systemPrompt = "You are a luxury fashion consultant and certified colour analyst. Respond ONLY with a valid JSON object. No markdown, no code fences, no extra text — raw JSON only."
         let prompt = """
-        You are a luxury fashion consultant and certified colour analyst.
-        Analyse the physical profile below and respond ONLY with a valid JSON object.
-        No markdown, no code fences, no extra text — raw JSON only.
-
-        Required JSON schema:
+        Analyse the physical profile below and return JSON matching this schema exactly:
         {
           "season": "Spring|Summer|Autumn|Winter",
           "guidelines": "2-3 sentences of personalised seasonal colour harmony guidance tailored to the person's gender",
@@ -109,7 +113,7 @@ final class GeminiService {
         - Eye colour: \(eyeColor)
         - Hair colour: \(hairColor)
         """
-        let raw = try await generate(prompt: prompt)
+        let raw = try await generate(prompt: prompt, systemPrompt: systemPrompt)
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw LLMError.parseError }
         do {
@@ -127,10 +131,18 @@ final class GeminiService {
                        inventoryJSON: String,
                        historyJSON: String,
                        occasion: String) async throws -> StyleResponse {
-        let prompt = """
+        // Profile is static between requests — sending it as a system message lets
+        // providers that support prefix caching (e.g. Anthropic via OpenRouter) skip
+        // re-tokenising it on every call.
+        let systemPrompt = """
         You are an elite personal stylist with expertise in colour theory, seasonal fashion, and dress codes.
-        Respond ONLY with a valid JSON object matching this schema exactly. No markdown, no code fences.
+        Respond ONLY with a valid JSON object. No markdown, no code fences, no extra text.
 
+        === USER PROFILE ===
+        \(profileJSON)
+        """
+        let prompt = """
+        Return a JSON object matching this schema exactly:
         {
           "clima_procesado": "temperature + condition string",
           "analisis_contexto": "2-3 sentence premium justification for why this look is ideal today",
@@ -143,22 +155,18 @@ final class GeminiService {
           "consejo_estilo": "one personalised tip to elevate the outfit"
         }
 
-        STRICT RULES — each violation degrades the quality of the recommendation:
-        1. INVENTORY: Use ONLY UUIDs present in the active wardrobe below. Never invent or reuse UUIDs.
+        STRICT RULES — each violation degrades the recommendation:
+        1. INVENTORY: Use ONLY UUIDs from the active wardrobe below. Never invent UUIDs.
+           Key legend: cat=category, sub=subcategory, layer=thermal layer (1=base…4=outer), color=hex, pat=pattern, sty=style.
         2. RADICAL VARIETY — CRITICAL:
-           - Cross-reference all item IDs from the 14-day history.
-           - Any item appearing 3 or more times in the last 14 days MUST be rested today.
-           - NEVER reproduce an identical outfit combination from the history.
-           - The new outfit must differ by at least 2 pieces from the most recently worn look.
+           - Items in rested[] MUST NOT be used — worn too recently.
+           - New outfit must differ by at least 2 pieces from items in recent[].
         3. THERMAL COHERENCE:
-           - If requiresUmbrella is true → abrigo_id is MANDATORY and must be weather-resistant.
-           - If temp < 10°C → abrigo_id is MANDATORY for warmth.
-           - If temp > 24°C → abrigo_id should be null unless the event strictly requires it.
-        4. EVENT PROTOCOL: Every piece must respect the formality and dress code of the occasion.
-        5. COLOUR HARMONY: Prioritise pieces that complement the user's seasonal colorimetry palette.
-
-        === USER PROFILE ===
-        \(profileJSON)
+           - requiresUmbrella true → abrigo_id MANDATORY, weather-resistant.
+           - temp < 10 → abrigo_id MANDATORY for warmth.
+           - temp > 24 → abrigo_id null unless event strictly requires it.
+        4. EVENT PROTOCOL: Every piece must respect the occasion's formality and dress code.
+        5. COLOUR HARMONY: Prioritise pieces complementing the user's seasonal palette.
 
         === CURRENT WEATHER ===
         \(weatherJSON)
@@ -166,13 +174,13 @@ final class GeminiService {
         === OCCASION & DRESS CODE ===
         \(occasion)
 
-        === ACTIVE WARDROBE (use only these UUIDs) ===
+        === ACTIVE WARDROBE ===
         \(inventoryJSON)
 
-        === LAST 14 DAYS HISTORY (avoid repeating these combinations) ===
+        === WEAR HISTORY (rested=must avoid, recent=last look worn) ===
         \(historyJSON)
         """
-        let raw = try await generate(prompt: prompt)
+        let raw = try await generate(prompt: prompt, systemPrompt: systemPrompt)
         let cleaned = stripMarkdownFences(raw)
         guard let data = cleaned.data(using: .utf8) else { throw LLMError.parseError }
         do { return try JSONDecoder().decode(StyleResponse.self, from: data) }
