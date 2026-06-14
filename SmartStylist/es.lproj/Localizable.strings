@@ -326,3 +326,7 @@
 /* Compartir */
 "share.outfit.button"  = "Compartir Look";
 "share.outfit.message" = "Mi look del día por SmartStylist";
+
+/* Guía de cámara */
+"camera.guide.tip.flat" = "Perfecto — estira la prenda plana dentro del marco";
+"camera.guide.tip.hang" = "Extiende la prenda plana o cuélgala dentro del marco";

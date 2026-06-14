@@ -116,6 +116,10 @@ enum Strings {
     static var addLabelSegmenting:   String { String(localized: "add.label.segmenting",   locale: activeLocale) }
     static var addAIError:           String { String(localized: "add.ai.error",           locale: activeLocale) }
 
+    // MARK: — Camera guide overlay
+    static var cameraGuideTipFlat:   String { String(localized: "camera.guide.tip.flat", locale: activeLocale) }
+    static var cameraGuideTipHang:   String { String(localized: "camera.guide.tip.hang", locale: activeLocale) }
+
     // MARK: — Validate sheet
     static var validateNavTitle:       String { String(localized: "validate.nav.title",         locale: activeLocale) }
     static var validateHeader:         String { String(localized: "validate.header",             locale: activeLocale) }

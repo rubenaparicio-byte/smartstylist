@@ -327,3 +327,7 @@
 /* Share */
 "share.outfit.button"  = "Share Look";
 "share.outfit.message" = "My look of the day by SmartStylist";
+
+/* Camera guide overlay */
+"camera.guide.tip.flat" = "Great — lay the garment flat within the frame";
+"camera.guide.tip.hang" = "Lay flat or hang the garment within the frame";
