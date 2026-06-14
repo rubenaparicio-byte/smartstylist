@@ -320,9 +320,33 @@
 "style.athletic"     = "Athletic";
 "style.evening"      = "Evening";
 
+/* Look Planner */
+"planner.tab.label"        = "Planner";
+"planner.empty.title"      = "NO LOOK YET";
+"planner.empty.subtitle"   = "Generate a look or add an event for this day.";
+"planner.quick.generate"   = "Generate Look";
+"planner.add.event"        = "Add Event";
+"planner.add.event.title"  = "NEW EVENT";
+"planner.add.event.for"    = "Outfit for";
+"planner.venue.note"       = "Venue / Notes";
+"planner.venue.placeholder" = "Elegant restaurant, rooftop bar…";
+"planner.generate.look"    = "Generate Look";
+"planner.regenerate"       = "Regenerate";
+
+/* Instant Look */
+"instant.tab.label"        = "Instant";
+"instant.occasion"         = "WHAT'S THE PLAN?";
+"instant.subtitle"         = "Generate a look for right now";
+"instant.generate"         = "Generate Now";
+"instant.generating"       = "Generating…";
+"instant.save.calendar"    = "Save to Today";
+"instant.saved.calendar"   = "Saved to Planner";
+
 /* Notifications */
-"notification.daily.title" = "Your Look for Today";
-"notification.daily.body"  = "Your daily outfit is ready! Tap to see it.";
+"notification.daily.title"    = "Your Look for Today";
+"notification.daily.body"     = "Your daily outfit is ready! Tap to see it.";
+"notification.planner.title"  = "Look Ready for Tomorrow";
+"notification.planner.body"   = "Your %@ outfit is all set — tap to review it.";
 
 /* Share */
 "share.outfit.button"  = "Share Look";

@@ -12,6 +12,10 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
   - `Closet/` — wardrobe CRUD, `AddItemView`, `ClothingItemCard`
   - `Components/` — reusable primitives (`CameraPicker`, `SelectionChip`, `FloatingTabBarView`, …)
   - `StyleEngine/` — AI outfit generation UI
+    - `StyleEngineRootView` — container with segmented picker (Planner / Instant)
+    - `LookPlannerView` — week-strip calendar + day outfit cards + `AddEventSheet`
+    - `InstantLookView` — quick occasion chips + immediate generation + save-to-calendar
+    - `StyleEngineView` — retained for reference; logic reused via `StyleEngineViewModel`
   - `Onboarding/` — 6-step user funnel (language → gender → body → skin → hair+eyes → result)
     - `LanguageStepView` — language selector (ES/EN/System); applies locale immediately via `@AppStorage`
     - `GenderStepView` — Male/Female cards; resets `selectedBodyType` on change
@@ -25,8 +29,8 @@ Native SwiftUI app (iOS 17+) that suggests outfits using AI (OpenRouter) and Ope
   - `GeminiService` — OpenRouter LLM + vision calls with model fallback
   - `GarmentSegmentationService` — on-device Vision segmentation (Swift `actor`)
   - `WeatherKitService` — Apple WeatherKit (primary); falls back to `WeatherService`/`LocationService` on error
-  - `NotificationService` — daily 8 AM local push notification ("your look for today")
-- `Models/` — `@Model` SwiftData entities (ClothingItem, OutfitHistory, UserProfile)
+  - `NotificationService` — daily 8 AM push + evening-before reminders for `PlannedLook` events
+- `Models/` — `@Model` SwiftData entities (ClothingItem, OutfitHistory, UserProfile, PlannedLook)
   - `ThermalLayer` enum — layering system (base / inner / mid / outer) on `ClothingItem`
 - `DesignSystem/` — design tokens (colors, typography, shapes, animations, `HapticManager`)
 
@@ -550,21 +554,64 @@ Apple WeatherKit is the primary weather source. `LocationWeatherService.refresh(
 - Name collision: both the project and the SDK have a `WeatherService` type — always qualify as `WeatherKit.WeatherService.shared` in `WeatherKitService.swift`
 - `WeatherCondition` mapping: Snow/Drizzle/Rain/Thunderstorm/Fog/Clouds/Clear → `CurrentWeatherData`
 
+### Look Planner (`Views/StyleEngine/`)
+
+`StyleEngineRootView` wraps a **NavigationStack** with a segmented picker (`Planner` | `Instant`) in the toolbar principal slot. Switching mode replaces the child view; each mode owns its own `@State private var vm = StyleEngineViewModel()`.
+
+**Planner mode — `LookPlannerView`**
+
+| Component | Description |
+|-----------|-------------|
+| `WeekStripView` | Horizontal scroll of 14 days (−2…+11 from today). Each `DayPillView` shows weekday abbrev, day number, and a `●` dot when a `PlannedLook` exists for that date. Today's pill has an accent border; selected pill fills with `dsAccentPrimary`. |
+| Day detail | Selected day shows the existing `PlannedLook` (outfit card + Regenerate / Delete) or an empty state with two buttons: **Generate Look** (daily context, no sheet) and **Add Event** (opens `AddEventSheet`). |
+| `AddEventSheet` | Bottom sheet (`.medium / .large` detent). Picker grid of all `EventContext` options + free-text venue/notes field. Confirm triggers generation immediately. |
+| Generation flow | `pendingOccasion` + `pendingVenueNote` → `vm.generateOutfit()` → saves/updates `PlannedLook` in SwiftData → schedules evening-before notification. |
+| Loading state | Tracked by `generatingForDate: Date?`. Loading view only shows when `vm.isLoading && generatingForDate == selectedDate` — switching days while generating doesn't bleed state into another day's slot. |
+
+**Instant mode — `InstantLookView`**
+
+3-column chip grid for all six `EventContext` cases. Single "Generate Now" button with inline loading spinner. After generation, a secondary button saves the look as a `PlannedLook` for today (`.isInstant = true`); tapping confirms with a checkmark banner.
+
+**Shared pattern — cancel on disappear**
+
+Both views cancel their `generationTask` and call `vm.cancelGeneration()` in `.onDisappear`. `LookPlannerView` also cancels on `selectedDate` change (switching days).
+
+### PlannedLook (`Models/PlannedLook.swift`)
+
+SwiftData `@Model` persisting a calendar slot with an AI-generated outfit.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `id` | `UUID` | Primary key |
+| `scheduledDate` | `Date` | Day of the event (start-of-day) |
+| `occasionRaw` | `String` | `EventContext.rawValue` — English, passed to LLM |
+| `venueNote` | `String?` | Free-text from `AddEventSheet` |
+| `generatedOutfitData` | `Data?` | JSON-encoded `StyleResponse`; accessed via `.styleResponse` computed property |
+| `itemIds` | `[UUID]` | Snapshot of outfit item IDs |
+| `isInstant` | `Bool` | `true` = created from Instant mode |
+| `weatherContext` | `String?` | `CurrentWeatherData.displayString` at time of generation |
+| `notificationIdentifier` | computed `String` | `"smartstylist.planned-look.\(id)"` — deterministic, no storage needed |
+
+Registered in `SmartStylistApp.modelContainer` schema alongside `UserProfile`, `ClothingItem`, `OutfitHistory`.
+
 ### NotificationService (`Services/NotificationService.swift`)
 
-Singleton `@MainActor` class managing daily 8 AM local push notifications.
+Singleton `@MainActor` class managing push notifications.
 
 | Method | Purpose |
 |--------|---------|
 | `requestPermission()` | Requests `.alert + .sound + .badge`; returns `Bool` |
 | `scheduleDailyLookNotification()` | Schedules `UNCalendarNotificationTrigger` at 08:00, `repeats: true` |
 | `requestAndSchedule()` | Convenience: request then schedule if granted |
+| `schedulePlannedLookReminder(for:)` | Schedules a one-shot notification at 20:00 the evening before the event date; no-ops if permission denied or date in the past |
+| `cancelPlannedLookReminder(identifier:)` | Synchronously removes a pending planned-look notification |
 
 **Wiring:**
 - `ColorimetryResultView` — calls `requestAndSchedule()` when the user taps "Enter my Wardrobe" (first-time permission prompt at the end of onboarding)
 - `MainTabView` — calls `scheduleDailyLookNotification()` on `.task` (reschedules silently on subsequent launches if already authorised)
+- `LookPlannerView` — calls `schedulePlannedLookReminder` after every successful generation; `cancelPlannedLookReminder` when a look is deleted
 
-Notification strings: `notification.daily.title` / `notification.daily.body` in both `Localizable.strings` files.
+Notification strings: `notification.daily.title` / `notification.daily.body` / `notification.planner.title` / `notification.planner.body` (format string, takes occasion name) in both `Localizable.strings` files.
 
 ### Share outfit (`Views/StyleEngine/StyleEngineView.swift`)
 
