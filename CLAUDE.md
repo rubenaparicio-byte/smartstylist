@@ -286,7 +286,24 @@ Cards in `VirtualClosetView` (grid items) and `WardrobeInsightsView` (section ca
 - **Corner brackets** — `CAShapeLayer` L-shaped markers at the 4 corners of a guide rect (82 % screen width, 5:6 ratio, centered in the usable area between banner and native controls). White at 85 % opacity, 3 pt stroke, rounded linecap.
 - **Tip banner** — `UIVisualEffectView` (ultra-thin dark blur) pinned below the safe area top. Shows a SF Symbol icon + one-line guidance text.
 
-**Orientation detection:** observes `UIDevice.orientationDidChangeNotification`. When the device is `.faceUp` (phone flat above a garment laid on a surface), the banner icon switches to `checkmark.circle.fill` (green) confirming flat-lay mode. Any other orientation shows `tshirt.fill` (white) with a hang/lay-flat prompt. Strings: `camera.guide.tip.flat` / `camera.guide.tip.hang`.
+**Tip cycling:** In non-flat-lay mode a `Timer` fires every 4 seconds and crossfades the banner between two alternating tips:
+
+| State | Icon | Colour | String key |
+|-------|------|--------|-----------|
+| Position tip | `tshirt.fill` | white | `camera.guide.tip.hang` |
+| Contrast tip | `circle.lefthalf.filled` | yellow | `camera.guide.tip.contrast` |
+
+The contrast tip reminds users to use a dark or colourful surface when photographing light garments — the most common cause of failed segmentation. Rotating between `showingContrastTip = true/false` ensures both messages reach users who leave the camera open. The timer is invalidated in `deinit`.
+
+**Orientation detection:** observes `UIDevice.orientationDidChangeNotification`. When the device is `.faceUp` (phone flat above a garment), the cycle resets and the banner shows `checkmark.circle.fill` (green) + `camera.guide.tip.flat`. Any orientation change calls `refreshTip()` which resets `showingContrastTip = false` before re-applying content.
+
+**Tip string keys:**
+
+| Key | Use |
+|-----|-----|
+| `camera.guide.tip.flat` | Device face-up (flat-lay confirmed) |
+| `camera.guide.tip.hang` | Default — hang or lay flat; mentions dark surface for light garments |
+| `camera.guide.tip.contrast` | Alternating tip — reinforces background contrast guidance |
 
 **Layout:** `layoutSubviews` computes geometry from `safeAreaInsets` and a fixed 150 pt bottom guard for the native controls area. Falls back to 44 pt safe-area when the view is not yet in a window (avoids banner flash at y=0).
 
@@ -297,12 +314,20 @@ Swift `actor` that isolates the Vision + CoreImage pipeline on a background thre
 **Pipeline:**
 1. `UIImage.normalized()` — redraws pixels to `.up` orientation eliminating EXIF ambiguity
 2. `UIImage.downscaled(maxDimension: 1200)` — reduces 12MP camera photos (~4032px) to ≤1200px; Vision is ~11× faster and more stable at this resolution
-3. `VNGenerateForegroundInstanceMaskRequest` — on-device foreground subject detection (iOS 17+, no network)
-4. `VNInstanceMaskObservation.generateScaledMaskForImage(forInstances:from:)` — pixel-accurate mask
-5. `CIGaussianBlur(radius: 2.0)` on mask — feathers edges to avoid hard cutout artifacts
-6. `CIFilter.blendWithMask()` — composites the garment over **white** background for catalog-style presentation
-7. `CIImage.enhancedForCatalog()` — catalog-quality enhancement chain (see below)
-8. Output as `Data` (PNG) via `pngData()`
+3. `CIImage.contrastEnhancedForDetection()` — builds a contrast/saturation-boosted copy **for Vision only** (contrast ×1.8, saturation ×1.4); the original pixels are retained for the final composite
+4. `VNGenerateForegroundInstanceMaskRequest` — on-device foreground subject detection (iOS 17+, no network) running on the enhanced image so edges are visible even on white/grey garments against similar backgrounds
+5. `VNInstanceMaskObservation.generateScaledMaskForImage(forInstances:from:)` — pixel-accurate mask (aligned to enhanced image, same dimensions as original)
+6. `CIImage.withSharpenedMaskEdges()` — pushes uncertain mid-range mask values (0.2–0.8) toward 0 or 1 (contrast ×4.0 on the grayscale mask), then applies a lighter `CIGaussianBlur(radius: 1.0)` for natural edge feathering
+7. `CIFilter.blendWithMask()` — composites the **original** garment image over white background using the sharpened mask
+8. `CIImage.enhancedForCatalog()` — catalog-quality enhancement chain (see below)
+9. Output as `Data` (PNG) via `pngData()`
+
+**Low-contrast handling (white/grey garments on similar backgrounds):**
+
+The two-step contrast strategy solves the most common segmentation failure mode:
+- `contrastEnhancedForDetection()` exaggerates small luminance/saturation differences so Vision's foreground mask algorithm can find garment boundaries it would otherwise miss.
+- `withSharpenedMaskEdges()` eliminates the soft "fade zone" that appears when Vision assigns mid-range confidence to borderline pixels — without sharpening, these render as a semi-transparent haze where the garment should have a clean edge.
+- The composite always uses the **original unmodified pixels**, so boosting contrast for detection has zero effect on the saved garment colour.
 
 **Enhancement chain (`enhancedForCatalog()`, private `CIImage` extension):**
 
@@ -400,7 +425,10 @@ Selecting a new gender in `GenderStepView` resets `selectedBodyType = ""` to pre
 
 ### ProfileSettingsView — section layout (`Views/Profile/ProfileSettingsView.swift`)
 
-**Hero header** — avatar circle (72 pt, `dsSurface` fill, `person.fill` icon), season + metal chip (glass capsule, `Material.ultraThinMaterial`), and a 3-column stats row driven by `@Query`:
+**Identity Hero** — tall card with `LinearGradient` derived from the user's first recommended colorimetry swatch (`accentColor.opacity(0.28)` → `dsCardBackground`). Contains:
+- Avatar circle (76 pt), season name in `.dsTitle` serif, metal preference as a dot + text inline
+- Stats bar at the bottom (dark frosted strip clipped with `UnevenRoundedRectangle` — bottom corners only)
+- Tap avatar 5× to reveal dev logs
 
 | Stat column | Source |
 |-------------|--------|
@@ -408,19 +436,20 @@ Selecting a new gender in `GenderStepView` resets `selectedBodyType = ""` to pre
 | looks | `@Query [OutfitHistory].count` |
 | stores | `profile.preferredStores.count` |
 
-Stats use `contentTransition(.numericText())`. Tap avatar 5× to reveal dev logs.
+Stats use `contentTransition(.numericText())`.
 
-**5 card sections:**
+**6 sections:**
 
-| Section | Content |
-|---------|---------|
-| STYLE DNA | Season label (read-only) + recommended colour swatches + avoid swatches |
-| PHYSICAL PROFILE | Body type, skin tone, eye colour, hair colour (all read-only) |
-| PREFERENCES | Accessory style chips + preferred stores → `StoreSelectionView` sheet |
-| ACCOUNT | Gender (read-only), Age (wheel picker sheet), Language picker |
-| ACTIONS | "Update Analysis" outline button + Danger Zone (Delete All Data) |
+| Section | Helper | Content |
+|---------|--------|---------|
+| Identity Hero | `identityHero(_:)` | Gradient card — avatar, season, metal, stats |
+| Palette | `paletteCard(_:)` | 54 pt swatches (scrollable) + avoid-color mini strip |
+| Traits | `traitsGrid(_:)` | 2×2 `LazyVGrid` — body, skin, eye, hair; each cell: SF Symbol icon + label + value |
+| Style & Shopping | `styleCard(_:)` | Accessory chips + preferred stores → `StoreSelectionView` sheet |
+| Account | `accountCard(_:)` | Compact rows: gender (read-only), age (wheel picker), language picker |
+| Actions | `actionSection(_:)` | "Update Analysis" outline button + Delete as plain text button (no danger card) |
 
-`metalPreference` is shown only in the hero chip — not duplicated in Physical Profile.
+`metalPreference` is shown inline in the hero alongside the season name — not in a separate chip.
 
 `StoreSelectionView` (`Views/Profile/StoreSelectionView.swift`) shows ~25 brands segmented as Budget / Mid-range / Premium / Sports. Selections are written directly to `profile.preferredStores` (SwiftData `@Model` class — auto-persisted).
 

@@ -352,5 +352,6 @@
 "share.outfit.message" = "Mi look del día por SmartStylist";
 
 /* Guía de cámara */
-"camera.guide.tip.flat" = "Perfecto — estira la prenda plana dentro del marco";
-"camera.guide.tip.hang" = "Extiende la prenda plana o cuélgala dentro del marco";
+"camera.guide.tip.flat"     = "Perfecto — estira la prenda plana dentro del marco";
+"camera.guide.tip.hang"     = "Cuélgala o extiéndela — usa fondo oscuro para prendas claras";
+"camera.guide.tip.contrast" = "Tip: un fondo de color o oscuro mejora la detección";

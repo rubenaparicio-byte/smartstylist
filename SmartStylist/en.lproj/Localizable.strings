@@ -353,5 +353,6 @@
 "share.outfit.message" = "My look of the day by SmartStylist";
 
 /* Camera guide overlay */
-"camera.guide.tip.flat" = "Great — lay the garment flat within the frame";
-"camera.guide.tip.hang" = "Lay flat or hang the garment within the frame";
+"camera.guide.tip.flat"     = "Great — lay the garment flat within the frame";
+"camera.guide.tip.hang"     = "Hang or lay flat — use a dark surface for light garments";
+"camera.guide.tip.contrast" = "Tip: a colourful or dark background improves detection";
