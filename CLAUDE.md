@@ -245,7 +245,21 @@ Cards in `VirtualClosetView` (grid items) and `WardrobeInsightsView` (section ca
 
 `CameraPicker` — `UIViewControllerRepresentable` wrapping `UIImagePickerController(.camera)`. Returns JPEG at 85% quality via `@Binding<Data?>`. Check `UIImagePickerController.isSourceTypeAvailable(.camera)` before enabling (simulators lack a camera).
 
+`CameraPicker` mounts a `CameraGuideOverlayView` as `UIImagePickerController.cameraOverlayView`. The overlay has `isUserInteractionEnabled = false` so native camera controls (shutter, flip, cancel) remain fully tappable.
+
 `NSCameraUsageDescription` is declared in `project.yml`. Current copy: _"SmartStylist uses the camera to photograph clothing items and automatically segment them from the background using on-device Vision analysis."_
+
+### Camera guide overlay (`Views/Components/CameraGuideOverlayView.swift`)
+
+`CameraGuideOverlayView` is a UIKit `UIView` placed over the camera live preview to guide the user toward clean garment shots.
+
+**Visual elements:**
+- **Corner brackets** — `CAShapeLayer` L-shaped markers at the 4 corners of a guide rect (82 % screen width, 5:6 ratio, centered in the usable area between banner and native controls). White at 85 % opacity, 3 pt stroke, rounded linecap.
+- **Tip banner** — `UIVisualEffectView` (ultra-thin dark blur) pinned below the safe area top. Shows a SF Symbol icon + one-line guidance text.
+
+**Orientation detection:** observes `UIDevice.orientationDidChangeNotification`. When the device is `.faceUp` (phone flat above a garment laid on a surface), the banner icon switches to `checkmark.circle.fill` (green) confirming flat-lay mode. Any other orientation shows `tshirt.fill` (white) with a hang/lay-flat prompt. Strings: `camera.guide.tip.flat` / `camera.guide.tip.hang`.
+
+**Layout:** `layoutSubviews` computes geometry from `safeAreaInsets` and a fixed 150 pt bottom guard for the native controls area. Falls back to 44 pt safe-area when the view is not yet in a window (avoids banner flash at y=0).
 
 ### Garment segmentation (`Services/GarmentSegmentationService.swift`)
 
@@ -258,7 +272,21 @@ Swift `actor` that isolates the Vision + CoreImage pipeline on a background thre
 4. `VNInstanceMaskObservation.generateScaledMaskForImage(forInstances:from:)` — pixel-accurate mask
 5. `CIGaussianBlur(radius: 2.0)` on mask — feathers edges to avoid hard cutout artifacts
 6. `CIFilter.blendWithMask()` — composites the garment over **white** background for catalog-style presentation
-7. Output as `Data` (PNG) via `pngData()`
+7. `CIImage.enhancedForCatalog()` — catalog-quality enhancement chain (see below)
+8. Output as `Data` (PNG) via `pngData()`
+
+**Enhancement chain (`enhancedForCatalog()`, private `CIImage` extension):**
+
+Applied after compositing, before PNG export. All filters run on-device via CoreImage with no network dependency.
+
+| Filter | Parameters | Effect |
+|--------|-----------|--------|
+| `CINoiseReduction` | level 0.02, sharpness 0.4 | Removes grain/JPEG artifacts without blurring fabric texture |
+| `CIVibrance` | amount +0.3 | Boosts garment colors without oversaturating whites or neutrals |
+| `CIHighlightShadowAdjust` | highlights 0.8, shadows 0.6 | Compresses wrinkle contrast — dark shadow creases lift, bright highlight peaks compress |
+| `CISharpenLuminance` | sharpness 0.4, radius 1.5 | Recovers edge/seam crispness lost during the segmentation blur pass |
+
+The chain runs only on the already-segmented image (white background), so noise from the original scene background is never amplified.
 
 **Image persistence:**
 ```swift

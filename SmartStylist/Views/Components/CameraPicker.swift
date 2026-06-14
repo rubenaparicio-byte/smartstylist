@@ -11,6 +11,8 @@ struct CameraPicker: UIViewControllerRepresentable {
         let picker = UIImagePickerController()
         picker.sourceType = .camera
         picker.delegate = context.coordinator
+        let overlay = CameraGuideOverlayView(frame: UIScreen.main.bounds)
+        picker.cameraOverlayView = overlay
         return picker
     }
 

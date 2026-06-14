@@ -49,8 +49,13 @@ actor GarmentSegmentationService {
         blend.backgroundImage = background
         blend.maskImage    = maskCI
 
-        guard let output   = blend.outputImage,
-              let cgOutput = context.createCGImage(output, from: output.extent) else {
+        guard let blended = blend.outputImage else {
+            throw SegmentationError.renderFailed
+        }
+
+        let enhanced = blended.enhancedForCatalog()
+
+        guard let cgOutput = context.createCGImage(enhanced, from: enhanced.extent) else {
             throw SegmentationError.renderFailed
         }
 
@@ -83,6 +88,37 @@ actor GarmentSegmentationService {
             case .renderFailed:   return "Image processing failed."
             }
         }
+    }
+}
+
+// ── CIImage enhancement ───────────────────────────────────────────────────────
+
+private extension CIImage {
+
+    // Applies a catalog-quality enhancement chain after segmentation:
+    //   1. Noise reduction — removes grain/compression artifacts
+    //   2. Vibrance boost — makes colors pop without oversaturating skin/neutrals
+    //   3. Highlight/shadow compression — flattens wrinkle shadows without losing texture
+    //   4. Luminance sharpen — recovers edge crispness lost in the segmentation blur
+    func enhancedForCatalog() -> CIImage {
+        let noiseReduced = applyingFilter("CINoiseReduction", parameters: [
+            "inputNoiseLevel": 0.02,
+            "inputSharpness":  0.4
+        ])
+
+        let vibrant = noiseReduced.applyingFilter("CIVibrance", parameters: [
+            kCIInputAmountKey: 0.3
+        ])
+
+        let tonal = vibrant.applyingFilter("CIHighlightShadowAdjust", parameters: [
+            "inputHighlightAmount": 0.8,   // compress bright wrinkle highlights
+            "inputShadowAmount":    0.6    // lift dark wrinkle shadows
+        ])
+
+        return tonal.applyingFilter("CISharpenLuminance", parameters: [
+            kCIInputSharpnessKey: 0.4,
+            kCIInputRadiusKey:    1.5
+        ])
     }
 }
 
