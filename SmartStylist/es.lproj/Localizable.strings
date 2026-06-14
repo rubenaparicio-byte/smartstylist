@@ -319,9 +319,33 @@
 "style.athletic"     = "Deportivo";
 "style.evening"      = "Noche";
 
+/* Planificador de Looks */
+"planner.tab.label"         = "Planificador";
+"planner.empty.title"       = "SIN LOOK";
+"planner.empty.subtitle"    = "Genera un look o añade un evento para este día.";
+"planner.quick.generate"    = "Generar Look";
+"planner.add.event"         = "Añadir Evento";
+"planner.add.event.title"   = "NUEVO EVENTO";
+"planner.add.event.for"     = "Outfit para";
+"planner.venue.note"        = "Lugar / Notas";
+"planner.venue.placeholder" = "Restaurante elegante, bar en azotea…";
+"planner.generate.look"     = "Generar Look";
+"planner.regenerate"        = "Regenerar";
+
+/* Look Inmediato */
+"instant.tab.label"         = "Inmediato";
+"instant.occasion"          = "¿CUÁL ES EL PLAN?";
+"instant.subtitle"          = "Genera un look para ahora mismo";
+"instant.generate"          = "Generar Ahora";
+"instant.generating"        = "Generando…";
+"instant.save.calendar"     = "Guardar para Hoy";
+"instant.saved.calendar"    = "Guardado en el Planificador";
+
 /* Notificaciones */
-"notification.daily.title" = "Tu look para hoy";
-"notification.daily.body"  = "¡Tu look para hoy está listo! Toca para verlo.";
+"notification.daily.title"   = "Tu look para hoy";
+"notification.daily.body"    = "¡Tu look para hoy está listo! Toca para verlo.";
+"notification.planner.title" = "Look Listo para Mañana";
+"notification.planner.body"  = "Tu outfit de %@ está preparado — toca para revisarlo.";
 
 /* Compartir */
 "share.outfit.button"  = "Compartir Look";

@@ -163,9 +163,35 @@ enum Strings {
     static var settingsLanguageEN:      String { String(localized: "settings.language.en",      locale: activeLocale) }
     static var settingsLanguageES:      String { String(localized: "settings.language.es",      locale: activeLocale) }
 
+    // MARK: — Look Planner
+    static var plannerTabLabel:      String { String(localized: "planner.tab.label",      locale: activeLocale) }
+    static var plannerEmptyTitle:    String { String(localized: "planner.empty.title",    locale: activeLocale) }
+    static var plannerEmptySubtitle: String { String(localized: "planner.empty.subtitle", locale: activeLocale) }
+    static var plannerQuickGenerate: String { String(localized: "planner.quick.generate", locale: activeLocale) }
+    static var plannerAddEvent:      String { String(localized: "planner.add.event",      locale: activeLocale) }
+    static var plannerAddEventTitle: String { String(localized: "planner.add.event.title", locale: activeLocale) }
+    static var plannerAddEventFor:   String { String(localized: "planner.add.event.for",  locale: activeLocale) }
+    static var plannerVenueNote:     String { String(localized: "planner.venue.note",     locale: activeLocale) }
+    static var plannerVenuePlaceholder: String { String(localized: "planner.venue.placeholder", locale: activeLocale) }
+    static var plannerGenerateLook:  String { String(localized: "planner.generate.look",  locale: activeLocale) }
+    static var plannerRegenerate:    String { String(localized: "planner.regenerate",     locale: activeLocale) }
+
+    // MARK: — Instant Look
+    static var instantTabLabel:        String { String(localized: "instant.tab.label",        locale: activeLocale) }
+    static var instantOccasion:        String { String(localized: "instant.occasion",          locale: activeLocale) }
+    static var instantSubtitle:        String { String(localized: "instant.subtitle",          locale: activeLocale) }
+    static var instantGenerate:        String { String(localized: "instant.generate",          locale: activeLocale) }
+    static var instantGenerating:      String { String(localized: "instant.generating",        locale: activeLocale) }
+    static var instantSaveToCalendar:  String { String(localized: "instant.save.calendar",     locale: activeLocale) }
+    static var instantSavedToCalendar: String { String(localized: "instant.saved.calendar",    locale: activeLocale) }
+
     // MARK: — Notifications
     static var notificationDailyTitle: String { String(localized: "notification.daily.title", locale: activeLocale) }
     static var notificationDailyBody:  String { String(localized: "notification.daily.body",  locale: activeLocale) }
+    static var notificationPlannerTitle: String { String(localized: "notification.planner.title", locale: activeLocale) }
+    static func notificationPlannerBody(_ occasion: String) -> String {
+        String(format: String(localized: "notification.planner.body", locale: activeLocale), occasion)
+    }
 
     // MARK: — Share
     static var shareOutfitButton:  String { String(localized: "share.outfit.button",  locale: activeLocale) }

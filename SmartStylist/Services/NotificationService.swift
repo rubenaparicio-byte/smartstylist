@@ -62,4 +62,47 @@ final class NotificationService {
         let granted = await requestPermission()
         if granted { await scheduleDailyLookNotification() }
     }
+
+    // Schedules a reminder at 20:00 the evening before a PlannedLook event.
+    // Silently no-ops if the user has not granted permission or the date is in the past.
+    func schedulePlannedLookReminder(for look: PlannedLook) async {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        guard settings.authorizationStatus == .authorized
+           || settings.authorizationStatus == .provisional else { return }
+
+        let cal = Calendar.current
+        guard let dayBefore = cal.date(byAdding: .day, value: -1, to: look.scheduledDate) else { return }
+        var components = cal.dateComponents([.year, .month, .day], from: dayBefore)
+        components.hour   = 20
+        components.minute = 0
+
+        guard let fireDate = cal.date(from: components), fireDate > Date() else { return }
+        _ = fireDate
+
+        let content       = UNMutableNotificationContent()
+        content.title     = Strings.notificationPlannerTitle
+        content.body      = Strings.notificationPlannerBody(look.occasion.localizedName)
+        content.sound     = .default
+
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: look.notificationIdentifier,
+            content: content,
+            trigger: trigger
+        )
+
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: [look.notificationIdentifier])
+
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+        } catch {
+            DebugLogger.shared.log("Planned look notification failed: \(error.localizedDescription)")
+        }
+    }
+
+    func cancelPlannedLookReminder(identifier: String) {
+        UNUserNotificationCenter.current()
+            .removePendingNotificationRequests(withIdentifiers: [identifier])
+    }
 }

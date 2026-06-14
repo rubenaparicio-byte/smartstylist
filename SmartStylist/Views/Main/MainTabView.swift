@@ -6,7 +6,7 @@ struct MainTabView: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
-                StyleEngineView()
+                StyleEngineRootView()
                     .tag(0)
                     .toolbar(.hidden, for: .tabBar)
 

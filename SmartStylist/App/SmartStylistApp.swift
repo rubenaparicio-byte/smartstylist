@@ -28,7 +28,7 @@ struct SmartStylistApp: App {
     // Static container so App.init() (which resets @State) never recreates the store.
     // UI tests pass --uitesting to get a fresh in-memory store with no CloudKit.
     private static let modelContainer: ModelContainer = {
-        let schema = Schema([UserProfile.self, ClothingItem.self, OutfitHistory.self])
+        let schema = Schema([UserProfile.self, ClothingItem.self, OutfitHistory.self, PlannedLook.self])
         let isUITesting = ProcessInfo.processInfo.arguments.contains("--uitesting")
         let config: ModelConfiguration
         if isUITesting {
