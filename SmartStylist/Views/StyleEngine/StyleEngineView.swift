@@ -115,13 +115,11 @@ struct StyleEngineView: View {
                             )
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background {
-                                if vm.occasion == context {
-                                    Color.dsAccentPrimary
-                                } else {
-                                    Material.ultraThinMaterial
-                                }
-                            }
+                            .background(
+                                vm.occasion == context
+                                    ? AnyShapeStyle(Color.dsAccentPrimary)
+                                    : AnyShapeStyle(Material.ultraThinMaterial)
+                            )
                             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 24, style: .continuous)
