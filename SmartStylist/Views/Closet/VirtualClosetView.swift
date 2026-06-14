@@ -35,9 +35,11 @@ struct VirtualClosetView: View {
                     .animation(.dsDefault, value: showFilters)
                     .animation(.easeInOut(duration: 0.22), value: filterKey)
                 }
+                .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
 
                 addButton
-                    .padding(24)
+                    .padding(.trailing, 24)
+                    .padding(.bottom, 106)
             }
             .navigationTitle("Wardrobe")
             .navigationBarTitleDisplayMode(.inline)

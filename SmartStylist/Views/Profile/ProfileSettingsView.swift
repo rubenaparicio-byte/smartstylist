@@ -37,6 +37,7 @@ struct ProfileSettingsView: View {
                         }
                         .padding(16)
                     }
+                    .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
                 } else {
                     Text(Strings.insightsEmptyTitle)
                         .font(.dsBody)

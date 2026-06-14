@@ -51,6 +51,7 @@ struct StyleEngineView: View {
                     .padding(.bottom, 32)
                     .animation(.dsDefault, value: displayState)
                 }
+                .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
             }
             .navigationTitle("Style")
             .navigationBarTitleDisplayMode(.inline)
