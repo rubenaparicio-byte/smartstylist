@@ -201,13 +201,30 @@ NavigationLink(destination: ...) { ClothingItemCard(...) }
 ```
 ZStack(alignment: .bottom)
   └─ TabView(selection: $selectedTab)          ← native TabView, no tabItem labels needed
-       ├─ each view gets .tag(n) + .toolbar(.hidden, for: .tabBar)
-       └─ .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }   ← reserves space
+       └─ each view gets .tag(n) + .toolbar(.hidden, for: .tabBar)
   └─ FloatingTabBarView(selectedTab: $selectedTab)
        .padding(.bottom, 8)                    ← sits 8pt above the safe-area bottom edge
 ```
 
-The `.safeAreaInset` ensures `ScrollView` content in each tab never hides behind the floating bar. Do **not** pass `CODE_SIGN_STYLE` overrides globally — this note is about the tab bar, but the pattern for safe area reservation via `.safeAreaInset` should be used for any floating overlay that could obscure scrollable content.
+**Avoiding occlusion by the floating bar:**
+
+`NavigationStack` inside each tab resets the safe area, so a `safeAreaInset` on the `TabView` does **not** propagate to the content inside. Each tab view must handle its own bottom clearance:
+
+- **ScrollView content** — add `.safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }` directly on the `ScrollView` in every tab view that scrolls.
+- **Floating action buttons** (ZStack `.bottomTrailing`) — use `.padding(.trailing, 24).padding(.bottom, 106)` so the button clears the ~68 pt tab bar top by a visible margin.
+
+```swift
+// Every tab ScrollView
+ScrollView { ... }
+    .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
+
+// ZStack FAB (e.g. VirtualClosetView addButton)
+addButton
+    .padding(.trailing, 24)
+    .padding(.bottom, 106)
+```
+
+Do **not** add `safeAreaInset` to the `TabView` in `MainTabView` — it has no effect on NavigationStack-wrapped content and was removed. Do **not** pass `CODE_SIGN_STYLE` overrides globally — the pattern for safe area reservation via `.safeAreaInset` should be used for any floating overlay that could obscure scrollable content.
 
 ### Scroll transitions (`Views/`)
 
@@ -373,12 +390,22 @@ Label(Strings.profileEmptyColors, systemImage: "circle.dashed")
 
 Use `Material.ultraThinMaterial` + `Capsule()` + `dsAccentPrimary.opacity(0.18–0.25)` stroke for any chip or pill that is tappable but currently unselected. Selected state uses solid `dsAccentPrimary` fill.
 
+`Material` conforms to `ShapeStyle` but **not** `View` — passing it to `background { }` (`@ViewBuilder` overload) fails at compile time on Xcode 16.4. Always use `AnyShapeStyle` type erasure with the `ShapeStyle` overload:
+
 ```swift
+// ✅ Correct — uses background(_: some ShapeStyle) overload
+.background(
+    isSelected
+        ? AnyShapeStyle(Color.dsAccentPrimary)
+        : AnyShapeStyle(Material.ultraThinMaterial)
+)
+.clipShape(Capsule())
+.overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.25), lineWidth: 0.5))
+
+// ❌ Wrong — @ViewBuilder rejects Material (not a View), CI build fails
 .background {
     if isSelected { Color.dsAccentPrimary } else { Material.ultraThinMaterial }
 }
-.clipShape(Capsule())
-.overlay(Capsule().stroke(Color.dsAccentPrimary.opacity(isSelected ? 0 : 0.25), lineWidth: 0.5))
 ```
 
 Applied in: `StyleEngineView` event context chips, `ProfileSettingsView` season/metal chip, `WardrobeInsightsView` stat pills.

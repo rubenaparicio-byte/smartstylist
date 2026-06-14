@@ -23,9 +23,6 @@ struct MainTabView: View {
                     .toolbar(.hidden, for: .tabBar)
             }
             .tint(Color.dsAccentPrimary)
-            .safeAreaInset(edge: .bottom) {
-                Color.clear.frame(height: 90)
-            }
             .task { await NotificationService.shared.scheduleDailyLookNotification() }
 
             FloatingTabBarView(selectedTab: $selectedTab)

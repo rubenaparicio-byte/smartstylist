@@ -41,6 +41,7 @@ struct WardrobeInsightsView: View {
                         }
                         .padding(16)
                     }
+                    .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 90) }
                 }
             }
             .navigationTitle(Strings.insightsNavTitle)
