@@ -10,6 +10,9 @@ final class CameraGuideOverlayView: UIView {
     private let bannerIcon = UIImageView()
     private let bannerLabel = UILabel()
 
+    private var showingContrastTip = false
+    private var tipTimer: Timer?
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         isUserInteractionEnabled = false
@@ -23,11 +26,13 @@ final class CameraGuideOverlayView: UIView {
             object: nil
         )
         refreshTip()
+        startTipCycle()
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
     deinit {
+        tipTimer?.invalidate()
         NotificationCenter.default.removeObserver(self)
         UIDevice.current.endGeneratingDeviceOrientationNotifications()
     }
@@ -118,18 +123,40 @@ final class CameraGuideOverlayView: UIView {
         bracketLayer.frame = bounds
     }
 
+    // MARK: – Tip cycling
+
+    private func startTipCycle() {
+        tipTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            guard UIDevice.current.orientation != .faceUp else { return }
+            self.showingContrastTip.toggle()
+            UIView.transition(with: self.banner, duration: 0.35, options: .transitionCrossDissolve) {
+                self.applyTipContent()
+            }
+        }
+    }
+
     // MARK: – Orientation tip
 
     @objc private func refreshTip() {
+        showingContrastTip = false
+        applyTipContent()
+    }
+
+    private func applyTipContent() {
         let isFlatLay = UIDevice.current.orientation == .faceUp
         if isFlatLay {
-            bannerLabel.text       = Strings.cameraGuideTipFlat
-            bannerIcon.image       = UIImage(systemName: "checkmark.circle.fill")
-            bannerIcon.tintColor   = UIColor.systemGreen
+            bannerLabel.text     = Strings.cameraGuideTipFlat
+            bannerIcon.image     = UIImage(systemName: "checkmark.circle.fill")
+            bannerIcon.tintColor = UIColor.systemGreen
+        } else if showingContrastTip {
+            bannerLabel.text     = Strings.cameraGuideTipContrast
+            bannerIcon.image     = UIImage(systemName: "circle.lefthalf.filled")
+            bannerIcon.tintColor = UIColor.systemYellow
         } else {
-            bannerLabel.text       = Strings.cameraGuideTipHang
-            bannerIcon.image       = UIImage(systemName: "tshirt.fill")
-            bannerIcon.tintColor   = .white
+            bannerLabel.text     = Strings.cameraGuideTipHang
+            bannerIcon.image     = UIImage(systemName: "tshirt.fill")
+            bannerIcon.tintColor = .white
         }
     }
 }

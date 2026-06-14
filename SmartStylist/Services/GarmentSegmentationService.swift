@@ -10,6 +10,10 @@ actor GarmentSegmentationService {
     // Segments the foreground garment from the background using Vision and
     // composites it over a white background for clean catalog-style images.
     // Returns PNG data preserving clean mask edges.
+    //
+    // Low-contrast handling: Vision runs on a contrast/saturation-boosted copy of the
+    // image so edge detection succeeds even for white garments on white backgrounds.
+    // The final composite always uses the original pixel data for colour fidelity.
     func segment(_ image: UIImage) async throws -> Data {
         // Normalize orientation first so Vision receives correct pixel layout,
         // then downscale to keep memory and latency under control.
@@ -19,9 +23,15 @@ actor GarmentSegmentationService {
             throw SegmentationError.invalidInput
         }
 
+        // Build a contrast-enhanced version for Vision only — this amplifies small
+        // luminance/saturation differences at garment edges that would otherwise be
+        // invisible to the foreground mask algorithm on low-contrast shots.
+        let ciForDetection = CIImage(cgImage: cgImage).contrastEnhancedForDetection()
+        let cgForDetection = context.createCGImage(ciForDetection, from: ciForDetection.extent) ?? cgImage
+
         let request = VNGenerateForegroundInstanceMaskRequest()
         // No orientation hint needed — image is already normalized to .up
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        let handler = VNImageRequestHandler(cgImage: cgForDetection, options: [:])
         try handler.perform([request])
 
         guard let observation = request.results?.first else {
@@ -33,21 +43,24 @@ actor GarmentSegmentationService {
             from: handler
         )
 
+        // Composite uses the ORIGINAL image for colour-accurate output
         let inputCI = CIImage(cgImage: cgImage)
 
-        // Feather mask edges to avoid harsh cutout artifacts
+        // Sharpen the mask before feathering: push uncertain mid-range pixel values
+        // (common on low-contrast edges) toward 0 or 1, then apply a lighter blur.
+        // This avoids the garment "fading into" a similar-toned background.
         let maskCI = CIImage(cvPixelBuffer: maskBuffer)
             .clampedToExtent()
-            .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: 2.0])
+            .withSharpenedMaskEdges()
             .cropped(to: inputCI.extent)
 
         // White background for clean catalog-style presentation
         let background = CIImage(color: .white).cropped(to: inputCI.extent)
 
         let blend = CIFilter.blendWithMask()
-        blend.inputImage   = inputCI
+        blend.inputImage      = inputCI
         blend.backgroundImage = background
-        blend.maskImage    = maskCI
+        blend.maskImage       = maskCI
 
         guard let blended = blend.outputImage else {
             throw SegmentationError.renderFailed
@@ -94,6 +107,29 @@ actor GarmentSegmentationService {
 // ── CIImage enhancement ───────────────────────────────────────────────────────
 
 private extension CIImage {
+
+    // Amplifies contrast and saturation so Vision can distinguish garment edges
+    // in low-contrast scenes (e.g. white garment on white background).
+    // Only applied to the detection input — never to the final composite.
+    func contrastEnhancedForDetection() -> CIImage {
+        applyingFilter("CIColorControls", parameters: [
+            kCIInputContrastKey:   1.8,  // exaggerate luminance differences at edges
+            kCIInputSaturationKey: 1.4   // boost saturation to separate whites from greys
+        ])
+    }
+
+    // Pushes soft mask pixel values (0.2–0.8) toward 0 or 1 so that uncertain
+    // regions on low-contrast garment boundaries become decisive cutouts rather
+    // than semi-transparent fades into the white background.
+    // A light Gaussian blur then restores natural edge feathering.
+    func withSharpenedMaskEdges() -> CIImage {
+        let sharpened = applyingFilter("CIColorControls", parameters: [
+            kCIInputContrastKey: 4.0   // strong curve on grayscale mask values
+        ])
+        return sharpened.applyingFilter("CIGaussianBlur", parameters: [
+            kCIInputRadiusKey: 1.0     // lighter feather than the previous 2.0
+        ])
+    }
 
     // Applies a catalog-quality enhancement chain after segmentation:
     //   1. Noise reduction — removes grain/compression artifacts
