@@ -133,10 +133,33 @@ AuthService(keychain: KeychainStore(
 
 **Reglas de prompt** (enforced in `GeminiService.swift`):
 1. Only reference `ClothingItem` UUIDs from the current inventory
-2. No outfit repeated within the last 14 days (`OutfitHistory`)
+2. Items worn ≥3 times in the last 14 days (`rested[]`) MUST be excluded; new outfit must differ by ≥2 pieces from the most recent look (`recent[]`)
 3. Colorimetry harmony based on `UserProfile` skin/hair/eye tones and season
 4. Match weather conditions and occasion from context
 5. Gender-specific guidance — `analyseProfile` and `encodeProfile` include `gender` so the LLM adapts language and style advice accordingly
+
+### LLM token efficiency (`StyleEngineViewModel` + `GeminiService`)
+
+Four optimisations applied to reduce token consumption on every outfit request:
+
+**1. Wardrobe pre-filter (`filteredWardrobe`)**  
+Before encoding, `StyleEngineViewModel.filteredWardrobe(_:profile:weather:occasion:)` reduces the active wardrobe to the most relevant items:
+- **Style filter by occasion** — `gym` sends only `Athletic` items; `formal`/`eveningDate` sends only `Formal/Smart Casual/Evening`. Non-matching categories fall back to full pool so the LLM always has options.
+- **Thermal filter** — `temp > 24 °C` skips outerwear entirely for casual occasions; for formal occasions it allows up to 3 outer items (blazers). `temp < 10 °C` keeps the full outer cap of 8.
+- **Colorimetry cap** — each category is capped at 8 items, sorted by colorimetry score (recommended hex → neutral hex → other) so the LLM sees the best candidates first.
+
+**2. Compressed wear history (`CompressedHistory`)**  
+`encodeHistory` replaces the full per-outfit item lists with two arrays:
+- `rested[]` — UUIDs appearing ≥3 times in the 14-day window; these must not be worn today.
+- `recent[]` — UUIDs from the most recent outfit; the new outfit must differ by ≥2 pieces.
+The LLM receives the two constraints it needs, not the full raw history.
+
+**3. Short inventory keys (`InventoryItem`)**  
+Item fields use compact names: `cat`, `sub`, `layer`, `color`, `pat`, `sty`, `tags`.  
+The prompt includes a one-line legend: `cat=category, sub=subcategory, layer=thermal layer (1=base…4=outer), color=hex, pat=pattern, sty=style`.
+
+**4. Profile in system message (prefix-cache eligible)**  
+`suggestOutfit` and `analyseProfile` send the persona + user profile as a `"system"` role message. Providers that support prefix caching (e.g. Anthropic models via OpenRouter) can cache this prefix and skip re-tokenising it on repeated calls. Other models treat it as a regular prepended message with no downside.
 
 ## Design System
 
@@ -329,7 +352,7 @@ Camera photos often have non-Up orientation. The service normalizes orientation 
 
 `ClothingCategory.defaultThermalLayer` maps each category to a sensible default. Both `AddItemView` and `ValidationWorkspaceSheet` update `thermalLayer` automatically via `.onChange(of: category)`.
 
-`StyleEngineViewModel.encodeInventory()` includes `"thermalLayer"` and `"layerNumber"` in each item's JSON so the LLM can reason about thermal coherence.
+`StyleEngineViewModel.encodeInventory()` includes `layer` (thermal layer number) in each item's JSON so the LLM can reason about thermal coherence. See the LLM token efficiency section for the full key legend.
 
 **SwiftData migration:** `thermalLayer` is stored as `ThermalLayer?` (optional) to survive schema migration without a `VersionedSchema`. Access it via `item.resolvedThermalLayer` (computed non-optional property) — never force-unwrap `thermalLayer` directly. The same pattern applies to `subcategory: ClothingSubcategory?` and all new `UserProfile` optional fields.
 
@@ -472,7 +495,7 @@ The outfit feed card renders a vertical **Layer Composition Stack** ordered oute
 | `.outerwear` | 7 | `coat`, `jacket`, `blazer`, `bomber`, `raincoat`, `puffer`, `trench` |
 | `.accessory` | 10 | `belt`, `scarf`, `hat`, `sunglasses`, `jewelry`, `bag`… |
 
-`ClothingCategory.subcategories` returns the filtered list for the picker. `GeminiService` sends `subcategory` raw value to the LLM for finer outfit reasoning. `StyleEngineViewModel.encodeInventory()` includes it when non-nil.
+`ClothingCategory.subcategories` returns the filtered list for the picker. `GeminiService` sends `subcategory` raw value to the LLM for finer outfit reasoning. `StyleEngineViewModel.encodeInventory()` includes it as the `sub` key when non-nil.
 
 Subcategory names are localized via `subcategory.<rawValue>` keys in `Localizable.strings`.
 

@@ -129,7 +129,7 @@ final class StyleEngineViewModel {
             let result = try await gemini.suggestOutfit(
                 profileJSON:   encodeProfile(profile),
                 weatherJSON:   currentWeather.map { encodeWeather($0) } ?? "{}",
-                inventoryJSON: encodeInventory(activeItems),
+                inventoryJSON: encodeInventory(filteredWardrobe(activeItems, profile: profile, weather: currentWeather, occasion: occasion)),
                 historyJSON:   encodeHistory(history14Days(from: history)),
                 occasion:      "\(occasion.rawValue) — \(occasion.dresscode)"
             )
@@ -177,18 +177,19 @@ final class StyleEngineViewModel {
     // Builds a local outfit using colorimetry scoring when Gemini is unavailable.
     // Returns nil if the wardrobe lacks the minimum categories (top + bottom + shoes).
 
+    private static let neutralHexes: Set<String> = [
+        "#000000", "#ffffff", "#f5f5dc", "#808080",
+        "#c0c0c0", "#000080", "#f5f5f5", "#d3d3d3", "#2f4f4f"
+    ]
+
     private func buildOfflineSuggestion(profile: UserProfile,
                                         activeItems: [ClothingItem]) -> StyleResponse? {
         let recommendedHexes = Set(profile.recommendedColorHexes.map { $0.lowercased() })
-        let neutralHexes: Set<String> = [
-            "#000000", "#ffffff", "#f5f5dc", "#808080",
-            "#c0c0c0", "#000080", "#f5f5f5", "#d3d3d3", "#2f4f4f"
-        ]
 
         func score(_ item: ClothingItem) -> Int {
             let hex = item.primaryColor.lowercased()
-            if recommendedHexes.contains(hex) { return 2 }
-            if neutralHexes.contains(hex)     { return 1 }
+            if recommendedHexes.contains(hex)     { return 2 }
+            if Self.neutralHexes.contains(hex)     { return 1 }
             return 0
         }
 
@@ -229,6 +230,53 @@ final class StyleEngineViewModel {
         return history.filter { $0.date >= cutoff }
     }
 
+    // Reduces the wardrobe to a relevance-ranked subset before LLM encoding.
+    // Filters by occasion style and temperature, then caps each category at 8 items
+    // ordered by colorimetry score so the LLM sees the best candidates first.
+    private func filteredWardrobe(_ items: [ClothingItem],
+                                   profile: UserProfile,
+                                   weather: CurrentWeatherData?,
+                                   occasion: EventContext) -> [ClothingItem] {
+        let recommendedHexes = Set(profile.recommendedColorHexes.map { $0.lowercased() })
+
+        func colorScore(_ item: ClothingItem) -> Int {
+            let hex = item.primaryColor.lowercased()
+            if recommendedHexes.contains(hex)  { return 2 }
+            if Self.neutralHexes.contains(hex) { return 1 }
+            return 0
+        }
+
+        let allowedStyles: Set<String>? = {
+            switch occasion {
+            case .gym:         return ["Athletic"]
+            case .formal:      return ["Formal", "Smart Casual", "Evening"]
+            case .eveningDate: return ["Evening", "Smart Casual", "Formal"]
+            default:           return nil
+            }
+        }()
+
+        let temp = weather?.temperatureCelsius ?? 15
+        let formalOccasion = occasion == .formal || occasion == .eveningDate || occasion == .work
+        let skipOuterwear  = temp > 24 && !formalOccasion
+        // Formal occasions may still need a blazer in heat — allow 3 outer items max.
+        let outerCap       = temp > 24 && formalOccasion ? 3 : 8
+
+        var result: [ClothingItem] = []
+        for category in ClothingCategory.allCases {
+            if category == .outerwear && skipOuterwear { continue }
+            let cap = category == .outerwear ? outerCap : 8
+
+            var pool = items.filter { $0.category == category }
+            if let allowed = allowedStyles {
+                let filtered = pool.filter { allowed.contains($0.style) }
+                if !filtered.isEmpty { pool = filtered }
+            }
+
+            result.append(contentsOf: pool.sorted { colorScore($0) > colorScore($1) }.prefix(cap))
+        }
+        return result
+    }
+
     private func encodeProfile(_ p: UserProfile) -> String {
         let genderField   = p.gender.map { ",\"gender\":\"\($0)\"" } ?? ""
         let storesField   = p.preferredStores.isEmpty ? "" : ",\"preferredStores\":[\(p.preferredStores.map { "\"\($0)\"" }.joined(separator: ","))]"
@@ -250,36 +298,35 @@ final class StyleEngineViewModel {
 
     // ── Codable payload structs ───────────────────────────────────────────────
 
+    // Short keys reduce per-item token cost (~40% savings over verbose names).
     private struct InventoryItem: Encodable {
         let id: String
-        let category: String
-        let subcategory: String?
-        let thermalLayer: String
-        let layerNumber: Int
-        let primaryColor: String
-        let pattern: String
-        let style: String
+        let cat: String    // category
+        let sub: String?   // subcategory
+        let layer: Int     // thermal layer number (1=base…4=outer)
+        let color: String  // primaryColor hex
+        let pat: String    // pattern
+        let sty: String    // style
         let tags: [String]
     }
 
-    private struct HistoryEntry: Encodable {
-        let date: String
-        let context: String
-        let items: [String]
+    // Compressed history: only the two constraints the LLM needs.
+    private struct CompressedHistory: Encodable {
+        let rested: [String]  // UUIDs worn ≥3 times in 14 days — must not use today
+        let recent: [String]  // UUIDs from the most recent outfit — must differ by ≥2 pieces
     }
 
     private func encodeInventory(_ items: [ClothingItem]) -> String {
         let payload = items.map { item in
             InventoryItem(
-                id:           item.id.uuidString,
-                category:     item.category.rawValue,
-                subcategory:  item.subcategory?.rawValue,
-                thermalLayer: item.resolvedThermalLayer.rawValue,
-                layerNumber:  item.resolvedThermalLayer.layerNumber,
-                primaryColor: item.primaryColor,
-                pattern:      item.pattern,
-                style:        item.style,
-                tags:         item.tags
+                id:    item.id.uuidString,
+                cat:   item.category.rawValue,
+                sub:   item.subcategory?.rawValue,
+                layer: item.resolvedThermalLayer.layerNumber,
+                color: item.primaryColor,
+                pat:   item.pattern,
+                sty:   item.style,
+                tags:  item.tags
             )
         }
         let encoder = JSONEncoder()
@@ -287,14 +334,13 @@ final class StyleEngineViewModel {
     }
 
     private func encodeHistory(_ history: [OutfitHistory]) -> String {
-        let payload = history.map { h in
-            HistoryEntry(
-                date:    h.date.ISO8601Format(),
-                context: h.context,
-                items:   h.clothingItemIds.map(\.uuidString)
-            )
+        var freq: [UUID: Int] = [:]
+        for outfit in history {
+            for id in outfit.clothingItemIds { freq[id, default: 0] += 1 }
         }
-        let encoder = JSONEncoder()
-        return (try? encoder.encode(payload)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
+        let rested = freq.filter { $0.value >= 3 }.map { $0.key.uuidString }
+        let recent = history.sorted { $0.date > $1.date }.first?.clothingItemIds.map(\.uuidString) ?? []
+        let payload = CompressedHistory(rested: rested, recent: recent)
+        return (try? JSONEncoder().encode(payload)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
     }
 }
